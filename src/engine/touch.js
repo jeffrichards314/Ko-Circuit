@@ -19,7 +19,7 @@ const A_FACE = c32(24, 6, 7), A_HI = c32(30, 14, 12), A_LO = c32(14, 3, 5);
 const B_FACE = c32(7, 11, 26), B_HI = c32(14, 18, 31), B_LO = c32(3, 5, 15);
 const S_FACE = c32(25, 19, 4), S_HI = c32(31, 27, 12), S_LO = c32(16, 10, 2);
 
-export const K_TABLE = [2.0, 2.5, 3.0, 3.5, 4.2]; // css px per art pixel, for TOUCH SIZE 1..5
+export const K_TABLE = [2.3, 2.9, 3.5, 4.1, 4.9]; // css px per art pixel, for TOUCH SIZE 1..5
 const DPAD = 42, BTN = 20, PILL_W = 44, PILL_H = 14;
 export const AB_W = 58, AB_H = 48; // the A / B / STAR cluster's box
 // button centres inside the cluster's box
@@ -152,7 +152,7 @@ export function installTouch(game, canvas, display) {
     const pill = (name, x, y, k) => { const w = PILL_W * k, h = PILL_H * k; place(els[name], x, y, w, h); return { x: x - 4, y: y - 4, w: w + 8, h: h + 8 }; };
     if (!T.portrait) {
       // the strips keep room for the pad at 2 px an art pixel at least (smaller than that and the buttons are too small to hit)
-      const kMin = Math.min(want, 2.0), minSide = AB_W * kMin + margin * 2;
+      const kMin = Math.min(want, 2.2), minSide = AB_W * kMin + margin * 2;
       let t = Math.min(availH / 224, (availW - 2 * minSide) / 256);
       t = quant(Math.max(t, Math.min(availH / 224, (availW * 0.45) / 256)));
       const gameW = 256 * t, gameH = 224 * t, side = Math.max(0, (availW - gameW) / 2);

@@ -85,8 +85,8 @@ async function layout() {
     ok(minBtn >= 34, `${label}: buttons too small (${Math.round(minBtn)}px)`);
     ok(g.x >= -1 && g.y >= -1 && g.x + g.w <= VW + 1 && g.y + g.h <= VH + 1, `${label}: the picture is off the screen`);
     if (land) {
-      // the picture takes the whole height, unless the pad needs the width (then at least 80% of the height)
-      ok(g.h >= VH * 0.8, `${label}: picture only ${Math.round((g.h / VH) * 100)}% of the height`);
+      // the picture takes the whole height, unless the pad needs the width (then at least 75% of the height)
+      ok(g.h >= VH * 0.75, `${label}: picture only ${Math.round((g.h / VH) * 100)}% of the height`);
       info(`${label}: picture ${Math.round(g.w)}x${Math.round(g.h)} (${Math.round((g.h / VH) * 100)}% of the height), buttons ${Math.round(minBtn)}px`);
     } else {
       // upright: the picture across the top at the full width (a Game Boy), the pad below it
