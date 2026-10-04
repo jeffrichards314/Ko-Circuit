@@ -54,12 +54,12 @@
 <script type="module">
 import { fighterSprites, playerSprites, paletteFor } from '../src/engine/spriteCache.js';
 import { spritePalette, swapPalette } from '../src/engine/palette.js';
-import { PALETTES } from '../data/palette.js';
+import { PALETTES, ensureAltPalette } from '../data/palette.js';
 import { FIGHTERS } from '../data/fighters/index.js';
 import { OpponentAI } from '../src/fight/opponentAI.js';
 import { Player, PT } from '../src/fight/player.js';
 import { PORTRAITS, playerPortrait } from '../data/sprites/portraits.js';
-import { TITLE_DEFENSE, remixed } from '../data/fighters/titleDefense.js';
+import { TD_LISTS, remixed } from '../data/fighters/titleDefense.js';
 import { jogFrames, ropeFrames } from '../data/sprites/jog.js';
 import { DEFAULT_PROFILE, playerPalettes, hairStyleOf, costumeIdOf, frontPalette } from '../data/customization.js';
 import { COSTUMES } from '../data/costumes.js';
@@ -75,12 +75,15 @@ function brighten(p) {
 
 // --- subjects: each exposes sprites, palettes, and animations as frame->pose functions
 const subjects = {};
-// (the Title Defense remixes too: their new moves and alternate costumes)
-for (const [key, d] of [...Object.entries(FIGHTERS), ...TITLE_DEFENSE.map((id) => [`${id}.td`, remixed(id)])]) {
+// (the Title Defense remixes too: their new moves and alternate costumes; every division's list, not just the first)
+const TD_IDS = [...new Set(Object.values(TD_LISTS).flat())];
+for (const [key, d] of [...Object.entries(FIGHTERS), ...TD_IDS.map((id) => [`${id}.td`, remixed(id)])]) {
   const bank = fighterSprites(d.spriteLayers);
   const base = PALETTES[d.palette];
   const pals = { default: paletteFor(d.palette).u32 };
   for (const [k, v] of Object.entries(bank.layers.palettes)) if (k !== 'default') pals[k] = paletteFor(v).u32;
+  // the alternate colours the medals unlock (Practice's ALT COLORS): generated for every opponent, so every one has them here too (not a remix: he has no such option)
+  if (!d.remix) pals['unlock alt'] = paletteFor(d.altPalette || ensureAltPalette(d.palette)).u32;
   pals.highlight = spritePalette(brighten(base.A), base.B && brighten(base.B)).u32;
   const ai = new OpponentAI(d, { randomness: 'fixed' }, { round: 1, clock: 0, sfx() {}, opponentAttack: () => 'dodged' });
   const at = (state, extra = {}) => (t) => {
