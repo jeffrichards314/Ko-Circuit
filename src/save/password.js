@@ -32,7 +32,7 @@ const V1_FIELDS = [
   ['active', CIRCUIT_ORDER.length],
   ['main', MAIN_PATH.length + 1],
   ['beaten', 6],
-  ['lives', 2],                             // 1..2 stored as 0..1
+  ['lives', 2],                             // the low bit of lives 1..3 stored as 0..2; the high bit rides in `pending` (the training session that used to wait there is gone, 2026-10-04: a code from before it has pending=1 only right after a belt, when the lives are full, and the clamp to the circuit's own gives that back)
   ['lostHere', 2],
   ['flags', 1 << LEGACY_FLAGS],
   ['skin', SKINS.length],
@@ -99,11 +99,11 @@ export function toFields(career) {
     active: V4_ORDER.indexOf(career.circuit),
     main: career.main,
     beaten: career.beaten,
-    lives: Math.max(1, Math.min(2, career.lives)) - 1,
+    lives: (Math.max(1, Math.min(3, career.lives)) - 1) & 1,
     lostHere: career.lostHere ? 1 : 0,
     flags,
     skin: p.skin, hair: p.hair, hairColor: p.hairColor, trunks: p.trunks, gloves: p.gloves, shoes: p.shoes, trainer: p.trainer, nick: p.nick,
-    medals, equipped, pending: T.pending ? 1 : 0,
+    medals, equipped, pending: (Math.max(1, Math.min(3, career.lives)) - 1) >> 1,
     rival: (career.rival || 0) & ((1 << RIVALS.length) - 1),
     ascRival: ascRivalCount(career.rival || 0),
     asc: Math.max(0, Math.min(ASC_STAGES, career.asc || 0)),
@@ -171,7 +171,7 @@ export function decode(code) {
       PERKS.filter((p) => p.game === g).forEach((p, j) => { if (m >= j + 2) perks.push(p.id); });
     });
     const equipped = PERKS.filter((p, i) => f.equipped & (1 << i) && perks.includes(p.id)).map((p) => p.id).slice(0, 3);
-    training = { best, perks, equipped, pending: !!f.pending };
+    training = { best, perks, equipped, pending: false };
   }
   return {
     circuit: orderOf(F)[f.active],
@@ -179,7 +179,7 @@ export function decode(code) {
     asc: f.asc || 0,
     main: f.main,
     beaten: f.beaten,
-    lives: f.lives + 1,
+    lives: (f.lives | ((f.pending || 0) << 1)) + 1,
     lostHere: !!f.lostHere,
     flags,
     training,

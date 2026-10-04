@@ -37,6 +37,8 @@ function verify(c, label, saved = true) {
 
 function win(c, label) { const o = recordResult(c, WIN); verify(c, label); return o; }
 function lose(c, label) { const o = recordResult(c, LOSS); verify(c, label); return o; }
+// (3 lives in most circuits, 2 in the Underworld: lose until the circuit resets)
+function loseOut(c, label) { let o, n = 0; do { o = lose(c, `${label} ${++n}`); } while (o.kind === 'rematch' && n < 6); return o; }
 function clearCircuit(c, label) { let o; for (let i = 0; i < 12 && (!o || o.kind !== 'title'); i++) o = win(c, `${label} win ${i + 1}`); return o; }
 // clear a circuit and, if the rival turns up after it, beat him too
 function clearWithRival(c, label) {
@@ -70,8 +72,8 @@ function clearWithRival(c, label) {
   }
   ok(selectableCircuits(c).includes('zero'), 'ZERO selectable after Nightmare + Underground');
   enterCircuit(c, 'zero');
-  // lose ZERO twice: back to the start of the Nightmare
-  lose(c, 'zero loss 1'); const o = lose(c, 'zero loss 2');
+  // lose ZERO until the lives run out: back to the start of the Nightmare
+  const o = loseOut(c, 'zero loss');
   ok(o.kind === 'reset' && c.circuit === 'nightmare' && c.beaten === 0 && c.lives === LIVES, 'ZERO last life -> Nightmare start');
   ok(!c.flags.nightmareCleared, 'ZERO reset: Nightmare must be cleared again');
   clearCircuit(c, 'nightmare again');
@@ -112,16 +114,16 @@ function clearWithRival(c, label) {
   const hw = win(c, 'halcyon win');
   ok(hw.kind === 'title' && hw.circuit === 'halcyon' && c.asc === 8, `Halcyon beaten (asc ${c.asc})`);
   ok(hw.next === 'u1' && c.circuit === 'u1' && c.beaten === 0, `after Halcyon and The Fall: the Underworld's first shore (${c.circuit})`);
-  ok(c.lives === 1, 'the Underworld gives one life');
+  ok(c.lives === 2, 'the Underworld gives two lives');
   ok(ascMap(c) === 'underworld' && hasFallen(c), 'a fallen career lives on the Underworld map');
-  // Phase C: the Underworld. One life: a loss sends you straight back to the start of the circuit (nothing else changes)
+  // Phase C: the Underworld. Two lives: the second loss sends you back to the start of the circuit (nothing else changes)
   {
     win(c, 'u1 win 1');
-    const ul = lose(c, 'u1 loss');
-    ok(ul.kind === 'reset' && ul.to === 'u1' && c.circuit === 'u1' && c.beaten === 0 && c.lives === 1 && c.asc === 8, `Underworld: one loss resets the circuit (${ul.kind} ${c.circuit} ${c.beaten} lives ${c.lives})`);
-    ok(decode(passwordOf(c)).lives === 1, 'the password stores the one life');
+    const ul = loseOut(c, 'u1 loss');
+    ok(ul.kind === 'reset' && ul.to === 'u1' && c.circuit === 'u1' && c.beaten === 0 && c.lives === 2 && c.asc === 8, `Underworld: the last life resets the circuit (${ul.kind} ${c.circuit} ${c.beaten} lives ${c.lives})`);
+    ok(decode(passwordOf(c)).lives === 2, 'the password stores the two lives');
     let uo = clearCircuit(c, 'u1');
-    ok(uo.kind === 'title' && uo.next === 'u2' && c.asc === 9 && c.lives === 1, `U1 belt -> U2 (asc ${c.asc})`);
+    ok(uo.kind === 'title' && uo.next === 'u2' && c.asc === 9 && c.lives === 2, `U1 belt -> U2 (asc ${c.asc})`);
     uo = clearCircuit(c, 'u2');
     ok(uo.next === 'u3' && c.asc === 10, 'U2 belt -> U3');
     ok(CIRCUITS.u3.fighters.length === 5 && CIRCUITS.u3.fighters[4] === 'jailer', 'U3: five fighters, the Jailer last');
@@ -129,22 +131,22 @@ function clearWithRival(c, label) {
     ok(lastU3.kind === 'title' && lastU3.next === 'rival7' && c.circuit === 'rival7' && c.asc === 11, 'U3 belt -> Dash in Chains');
     ok(ascMap(c) === 'underworld', 'Dash VII is fought from the Underworld map');
     // Dash in Chains: one life. Losing him sends you back to the start of the Chain Pits (their belt must be won again)
-    const dl = lose(c, 'rival7 loss');
+    const dl = loseOut(c, 'rival7 loss');
     ok(dl.kind === 'reset' && dl.to === 'u3' && c.circuit === 'u3' && c.beaten === 0 && c.asc === 10, `Dash VII: the loss resets to U3 (${dl.kind} ${c.circuit} asc ${c.asc})`);
     const again = (() => { let o; for (let i = 0; i < 12 && (!o || o.kind !== 'title'); i++) o = win(c, `u3 again ${i + 1}`); return o; })();
     ok(again.next === 'rival7', 'the Chain Pits again -> Dash VII');
     const d7 = win(c, 'rival7 win');
     ok(d7.kind === 'rival' && c.asc === 11 && (c.rival & (1 << (RIVALS.length + 2))), 'Dash VII beaten (his own bit)');
-    ok(c.circuit === 'u4' && c.beaten === 0 && c.lives === 1, `after Dash VII the descent goes on: the Hall of the Fallen (${c.circuit})`);
+    ok(c.circuit === 'u4' && c.beaten === 0 && c.lives === 2, `after Dash VII the descent goes on: the Hall of the Fallen (${c.circuit})`);
     const pwU = passwordOf(c), backU = careerFromPassword(pwU, c);
-    ok(backU && backU.asc === 11 && backU.circuit === 'u4' && backU.lives === 1 && backU.rival === c.rival, 'Underworld career password round trip');
+    ok(backU && backU.asc === 11 && backU.circuit === 'u4' && backU.lives === 2 && backU.rival === c.rival, 'Underworld career password round trip');
     ok(replayable(c).includes('u1') && replayable(c).includes('u3'), 'cleared Underworld circuits can be replayed');
-    startReplay(c, 'u2'); ok(c.replay.lives === 1, 'an Underworld replay has one life'); c.replay = null;
+    startReplay(c, 'u2'); ok(c.replay.lives === 2, 'an Underworld replay has two lives'); c.replay = null;
     // Phase D: U4-U6, Dash the King's Champion, Vorgath. One life all the way down
     ok(CIRCUITS.u4.fighters.length === 4 && CIRCUITS.u4.fighters[3] === 'fkarver' && CIRCUITS.u5.fighters.length === 4 && CIRCUITS.u5.fighters[3] === 'crucible', 'U4 ends with the Fallen King, U5 with Crucible');
     ok(CIRCUITS.u6.fighters.length === 5 && CIRCUITS.u6.fighters[4] === 'herald' && CIRCUITS.vorgath.fighters.length === 1 && CIRCUITS.vorgath.forms === 3, 'U6 ends with the Herald; Vorgath has three phases');
     win(c, 'u4 win 1');
-    const l4 = lose(c, 'u4 loss');
+    const l4 = loseOut(c, 'u4 loss');
     ok(l4.kind === 'reset' && l4.to === 'u4' && c.circuit === 'u4' && c.beaten === 0 && c.asc === 11, `U4: one loss resets the circuit (${l4.kind} ${c.circuit})`);
     let d = clearCircuit(c, 'u4');
     ok(d.kind === 'title' && d.next === 'u5' && c.asc === 12, `U4 belt -> the Furnace (asc ${c.asc})`);
@@ -152,14 +154,14 @@ function clearWithRival(c, label) {
     ok(d.next === 'u6' && c.asc === 13, 'U5 belt -> the Abyss Gate');
     const lastU6 = (() => { let o; for (let i = 0; i < 12 && (!o || o.kind !== 'title'); i++) o = win(c, `u6 win ${i + 1}`); return o; })();
     ok(lastU6.kind === 'title' && lastU6.next === 'rival8' && c.circuit === 'rival8' && c.asc === 14, 'U6 belt -> Dash, the King\'s Champion');
-    const d8l = lose(c, 'rival8 loss');
+    const d8l = loseOut(c, 'rival8 loss');
     ok(d8l.kind === 'reset' && d8l.to === 'u6' && c.circuit === 'u6' && c.beaten === 0 && c.asc === 13, `Dash VIII: the loss resets to U6 (${d8l.kind} ${c.circuit} asc ${c.asc})`);
     const again6 = (() => { let o; for (let i = 0; i < 12 && (!o || o.kind !== 'title'); i++) o = win(c, `u6 again ${i + 1}`); return o; })();
     ok(again6.next === 'rival8', 'the Abyss Gate again -> Dash VIII');
     const d8 = win(c, 'rival8 win');
     ok(d8.kind === 'rival' && c.asc === 14 && (c.rival & (1 << (RIVALS.length + 3))), 'Dash VIII beaten (his own bit)');
-    ok(c.circuit === 'vorgath' && c.beaten === 0 && c.lives === 1, `after Dash VIII: the throne of Vorgath (${c.circuit})`);
-    const vl = lose(c, 'vorgath loss');
+    ok(c.circuit === 'vorgath' && c.beaten === 0 && c.lives === 2, `after Dash VIII: the throne of Vorgath (${c.circuit})`);
+    const vl = loseOut(c, 'vorgath loss');
     ok(vl.kind === 'reset' && vl.to === 'vorgath' && c.circuit === 'vorgath' && c.asc === 14, `Vorgath: one loss and it starts over (${vl.kind} asc ${c.asc})`);
     const vw = win(c, 'vorgath win');
     ok(vw.kind === 'title' && vw.circuit === 'vorgath' && c.asc === 15, `the King Below falls (asc ${c.asc})`);
@@ -204,7 +206,8 @@ function clearWithRival(c, label) {
   // Halcyon: three forms are one fight, one life pool; losing sends you back to the start of his circuit
   const c2 = newCareer(); Object.assign(c2.flags, { pantheonOpen: true, zeroBeaten: true }); c2.main = 10; c2.asc = 7; enterCircuit(c2, 'halcyon');
   ok(lose(c2, 'halcyon loss 1').kind === 'rematch', 'Halcyon: first loss -> rematch');
-  const l2 = lose(c2, 'halcyon loss 2');
+  ok(lose(c2, 'halcyon loss 2').kind === 'rematch', 'Halcyon: second loss -> rematch');
+  const l2 = lose(c2, 'halcyon loss 3');
   ok(l2.kind === 'reset' && c2.circuit === 'halcyon' && c2.asc === 7, 'Halcyon: last life -> back to the start of his fight');
   const pwA = passwordOf(c), backA = careerFromPassword(pwA, c);
   ok(backA && backA.asc === 19 && backA.flags.pantheonOpen && backA.circuit === c.circuit, 'Ascension career password round trip');
@@ -218,8 +221,8 @@ function clearWithRival(c, label) {
   ok(c.circuit === 'major', 'at Major');
   win(c, 'major 1');
   let o = lose(c, 'major loss 1');
-  ok(o.kind === 'rematch' && c.lives === 1 && c.beaten === 1, 'loss costs a life, rematch same opponent');
-  o = lose(c, 'major loss 2');
+  ok(o.kind === 'rematch' && c.lives === LIVES - 1 && c.beaten === 1, 'loss costs a life, rematch same opponent');
+  o = loseOut(c, 'major loss');
   ok(o.kind === 'reset' && c.circuit === 'major' && c.beaten === 0 && c.lives === LIVES, 'last life -> start of Major');
   ok(c.lostHere, 'the reset keeps the loss for the clean-run rule');
   clearWithRival(c, 'major after loss');
@@ -232,7 +235,7 @@ function clearWithRival(c, label) {
   const c = newCareer();
   for (const id of MAIN_PATH.slice(0, -1)) clearWithRival(c, id);
   ok(c.circuit === 'dream', 'at the Dream Fight');
-  lose(c, 'jax loss 1'); const o = lose(c, 'jax loss 2');
+  const o = loseOut(c, 'jax loss');
   ok(o.kind === 'reset' && c.circuit === 'grandprix' && c.beaten === 0 && c.main === MAIN_PATH.indexOf('grandprix'), 'Jax last life -> Grand Prix start');
   clearCircuit(c, 'grand prix again');
   ok(c.circuit === 'dream', 'back at the Dream Fight after the Grand Prix (Dash IV stays beaten)');
@@ -244,7 +247,7 @@ function clearWithRival(c, label) {
   for (const id of ['rookie', 'minor', 'metro', 'major']) clearWithRival(c, id);
   ok(c.flags.carnivalUnlocked && selectableCircuits(c).includes('carnival'), 'Carnival offered at the start of Continental');
   enterCircuit(c, 'carnival');
-  win(c, 'carnival 1'); lose(c, 'carnival loss'); const o = lose(c, 'carnival loss 2');
+  win(c, 'carnival 1'); const o = loseOut(c, 'carnival loss');
   ok(o.kind === 'reset' && c.circuit === 'carnival' && c.beaten === 0, 'Carnival last life -> start of Carnival');
   clearCircuit(c, 'carnival');
   ok(c.flags.carnivalCleared && c.circuit === 'continental' && c.beaten === 0, 'after Carnival: back to the start of Continental');
@@ -264,7 +267,7 @@ function clearWithRival(c, label) {
 {
   const c = newCareer();
   let n = 0, bad = 0;
-  for (const id of Object.keys(CIRCUITS)) for (let b = 0; b < CIRCUITS[id].fighters.length; b++) for (const lives of [1, 2]) {
+  for (const id of Object.keys(CIRCUITS)) for (let b = 0; b < CIRCUITS[id].fighters.length; b++) for (const lives of [1, 2, 3]) {
     c.circuit = id; c.beaten = b; c.lives = lives; c.main = Math.max(0, MAIN_PATH.indexOf(id));
     const pw = passwordOf(c); n++;
     const d = decode(pw);
@@ -285,11 +288,11 @@ function clearWithRival(c, label) {
   const c = newCareer();
   clearCircuit(c, 'rookie');
   const o = clearCircuit(c, 'minor');
-  ok(o.next === 'rival1' && c.circuit === 'rival1' && c.lives === LIVES && c.main === MAIN_PATH.indexOf('metro'), 'Minor title -> Dash I due, 2 lives');
+  ok(o.next === 'rival1' && c.circuit === 'rival1' && c.lives === LIVES && c.main === MAIN_PATH.indexOf('metro'), 'Minor title -> Dash I due, full lives');
   ok(selectableCircuits(c).length === 1 && selectableCircuits(c)[0] === 'rival1', 'nothing but Dash while he is due');
   let r = lose(c, 'dash1 loss 1');
-  ok(r.kind === 'rematch' && c.circuit === 'rival1' && c.lives === 1, 'losing to Dash costs a life');
-  r = lose(c, 'dash1 loss 2');
+  ok(r.kind === 'rematch' && c.circuit === 'rival1' && c.lives === LIVES - 1, 'losing to Dash costs a life');
+  r = loseOut(c, 'dash1 loss');
   ok(r.kind === 'reset' && c.circuit === 'minor' && c.main === MAIN_PATH.indexOf('minor') && c.beaten === 0, 'last life vs Dash -> start of Minor');
   const o2 = clearCircuit(c, 'minor again');
   ok(o2.next === 'rival1' && c.circuit === 'rival1', 'Minor re-won -> Dash I again');
@@ -322,7 +325,7 @@ function clearWithRival(c, label) {
   ok(l.rival === 0 && l.circuit === 'storm', 'old save loads with no rival fights won');
   const sel = selectableCircuits(l);
   ok(['rival1', 'rival2', 'rival3'].every((r) => sel.includes(r)) && sel.includes('storm'), 'skipped rival fights are optional nodes');
-  enterCircuit(l, 'rival2'); lose(l, 'optional loss'); const o = lose(l, 'optional loss 2');
+  enterCircuit(l, 'rival2'); const o = loseOut(l, 'optional loss');
   ok(o.kind === 'reset' && l.circuit === 'storm' && l.main === MAIN_PATH.indexOf('storm'), 'losing an optional rival fight never costs a circuit');
   enterCircuit(l, 'rival2'); const w = win(l, 'optional win');
   ok(w.kind === 'rival' && l.circuit === 'storm' && l.rival === 2, 'winning one returns to the road');
@@ -362,15 +365,16 @@ function clearWithRival(c, label) {
   startReplay(c, 'metro');
   ok(replayOpponent(c) === 'ray', 'replay starts at the bottom of the ladder');
   let o = recordReplay(c, WIN); ok(o.kind === 'win' && replayOpponent(c) === 'pidge', 'replay win -> next');
-  o = recordReplay(c, LOSS); ok(o.kind === 'rematch' && c.replay.lives === 1, 'replay loss costs a replay life');
-  o = recordReplay(c, LOSS); ok(o.kind === 'over' && !c.replay, 'replay over after 2 losses');
+  o = recordReplay(c, LOSS); ok(o.kind === 'rematch' && c.replay.lives === 2, 'replay loss costs a replay life');
+  o = recordReplay(c, LOSS); ok(o.kind === 'rematch' && c.replay.lives === 1, 'a second replay loss costs another');
+  o = recordReplay(c, LOSS); ok(o.kind === 'over' && !c.replay, 'replay over after 3 losses');
   ok(JSON.stringify(pick(c)) === before && passwordOf(c) === pw && JSON.stringify(c.record) === rec, 'the career is untouched by a replay');
   // Major replayed clean: Dash II at the end, then the Carnival unlocks
   startReplay(c, 'major');
   for (let i = 0; i < 3; i++) recordReplay(c, WIN);
   o = recordReplay(c, WIN); ok(o.kind === 'rival' && replayOpponent(c) === 'dash2', 'replay of Major ends with Dash II');
   o = recordReplay(c, WIN); ok(o.kind === 'done' && o.unlocked === 'carnival' && c.flags.carnivalUnlocked, 'clean Major replay unlocks the Carnival');
-  ok(c.circuit === 'continental' && c.beaten === 1 && c.lives === 1, 'still mid-Continental with 1 life after the replay');
+  ok(c.circuit === 'continental' && c.beaten === 1 && c.lives === LIVES - 1, 'still mid-Continental with one life lost after the replay');
   ok(decode(passwordOf(c)).flags.carnivalUnlocked, 'the second-chance unlock is in the password');
   // a replay with a loss in it: no unlock
   const d = newCareer();
@@ -444,10 +448,11 @@ function clearWithRival(c, label) {
   recordResult(c, W_('barney')); recordResult(c, W_('kid'));
   ok(row('rookie') === 'beaten,beaten,next,ahead', 'two beaten: they are rematches, the third is next');
   const l1 = recordResult(c, L_('mort'));
-  ok(l1.kind === 'rematch' && row('rookie') === 'beaten,beaten,next,ahead' && c.lives === 1, 'a loss with a life left changes no podium');
+  ok(l1.kind === 'rematch' && row('rookie') === 'beaten,beaten,next,ahead' && c.lives === LIVES - 1, 'a loss with a life left changes no podium');
+  recordResult(c, L_('mort'));
   const l2 = recordResult(c, L_('mort'));
-  ok(l2.kind === 'reset' && row('rookie') === 'next,ahead,ahead,ahead' && c.lives === 2, 'the last life lost: every fighter of the circuit is unbeaten again for this run');
-  ok(c.record.l === 2, 'and the record keeps counting');
+  ok(l2.kind === 'reset' && row('rookie') === 'next,ahead,ahead,ahead' && c.lives === LIVES, 'the last life lost: every fighter of the circuit is unbeaten again for this run');
+  ok(c.record.l === 3, 'and the record keeps counting');
   for (const id of CIRCUITS.rookie.fighters) recordResult(c, W_(id));
   ok(circuitStatus(c, 'rookie') === 'cleared' && row('rookie') === 'beaten,beaten,beaten,beaten', 'a cleared circuit: every podium is a rematch');
   ok(circuitStatus(c, 'minor') === 'current' || circuitStatus(c, 'minor') === 'open', 'the next circuit opens');
@@ -478,7 +483,7 @@ function clearWithRival(c, label) {
   ok(o.kind === 'rematch' && c.lives === LIVES - 1, 'losing costs one life');
   o = win(c, 'life: win the rematch');
   ok(o.kind === 'win' && o.gained === true && c.lives === LIVES && o.lives === LIVES, 'winning gives it back (the rematch after a loss is a ladder win)');
-  lose(c, 'life: lose again'); lose(c, 'life: lose a second time'); // (the last life: back to the start of the circuit with a full set)
+  loseOut(c, 'life: lose until it resets'); // (the last life: back to the start of the circuit with a full set)
   ok(c.lives === LIVES, 'a reset circuit starts on full lives');
 }
 console.log(`${checks} checks, ${fails} failed`);

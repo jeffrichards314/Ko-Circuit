@@ -41,7 +41,7 @@ for (let run = 0; run < RUNS; run++) {
       const o = recordResult(c, { winner: won ? 'player' : 'opponent', method: 'KO', opponent: opp });
       ok(!!o && typeof o.kind === 'string', `${tag()}: no result`);
       if (!won && noLives(before.circuit)) ok(o.kind === 'retry' && c.circuit === before.circuit && c.beaten === before.beaten && c.asc === before.asc, `${tag()}: a Void loss changed something (${o.kind})`);
-      if (!won && zoneOf(before.circuit) === 'underworld') ok(c.lives >= 1 && livesOf(before.circuit) === 1, `${tag()}: Underworld lives`);
+      if (!won && zoneOf(before.circuit) === 'underworld') ok(c.lives >= 1 && livesOf(before.circuit) === 2, `${tag()}: Underworld lives`);
       if (HOLLOWED.includes(opp) && won) ok(isFreed(c, opp), `${tag()}: ${opp} not freed after a win`);
     } else {
       // nobody left in this ladder: the map offers somewhere to go

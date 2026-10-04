@@ -154,7 +154,7 @@ export const RIVALS = ['rival1', 'rival2', 'rival3', 'rival4'];
 //   zone       'pantheon' | 'underworld' | 'void' (the Ascension's own path)
 //   asc        true: an Ascension circuit (not on the main path, not secret)
 // Ascension circuits are entered from their zone's map once the way is open, one
-// after another (ASC_PATH), with the usual 2 lives and belt.
+// after another (ASC_PATH), with the usual 3 lives and belt.
 const ASC_BASE = {
   ...base, hearts: 12, heartsLostOnBlock: 3, randomness: 'adaptive', starsPerRound: 2, guardCounter: 2, asc: true, zone: 'pantheon',
   mash: { power: 5.5, decay: 0.8, perKnockdown: 1.9 },
@@ -183,7 +183,7 @@ Object.assign(CIRCUITS, {
 // tips), ONE life (losing it sends you back to the start of the circuit), 10 hearts, 4-frame tells
 // (heavies 6f), and only `cornerHeal` health comes back between rounds (the corner's mash cap: the base game's
 // is 30; the Underworld's was the same 30, which didn't bite, and is 15 since the 2026-10-01 rebalance).
-const UW_BASE = { ...ASC_BASE, zone: 'underworld', hearts: 10, lives: 1, cornerHeal: 15 };
+const UW_BASE = { ...ASC_BASE, zone: 'underworld', hearts: 10, lives: 2, cornerHeal: 15 };
 Object.assign(CIRCUITS, {
   u1: { ...UW_BASE, id: 'u1', name: 'UNDERWORLD I: FERRYMAN\'S SHORE', arena: 'underworld1', tellWindow: 4, fighters: ['grue', 'mae', 'toll', 'moros'], belt: 'FERRYMAN\'S SHORE CHAMPION',
     mash: { power: 5.5, decay: 0.89, perKnockdown: 2 } },
@@ -245,7 +245,7 @@ export const VOID_SKIP_FREED = false;
 // the twelve Hollowed in the order they are freed (the freed mask, career.freed, is over this list)
 export const HOLLOWED = VOID.flatMap((id) => CIRCUITS[id].fighters);
 // Lives per circuit: 2, and 1 in the Underworld (spec A3)
-export const livesOf = (id) => (CIRCUITS[id] && CIRCUITS[id].lives) || 2;
+export const livesOf = (id) => (CIRCUITS[id] && CIRCUITS[id].lives) || 3; // (3 in most circuits, 2 in the Underworld; a win in the ladder gives one back)
 // The map screen an Ascension circuit belongs to: 'pantheon' or 'underworld'
 export const zoneOf = (id) => (CIRCUITS[id] && CIRCUITS[id].zone) || null;
 export const isAsc = (id) => !!(CIRCUITS[id] && CIRCUITS[id].asc);

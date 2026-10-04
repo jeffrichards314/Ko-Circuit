@@ -4,7 +4,7 @@
 //   circuit   the circuit being fought right now (main path or secret)
 //   main      index into MAIN_PATH of the main circuit in progress
 //   beaten    fighters beaten in the current circuit (= your rank position)
-//   lives     2 per circuit (1 in the Underworld: circuits.js `lives`). Losing costs one and
+//   lives     3 per circuit (2 in the Underworld: circuits.js `lives`). Losing costs one and
 //             you rematch; winning a fight of the ladder gives one back (never past the circuit's own); losing the last one sends you back to the start of the circuit
 //             with a full set again.
 //   lostHere  lost any fight in this circuit (secret unlocks need a clean run)
@@ -36,7 +36,7 @@ import { normalizeProfile, DEFAULT_PROFILE } from '../../data/customization.js';
 import { PERKS, MAX_EQUIPPED } from '../../data/perks.js';
 import { DRILL_IDS, DRILL_MEDALS } from '../../data/drills.js';
 
-export const LIVES = 2;
+export const LIVES = 3;
 // "Start of the circuit" for the bosses means the circuit before them (§5).
 const RESET_TO = { dream: 'grandprix', zero: 'nightmare' };
 
@@ -133,7 +133,7 @@ export function careerFromPassword(code, current) {
   // flags.trueEndingSeen). A code is shown after that very win, so it carries the ending with it (the Theater has the scene)
   if (c.asc >= ASC_PATH.length) c.flags.trueEndingSeen = true;
   if (current) c.freed = current.freed || 0; // (the freed Hollowed are local: kept, and topped up from the code's own progress)
-  c.lives = Math.min(c.lives, livesOf(c.circuit)); // (a password stores 1 or 2: the Underworld only has one)
+  c.lives = Math.min(c.lives, livesOf(c.circuit)); // (a password stores 1 to 3: the Underworld only has two)
   return normalizeRival(c);
 }
 
@@ -288,7 +288,6 @@ function winTitle(c, id) {
   if (id === 'nightmare') f.nightmareCleared = true;
   if (id === 'zero') f.zeroBeaten = true;
   if (!isSecret(id)) c.main = Math.min(MAIN_PATH.length, c.main + 1);
-  c.training.pending = true; // a training session on the road to the next circuit
   // the rival turns up at the belt ceremony (§11b)
   const rival = RIVAL_AFTER[id];
   if (rival && !rivalWon(c, rival)) { enterCircuit(c, rival, true); return rival; }
@@ -298,7 +297,6 @@ function winTitle(c, id) {
 // An Ascension belt: the next stage of the path, Dash's fight first if one follows this circuit.
 function winAscension(c, id) {
   c.asc = Math.max(c.asc || 0, ascIndex(id) + 1);
-  c.training.pending = true;
   const rival = RIVAL_AFTER[id];
   if (rival && !rivalWon(c, rival)) { enterCircuit(c, rival, true); return rival; }
   return backToMain(c);

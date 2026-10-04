@@ -77,7 +77,7 @@ const podium = (H, i) => H.L.stations.find((q) => q.kind === 'podium' && q.index
   const { recordFight } = await import('../src/save/medals.js');
   recordResult(g.career, { winner: 'player', method: 'KO', opponent: 'barney', round: 1, time: '0:30', seconds: 30 });
   g.medals.got.barney = { speed: true, flawless: false, signature: false }; g.medals.best.barney = 41;
-  recordResult(g.career, { winner: 'opponent', method: 'KO', opponent: 'kid' }); recordResult(g.career, { winner: 'opponent', method: 'KO', opponent: 'kid' });
+  for (let i = 0; i < 3; i++) recordResult(g.career, { winner: 'opponent', method: 'KO', opponent: 'kid' }); // (three lives)
   const H = new InteriorScreen(g, { id: 'rookie' });
   ok([0, 1, 2, 3].map((i) => H.podState(podium(H, i))).join() === 'next,ahead,ahead,ahead', 'after the reset every fighter is unbeaten again');
   ok(g.medals.got.barney.speed && g.medals.best.barney === 41, 'the medals and record times stay');

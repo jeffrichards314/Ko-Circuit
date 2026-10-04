@@ -264,10 +264,10 @@ async function camp(args = {}, career = {}) {
   ok(['counter', 'saver', 'chin'].every((id) => l.training.perks.includes(id)) && !l.training.perks.includes('grit') && !l.training.perks.includes('lungs'), `load: perks implied by the scores are restored, no more (${l.training.perks})`);
   c.training = undefined; localStorage.setItem('kocircuit.career', JSON.stringify(c)); l = loadCareer();
   ok(l.training && Array.isArray(l.training.equipped), 'load: an old save without a training block gets one');
-  // passwords
+  // passwords (the waiting-session bit now carries a life; nothing waits for training any more: 2026-10-04)
   const p = newCareer(); p.training = { best: { bag: 84, rope: 45, run: 380 }, perks: ['counter', 'saver', 'lungs', 'chin'], equipped: ['saver', 'chin', 'counter'], pending: true };
   const back = careerFromPassword(passwordOf(p), null);
-  ok(back && back.training.perks.join() === 'counter,saver,lungs,chin' && back.training.equipped.length === 3 && back.training.equipped.every((id) => p.training.equipped.includes(id)) && back.training.pending === true, `password: perks and equipment survive (${back && back.training.perks})`);
+  ok(back && back.training.perks.join() === 'counter,saver,lungs,chin' && back.training.equipped.length === 3 && back.training.equipped.every((id) => p.training.equipped.includes(id)) && back.training.pending === false, `password: perks and equipment survive (${back && back.training.perks})`);
   ok(back.training.equipped.every((id) => back.training.perks.includes(id)), 'password: only perks you hold are equipped');
   const q = newCareer(); q.training = { best: { bag: 40, rope: 0, run: 0 }, perks: [], equipped: [], pending: false };
   ok(careerFromPassword(passwordOf(q), null).training.perks.length === 0, 'password: a bronze wins no perk');
