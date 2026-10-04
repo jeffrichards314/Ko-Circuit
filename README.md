@@ -39,7 +39,8 @@ filter on a computer; Options has it too.
 - Menus, lists and screens of text: **tap** a row to choose it and tap it again to use it; **swipe** to scroll a long list or turn a page; tap anywhere to turn a text box.
 - The **world map** and the **halls**: the D-pad walks; or tap a place and the runner walks there, and tap it again to go in.
 - Name and password entry have an **on-screen keyboard**; the password screen has a PASTE key where the browser allows it.
-- Hold the phone **sideways**. Upright, the game asks you to rotate it and waits.
+- **Sideways is best**: the picture takes the whole height. Installed on Android, the game locks itself sideways. iPhones and iPads do not let a web page turn or lock the screen, so there the game also plays **upright**: the picture across the top and the pad underneath like a Game Boy (D-pad left, A / B / STAR right, PAUSE and START below).
+- Options, SCREEN SIZE: AUTO / FILL / SHARP. FILL (the default on a touch device) makes the picture as big as the window allows; SHARP keeps whole-number sizes only, which is crispest.
 - The game **pauses when you leave** it (another app, the lock button, a call); a fight shows its pause menu.
 
 ## Playing and installing

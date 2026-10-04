@@ -89,9 +89,9 @@ export function installTouch(game, canvas, display) {
     #touch { position: fixed; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; display: none; }
     #touch.on { display: block; }
     #touch canvas { position: absolute; image-rendering: pixelated; image-rendering: crisp-edges; pointer-events: none; }
-    #rotate, #paused { position: fixed; inset: 0; z-index: 20; background: #05060c; display: none; align-items: center; justify-content: center; flex-direction: column; }
-    #rotate.on, #paused.on { display: flex; }
-    #rotate canvas, #paused canvas { image-rendering: pixelated; image-rendering: crisp-edges; max-width: 90vw; }
+    #paused { position: fixed; inset: 0; z-index: 20; background: #05060c; display: none; align-items: center; justify-content: center; flex-direction: column; }
+    #paused.on { display: flex; }
+    #paused canvas { image-rendering: pixelated; image-rendering: crisp-edges; max-width: 90vw; }
   `;
   document.head.appendChild(css);
 
@@ -121,55 +121,80 @@ export function installTouch(game, canvas, display) {
   document.body.appendChild(probe);
   let rects = null; // hit areas, in css px
 
+  // Landscape: the picture as big as the window allows (the whole height, as far as the strips beside it keep room for the pad), the pad in the strips.
+  // Portrait (a phone that is not turned, or cannot be locked): the picture across the top at the full width, the pad below it like a Game Boy: the direction
+  // pad on the left, A / B / STAR on the right, PAUSE and START between them underneath. The picture is whole-number scaled (SHARP) or exactly as big as fits (FILL).
   function layout() {
     const dpr = window.devicePixelRatio || 1;
     const vw = window.innerWidth, vh = window.innerHeight;
     const cs = getComputedStyle(probe);
     const safe = { t: parseFloat(cs.paddingTop) || 0, r: parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.paddingBottom) || 0, l: parseFloat(cs.paddingLeft) || 0 };
     const availW = vw - safe.l - safe.r, availH = vh - safe.t - safe.b;
-    // portrait: a touch device held upright gets the "rotate" message (the game waits)
     T.portrait = hasTouch && vh > vw;
-    rotateEl.classList.toggle('on', T.portrait);
-    root.classList.toggle('on', T.visible && !T.portrait);
+    root.classList.toggle('on', T.visible);
+    const fit = O().screenFit ?? 0; // 0 AUTO (FILL on a touch device), 1 FILL, 2 SHARP
+    const fill = fit === 1 || (fit === 0 && hasTouch);
+    display.fill = fill;
     const place = (el, x, y, w, h) => { el.style.left = `${x}px`; el.style.top = `${y}px`; el.style.width = `${w}px`; el.style.height = `${h}px`; };
+    const box = (x, y, w, h) => { wrap.style.cssText = `position:fixed;left:${x}px;top:${y}px;width:${w}px;height:${h}px`; };
     if (!T.visible) {
       // no pad: the picture takes the whole window
-      wrap.style.cssText = `position:fixed;left:${safe.l}px;top:${safe.t}px;width:${availW}px;height:${availH}px`;
+      box(safe.l, safe.t, availW, availH);
       rects = null;
       display.resize();
       return;
     }
     const want = K_TABLE[Math.max(0, Math.min(4, (O().touchSize || 3) - 1))];
-    const margin = 8;
-    // the picture first: the biggest whole-number scale (in device pixels) that still leaves the strips enough room for the pad at 75% of its wanted size
-    const sMax = Math.max(1, Math.floor(Math.min(availW * dpr / 256, availH * dpr / 224)));
-    let s = sMax;
-    for (; s > 1; s--) if ((availW - (256 * s) / dpr) / 2 >= AB_W * want * 0.75 + margin * 2) break;
-    const gameW = (256 * s) / dpr, side = Math.max(0, (availW - gameW) / 2);
-    const k = Math.max(1.2, Math.min(want, (side - margin * 2) / AB_W));
-    T.k = k;
-    wrap.style.cssText = `position:fixed;left:${safe.l + side}px;top:${safe.t}px;width:${availW - side * 2}px;height:${availH}px`;
-    // columns
-    const swap = !!O().touchSide;
-    const leftCol = safe.l, rightCol = vw - safe.r - side;
-    const dpadCol = swap ? rightCol : leftCol, abCol = swap ? leftCol : rightCol;
-    const pillTop = safe.t + margin, pillH = PILL_H * k;
-    const minY = pillTop + pillH + margin, maxY = (h) => safe.t + availH - margin - h;
-    const yFor = (h) => { const lo = minY, hi = Math.max(lo, maxY(h)); return hi - (hi - lo) * Math.max(0, Math.min(4, O().touchY ?? 1)) / 4; };
-    const dW = DPAD * k, dX = dpadCol + (side - dW) / 2, dY = yFor(dW);
-    const aW = AB_W * k, aH = AB_H * k, aX = abCol + (side - aW) / 2, aY = yFor(aH);
-    place(els.dpad, dX, dY, dW, dW);
-    const btn = (name) => { const [cx, cy] = AB[name]; place(els[name], aX + (cx - BTN / 2) * k, aY + (cy - BTN / 2) * k, BTN * k, BTN * k); return { cx: aX + cx * k, cy: aY + cy * k, r: (BTN / 2 + 5) * k }; };
-    const pill = (name, col) => { const w = PILL_W * k; place(els[name], col + (side - w) / 2, pillTop, w, pillH); return { x: col + (side - w) / 2 - 4, y: pillTop - 4, w: w + 8, h: pillH + 8 }; };
-    rects = {
-      dpad: { cx: dX + dW / 2, cy: dY + dW / 2, w: dW, hit: dW * 0.62 },
-      a: btn('a'), b: btn('b'), star: btn('star'),
-      start: pill('start', abCol), pause: pill('pause', dpadCol),
-    };
+    const margin = 8, swap = !!O().touchSide;
+    const quant = (t) => (fill ? t : Math.max(1, Math.floor(t * dpr + 0.01)) / dpr); // css px a native pixel takes
+    const yAt = (lo, hi, h) => { const top = lo, bot = Math.max(lo, hi - h); return bot - (bot - top) * Math.max(0, Math.min(4, O().touchY ?? 1)) / 4; };
+    const btn = (name, aX, aY, k) => { const [cx, cy] = AB[name]; place(els[name], aX + (cx - BTN / 2) * k, aY + (cy - BTN / 2) * k, BTN * k, BTN * k); return { cx: aX + cx * k, cy: aY + cy * k, r: (BTN / 2 + 5) * k }; };
+    const pill = (name, x, y, k) => { const w = PILL_W * k, h = PILL_H * k; place(els[name], x, y, w, h); return { x: x - 4, y: y - 4, w: w + 8, h: h + 8 }; };
+    if (!T.portrait) {
+      // the strips keep room for the pad at 2 px an art pixel at least (smaller than that and the buttons are too small to hit)
+      const kMin = Math.min(want, 2.0), minSide = AB_W * kMin + margin * 2;
+      let t = Math.min(availH / 224, (availW - 2 * minSide) / 256);
+      t = quant(Math.max(t, Math.min(availH / 224, (availW * 0.45) / 256)));
+      const gameW = 256 * t, gameH = 224 * t, side = Math.max(0, (availW - gameW) / 2);
+      const k = Math.max(1.2, Math.min(want, (side - margin * 2) / AB_W));
+      T.k = k;
+      box(safe.l + side, safe.t + (availH - gameH) / 2, gameW, gameH);
+      const leftCol = safe.l, rightCol = vw - safe.r - side;
+      const dpadCol = swap ? rightCol : leftCol, abCol = swap ? leftCol : rightCol;
+      const pillTop = safe.t + margin, pillH = PILL_H * k;
+      const lo = pillTop + pillH + margin, hi = safe.t + availH - margin;
+      const dW = DPAD * k, dX = dpadCol + (side - dW) / 2, dY = yAt(lo, hi, dW);
+      const aW = AB_W * k, aH = AB_H * k, aX = abCol + (side - aW) / 2, aY = yAt(lo, hi, aH);
+      place(els.dpad, dX, dY, dW, dW);
+      const pw = PILL_W * k;
+      rects = {
+        dpad: { cx: dX + dW / 2, cy: dY + dW / 2, w: dW, hit: dW * 0.62 },
+        a: btn('a', aX, aY, k), b: btn('b', aX, aY, k), star: btn('star', aX, aY, k),
+        start: pill('start', abCol + (side - pw) / 2, pillTop, k), pause: pill('pause', dpadCol + (side - pw) / 2, pillTop, k),
+      };
+    } else {
+      const t = quant(Math.min(availW / 256, (availH * 0.6) / 224));
+      const gameW = 256 * t, gameH = 224 * t, top = safe.t + 4;
+      box(safe.l + (availW - gameW) / 2, top, gameW, gameH);
+      const k = Math.max(1.4, Math.min(want * 1.1, (availW * 0.5 - margin * 2) / AB_W));
+      T.k = k;
+      const dW = DPAD * k, aW = AB_W * k, aH = AB_H * k, pw = PILL_W * k, ph = PILL_H * k, clusterH = Math.max(dW, aH);
+      const regionTop = top + gameH + margin, regionBottom = safe.t + availH - margin;
+      const y = yAt(regionTop, regionBottom, clusterH + margin + ph);
+      const half = availW / 2, dpadX = swap ? safe.l + half + (half - dW) / 2 : safe.l + (half - dW) / 2, abX = swap ? safe.l + (half - aW) / 2 : safe.l + half + (half - aW) / 2;
+      const dY = y + (clusterH - dW) / 2, aY = y + (clusterH - aH) / 2;
+      place(els.dpad, dpadX, dY, dW, dW);
+      const py = y + clusterH + margin, cx = safe.l + availW / 2;
+      rects = {
+        dpad: { cx: dpadX + dW / 2, cy: dY + dW / 2, w: dW, hit: dW * 0.62 },
+        a: btn('a', abX, aY, k), b: btn('b', abX, aY, k), star: btn('star', abX, aY, k),
+        pause: pill('pause', cx - pw - 6, py, k), start: pill('start', cx + 6, py, k),
+      };
+    }
     display.resize();
   }
 
-  // ---- the "rotate your device" and "paused" cards (drawn with the game's font, like everything else) ----------------------------------------
+  // ---- the "paused" card (drawn with the game's font, like everything else) ----------------------------------------
   function card(id, lines, colors, w) {
     const el = document.createElement('div');
     el.id = id;
@@ -183,17 +208,6 @@ export function installTouch(game, canvas, display) {
     el.appendChild(c);
     document.body.appendChild(el);
     return el;
-  }
-  const rotateEl = card('rotate', ['ROTATE YOUR', 'DEVICE', '', 'KO CIRCUIT PLAYS', 'SIDEWAYS'], [c32(31, 29, 10), c32(31, 29, 10), TXT, c32(18, 20, 26), c32(18, 20, 26)], 136);
-  // a little phone turning on its side, above the words
-  {
-    const ph = blank(30, 30);
-    const rect = (x, y, w, h, c) => ph.rect(x, y, w, h, c);
-    rect(9, 2, 12, 22, INK); rect(10, 3, 10, 20, FACE_HI); rect(11, 5, 8, 15, c32(6, 12, 22)); rect(13, 21, 4, 1, TXT);
-    rect(21, 10, 6, 1, ON); rect(24, 8, 1, 5, ON); rect(22, 11, 1, 1, ON);
-    const c = document.createElement('canvas'); toCanvas(c, ph); c.style.width = '90px'; c.style.margin = '0 0 12px'; c.style.animation = 'tilt 2s ease-in-out infinite';
-    rotateEl.insertBefore(c, rotateEl.firstChild);
-    const st = document.createElement('style'); st.textContent = '@keyframes tilt { 0%,30% { transform: rotate(0deg); } 60%,100% { transform: rotate(-90deg); } }'; document.head.appendChild(st);
   }
   const pausedEl = card('paused', ['PAUSED', '', 'TAP OR PRESS ANY KEY', 'TO CONTINUE'], [c32(31, 29, 10), TXT, TXT, TXT], 168);
   T.pausedEl = pausedEl;
@@ -239,7 +253,6 @@ export function installTouch(game, canvas, display) {
   function start(t) {
     const x = t.clientX, y = t.clientY;
     if (!T.visible) show();
-    if (T.portrait) return;
     const f = { x0: x, y0: y, x, y, t0: performance.now(), moved: 0 };
     if (inDpad(x, y)) { f.kind = 'dpad'; setDir(x - rects.dpad.cx, y - rects.dpad.cy); }
     else { const b = hitBtn(x, y); if (b) { f.kind = 'btn'; f.name = b; setBtn(b, true); } else { f.kind = 'pic'; input.clearDrag(); } }
@@ -272,7 +285,11 @@ export function installTouch(game, canvas, display) {
       input.pushTap(p ? p.x : -99, p ? p.y : -99); // (a tap off the picture still turns a text box)
     }
   }
-  const unlockAudio = () => { try { game.audio.unlock(); } catch { /* no audio */ } };
+  // Turn the phone sideways for the player where the browser lets a page do it (Android, when the game is installed or full screen; iOS never does). Where it
+  // cannot, the portrait layout (a Game Boy) is the way to play upright.
+  let locked = false;
+  const lockSideways = () => { if (locked) return; locked = true; try { screen.orientation.lock('landscape').catch(() => { locked = false; }); } catch { /* not on this browser */ } };
+  const unlockAudio = () => { lockSideways(); try { game.audio.unlock(); } catch { /* no audio */ } };
   const each = (e, fn) => { for (const t of e.changedTouches) fn(t); };
   const opts = { passive: false };
   // (a real page button, like the "new version ready" card, is left alone: it gets its click)

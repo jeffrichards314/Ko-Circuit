@@ -99,20 +99,24 @@ export class Display {
     this.frame = new Frame();
     this.frame.buf = new Uint32Array(this.img.data.buffer);
     this.fixedScale = 0;
+    this.fill = false;
     this.crt = 0;
     this.resize();
     window.addEventListener('resize', () => this.resize());
   }
-  // Largest integer scale that fits (in device pixels), or a fixed scale.
+  // Largest integer scale that fits (in device pixels), or a fixed scale. `fill` (a phone): exactly as big as the box allows, even between whole numbers: the
+  // picture is kept at the next whole-number size up and the browser takes it down to fit, which stays sharp and keeps every native pixel the same size.
   resize() {
     const dpr = window.devicePixelRatio || 1;
     const box = this.canvas.parentElement.getBoundingClientRect();
     const avail = Math.min((box.width || window.innerWidth) * dpr / W, (box.height || window.innerHeight) * dpr / H);
-    const s = this.fixedScale || Math.max(1, Math.floor(avail + 0.01)); // (+0.01: a box sized to exactly N scales must not floor to N-1)
+    const t = this.fixedScale || (this.fill ? Math.max(1, avail) : Math.max(1, Math.floor(avail + 0.01))); // device pixels a native pixel takes
+    const s = Math.min(8, Math.max(1, Math.ceil(t - 0.01)));
     this.scale = s;
     this.canvas.width = W * s; this.canvas.height = H * s;
-    this.canvas.style.width = `${(W * s) / dpr}px`;
-    this.canvas.style.height = `${(H * s) / dpr}px`;
+    this.canvas.style.width = `${(W * t) / dpr}px`;
+    this.canvas.style.height = `${(H * t) / dpr}px`;
+    this.canvas.style.imageRendering = Math.abs(t - s) < 0.01 ? '' : 'auto';
     this.ctx.imageSmoothingEnabled = false;
     this.overlay = null; // rebuilt for the new size
   }

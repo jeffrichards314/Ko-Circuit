@@ -111,7 +111,7 @@ for (const ev of ['keydown', 'pointerdown', 'pointerup', 'touchend', 'click']) w
 // Leaving the game (another tab, another app, the lock screen, a notification shade) or holding the phone upright pauses it; a fight shows its own pause
 // menu, everything else freezes behind a card until the player taps or presses a key. The sound is held too, and comes back with the player.
 let away = false, awayHandled = false;
-const suspended = () => (away && !awayHandled) || touch.portrait;
+const suspended = () => away && !awayHandled;
 function leave() {
   if (away) return;
   away = true; touch.releaseAll(); input.keys.clear(); input.virtual = {};
@@ -124,7 +124,7 @@ function wake() {
   away = false; awayHandled = false;
   touch.pausedEl.classList.remove('on');
   input.keys.clear();
-  if (!touch.portrait) audio.resume();
+  audio.resume();
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) leave(); else if (awayHandled) wake(); });
 window.addEventListener('pagehide', leave);

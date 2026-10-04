@@ -3,7 +3,7 @@
 //   npm i playwright-core         (anywhere; then:  PW_CORE=/path/to/node_modules/playwright-core/index.mjs node tools/touch-e2e.mjs [--url http://localhost:PORT] [--shots dir] [--only layout|input|flow])
 //   Chrome: set CHROME=/path/to/chrome, or it uses Playwright's cache (~/Library/Caches/ms-playwright on a Mac).
 // It needs a dev server (python3 tools/serve.py PORT) and uses ?dev for the console handle (window.KO).
-//   layout  every device x orientation: whole-number scale, the pad never touches the picture, portrait shows the rotate card and freezes the game
+//   layout  every device x orientation: the picture as big as fits, the pad never touches it, upright shows a Game Boy layout (picture on top, pad below)
 //   input   real multi-touch through CDP: Up held while A is tapped, double-tap Down, thumb rolling B -> A, one frame of latency from finger to game
 //   flow    new game -> name -> home gym (walk by tap, the bag drill on the pad) -> Rookie fight (a bot reads the fight and works the pad) -> map travel -> podium
 //           rematch -> password shown at the desk, typed back in on the on-screen keyboard -> the same career in another save; LOAD GAME
@@ -72,40 +72,46 @@ async function layout() {
     const H = await open(dev);
     const d = devices[dev], land = d.viewport.width > d.viewport.height;
     const R = await H.rects();
-    const S = await H.p.evaluate(() => ({ scale: KO.display.scale, dpr: devicePixelRatio, cw: document.getElementById('screen').width, rot: document.getElementById('rotate').classList.contains('on'), pad: document.getElementById('touch').classList.contains('on'), frozen: null }));
+    const S = await H.p.evaluate(() => ({ scale: KO.display.scale, dpr: devicePixelRatio, cw: document.getElementById('screen').width, pad: document.getElementById('touch').classList.contains('on') }));
     const label = `${kind.padEnd(12)} ${dev.padEnd(28)} ${d.viewport.width}x${d.viewport.height}@${d.deviceScaleFactor}`;
+    const g = R.game[0], VW = d.viewport.width, VH = d.viewport.height;
+    ok(S.pad, `${label}: pad not shown`);
+    let clash = 0;
+    for (const k of ['dpad', 'pill', 'round']) for (const r of R[k]) if (r.x < g.x + g.w && r.x + r.w > g.x && r.y < g.y + g.h && r.y + r.h > g.y) clash++;
+    ok(clash === 0, `${label}: ${clash} controls cover the picture`);
+    let off = 0; for (const k of ['dpad', 'pill', 'round']) for (const r of R[k]) if (r.x < -1 || r.y < -1 || r.x + r.w > VW + 1 || r.y + r.h > VH + 1) off++;
+    ok(off === 0, `${label}: ${off} controls off screen`);
+    const minBtn = Math.min(...R.round.map((r) => r.w));
+    ok(minBtn >= 34, `${label}: buttons too small (${Math.round(minBtn)}px)`);
+    ok(g.x >= -1 && g.y >= -1 && g.x + g.w <= VW + 1 && g.y + g.h <= VH + 1, `${label}: the picture is off the screen`);
     if (land) {
-      const g = R.game[0];
-      ok(!S.rot, `${label}: rotate card showing in landscape`);
-      ok(S.pad, `${label}: pad not shown`);
-      ok(Number.isInteger(S.cw / 256) && Math.abs((g.w * S.dpr) - S.cw) < 1.5, `${label}: scale not a whole number of device pixels (${S.cw}px canvas, ${g.w} css)`);
-      let clash = 0;
-      for (const k of ['dpad', 'pill', 'round']) for (const r of R[k]) if (r.x < g.x + g.w && r.x + r.w > g.x && r.y < g.y + g.h && r.y + r.h > g.y) clash++;
-      ok(clash === 0, `${label}: ${clash} controls cover the picture`);
-      let off = 0; for (const k of ['dpad', 'pill', 'round']) for (const r of R[k]) if (r.x < -1 || r.y < -1 || r.x + r.w > d.viewport.width + 1 || r.y + r.h > d.viewport.height + 1) off++;
-      ok(off === 0, `${label}: ${off} controls off screen`);
-      const minBtn = Math.min(...R.round.map((r) => r.w));
-      ok(minBtn >= 40, `${label}: buttons too small (${Math.round(minBtn)}px)`);
-      info(`${label}: scale ${S.scale}, picture ${Math.round(g.w)}x${Math.round(g.h)}, buttons ${Math.round(minBtn)}px, pad ${S.pad ? 'on' : 'off'}`);
-      await H.shot(`layout-${dev.replace(/[ ()]/g, '_')}`);
+      // the picture takes the whole height, unless the pad needs the width (then at least 80% of the height)
+      ok(g.h >= VH * 0.8, `${label}: picture only ${Math.round((g.h / VH) * 100)}% of the height`);
+      info(`${label}: picture ${Math.round(g.w)}x${Math.round(g.h)} (${Math.round((g.h / VH) * 100)}% of the height), buttons ${Math.round(minBtn)}px`);
     } else {
-      ok(S.rot, `${label}: no rotate card in portrait`);
-      const frozen = await H.p.evaluate(async () => { const a = KO.screen.t; await new Promise((r) => setTimeout(r, 400)); return KO.screen.t === a; });
-      ok(frozen, `${label}: the game keeps running in portrait`);
-      info(`${label}: rotate card shown, game frozen`);
-      await H.shot(`layout-${dev.replace(/[ ()]/g, '_')}`);
+      // upright: the picture across the top at the full width (a Game Boy), the pad below it
+      ok(g.w >= VW * 0.9 || g.h >= VH * 0.55, `${label}: picture only ${Math.round((g.w / VW) * 100)}% of the width`);
+      const below = [...R.dpad, ...R.pill, ...R.round].every((r) => r.y >= g.y + g.h - 1);
+      ok(below, `${label}: the pad is not all below the picture`);
+      ok(R.dpad[0].x < VW / 2 && R.round.every((r) => r.x > VW / 2 - 1), `${label}: D-pad not on the left / buttons not on the right`);
+      info(`${label}: picture ${Math.round(g.w)}x${Math.round(g.h)} (${Math.round((g.w / VW) * 100)}% of the width), buttons ${Math.round(minBtn)}px`);
     }
+    await H.shot(`layout-${dev.replace(/[ ()]/g, '_')}`);
     ok(H.errs.length === 0, `${label}: console errors ${H.errs.join(' | ')}`);
     await H.close();
   }
-  // rotating a phone while the game runs
+  // turning a phone while the game runs: the pad follows (beside the picture, then below it)
   const H = await open('iPhone 13 landscape');
   await H.p.setViewportSize({ width: 390, height: 664 }); await H.wait(500);
-  ok(await H.p.evaluate(() => document.getElementById('rotate').classList.contains('on')), 'rotate to portrait: card not shown');
+  let R = await H.rects(), g = R.game[0];
+  ok(R.dpad[0].y >= g.y + g.h - 1 && g.w >= 380, 'turned upright: the pad is not under a full-width picture');
   await H.p.setViewportSize({ width: 664, height: 390 }); await H.wait(500);
-  ok(!(await H.p.evaluate(() => document.getElementById('rotate').classList.contains('on'))), 'rotate back: card still shown');
-  const R = await H.rects(), g = R.game[0];
-  ok(R.dpad[0].x + R.dpad[0].w <= g.x && R.round.every((r) => r.x >= g.x + g.w), 'rotate back: pad not beside the picture');
+  R = await H.rects(); g = R.game[0];
+  ok(R.dpad[0].x + R.dpad[0].w <= g.x + 1 && R.round.every((r) => r.x >= g.x + g.w - 1), 'turned back: the pad is not beside the picture');
+  // sharp mode keeps whole-number sizes
+  await H.p.evaluate(() => { KO.options.screenFit = 2; KO.touch.refresh(); });
+  const sharp = await H.p.evaluate(() => ({ cw: document.getElementById('screen').width, css: document.getElementById('screen').getBoundingClientRect().width, dpr: devicePixelRatio }));
+  ok(Number.isInteger(sharp.cw / 256) && Math.abs(sharp.css * sharp.dpr - sharp.cw) < 1.5, `SHARP: not a whole-number scale (${sharp.cw}px canvas, ${sharp.css} css)`);
   await H.close();
   // the pad hides for a keyboard and returns for a finger; ALWAYS/OFF modes
   const K = await open('iPad (gen 7) landscape');
