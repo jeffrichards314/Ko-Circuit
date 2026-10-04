@@ -19,7 +19,7 @@ const A_FACE = c32(24, 6, 7), A_HI = c32(30, 14, 12), A_LO = c32(14, 3, 5);
 const B_FACE = c32(7, 11, 26), B_HI = c32(14, 18, 31), B_LO = c32(3, 5, 15);
 const S_FACE = c32(25, 19, 4), S_HI = c32(31, 27, 12), S_LO = c32(16, 10, 2);
 
-export const K_TABLE = [2.3, 2.9, 3.5, 4.1, 4.9]; // css px per art pixel, for TOUCH SIZE 1..5
+export const K_TABLE = [2.5, 3.1, 3.8, 4.5, 5.4]; // css px per art pixel, for TOUCH SIZE 1..5
 const DPAD = 42, BTN = 20, PILL_W = 44, PILL_H = 14;
 export const AB_W = 58, AB_H = 48; // the A / B / STAR cluster's box
 // button centres inside the cluster's box
@@ -144,17 +144,20 @@ export function installTouch(game, canvas, display) {
       display.resize();
       return;
     }
-    const want = K_TABLE[Math.max(0, Math.min(4, (O().touchSize || 3) - 1))];
+    // A tablet's controls are bigger than a phone's (the screen is, and so are the hands on it); the picture gives up some of its height to make room
+    const tablet = Math.min(vw, vh) >= 600;
+    const want = K_TABLE[Math.max(0, Math.min(4, (O().touchSize || 3) - 1))] * (tablet ? 1.35 : 1);
     const margin = 8, swap = !!O().touchSide;
     const quant = (t) => (fill ? t : Math.max(1, Math.floor(t * dpr + 0.01)) / dpr); // css px a native pixel takes
     const yAt = (lo, hi, h) => { const top = lo, bot = Math.max(lo, hi - h); return bot - (bot - top) * Math.max(0, Math.min(4, O().touchY ?? 1)) / 4; };
     const btn = (name, aX, aY, k) => { const [cx, cy] = AB[name]; place(els[name], aX + (cx - BTN / 2) * k, aY + (cy - BTN / 2) * k, BTN * k, BTN * k); return { cx: aX + cx * k, cy: aY + cy * k, r: (BTN / 2 + 5) * k }; };
     const pill = (name, x, y, k) => { const w = PILL_W * k, h = PILL_H * k; place(els[name], x, y, w, h); return { x: x - 4, y: y - 4, w: w + 8, h: h + 8 }; };
     if (!T.portrait) {
-      // the strips keep room for the pad at 2 px an art pixel at least (smaller than that and the buttons are too small to hit)
-      const kMin = Math.min(want, 2.2), minSide = AB_W * kMin + margin * 2;
-      let t = Math.min(availH / 224, (availW - 2 * minSide) / 256);
-      t = quant(Math.max(t, Math.min(availH / 224, (availW * 0.45) / 256)));
+      // the strips get the room the pad wants, but the picture keeps at least 90% of the height on a phone (68% on a tablet)
+      const minSide = AB_W * want + margin * 2, tFull = Math.min(availH / 224, (availW - 2 * (AB_W * 1.2 + margin * 2)) / 256);
+      let t = Math.min(tFull, (availW - 2 * minSide) / 256);
+      const tHard = (availW - 2 * (AB_W * 2.2 + margin * 2)) / 256; // (never so narrow a strip that the buttons drop under 44 px)
+      t = quant(Math.min(Math.max(t, tFull * (tablet ? 0.68 : 0.9)), Math.max(tHard, 0.5)));
       const gameW = 256 * t, gameH = 224 * t, side = Math.max(0, (availW - gameW) / 2);
       const k = Math.max(1.2, Math.min(want, (side - margin * 2) / AB_W));
       T.k = k;
