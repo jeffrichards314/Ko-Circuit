@@ -74,20 +74,19 @@ export const LOCK_TEXT = {
 // ---- the Home gym: one row of stations along the floor, left to right
 const HOME_STATIONS = [
   { id: 'exit', kind: 'exit', x: 26, label: 'OUT TO THE ROAD', prop: 'door' },
-  { id: 'bag', kind: 'prop', x: 92, prop: 'speedbag', label: 'SPEED BAG', sub: 'A TIMING DRILL', go: { screen: 'training', args: { free: true, drill: 'bag' } } },
-  { id: 'rope', kind: 'prop', x: 152, prop: 'rope', label: 'JUMP ROPE', sub: 'A RHYTHM DRILL', go: { screen: 'training', args: { free: true, drill: 'rope' } } },
-  { id: 'run', kind: 'prop', x: 212, prop: 'road', label: 'ROAD RUN', sub: 'A STAMINA DRILL', go: { screen: 'training', args: { free: true, drill: 'run' } } },
-  { id: 'perks', kind: 'prop', x: 272, prop: 'clipboard', label: 'PERKS', sub: 'WHAT YOU HAVE EQUIPPED', go: { screen: 'perks' } },
-  { id: 'replay', kind: 'prop', x: 326, prop: 'tapes', label: 'FIGHT TAPES', sub: 'REPLAY A CLEARED CIRCUIT', go: { screen: 'replay' }, lock: { kind: 'replay', hint: 'WIN A BELT FIRST, THEN REPLAY IT.' } },
-  { id: 'ring', kind: 'prop', x: 378, prop: 'ring', label: 'PRACTICE RING', sub: 'ANYONE YOU HAVE MET', go: { screen: 'practice' }, lock: { kind: 'met', hint: 'FIGHT SOMEBODY IN A CIRCUIT FIRST.' } },
-  { id: 'mirror', kind: 'prop', x: 448, prop: 'mirror', label: 'LOCKER AND MIRROR', sub: 'LOOKS AND COSTUMES', go: { screen: 'customize', args: { next: 'map' } } },
-  { id: 'index', kind: 'prop', x: 512, prop: 'index', label: 'OPPONENT INDEX', sub: 'SCOUTING REPORTS', go: { screen: 'handbook' } },
-  { id: 'gallery', kind: 'prop', x: 572, prop: 'gallery', label: 'GALLERY', sub: 'EVERY FIGHTER, UP CLOSE', go: { screen: 'gallery' }, lock: { kind: 'unlock', id: 'gallery', hint: 'THE GALLERY OPENS AT 16 MEDALS.' } },
-  { id: 'trophy', kind: 'prop', x: 634, prop: 'trophy', label: 'TROPHY CASE', sub: 'MEDALS AND RECORD TIMES', go: { screen: 'medals' } },
-  { id: 'shop', kind: 'prop', x: 698, prop: 'shop', label: 'MEDAL SHOP', sub: 'WHAT YOUR MEDALS HAVE OPENED', go: { screen: 'unlocks' } },
-  { id: 'tv', kind: 'prop', x: 762, prop: 'tv', label: 'TV: THEATER', sub: 'WATCH ANY SCENE AGAIN', go: { screen: 'theater' } },
-  { id: 'jukebox', kind: 'prop', x: 822, prop: 'jukebox', label: 'JUKEBOX', sub: 'EVERY SONG AND SOUND', go: { screen: 'soundtest' }, lock: { kind: 'unlock', id: 'sound', hint: 'THE JUKEBOX NEEDS 8 MEDALS.' } },
-  { id: 'desk', kind: 'prop', x: 888, prop: 'desk', label: 'DESK', sub: 'SAVE, PASSWORD, OPTIONS, CONTROLS', go: { screen: 'desk' } },
+  // (one station for all the training, 2026-10-04: the speed bag stands for it; the drills and their perks are inside)
+  { id: 'training', kind: 'prop', x: 92, prop: 'speedbag', label: 'TRAINING', sub: 'DRILLS THAT WIN YOU PERKS', go: { screen: 'training', args: { free: true } } },
+  { id: 'perks', kind: 'prop', x: 152, prop: 'clipboard', label: 'PERKS', sub: 'WHAT YOU HAVE EQUIPPED', go: { screen: 'perks' } },
+  { id: 'replay', kind: 'prop', x: 206, prop: 'tapes', label: 'FIGHT TAPES', sub: 'REPLAY A CLEARED CIRCUIT', go: { screen: 'replay' }, lock: { kind: 'replay', hint: 'WIN A BELT FIRST, THEN REPLAY IT.' } },
+  { id: 'ring', kind: 'prop', x: 258, prop: 'ring', label: 'PRACTICE RING', sub: 'ANYONE YOU HAVE MET', go: { screen: 'practice' }, lock: { kind: 'met', hint: 'FIGHT SOMEBODY IN A CIRCUIT FIRST.' } },
+  { id: 'mirror', kind: 'prop', x: 328, prop: 'mirror', label: 'LOCKER AND MIRROR', sub: 'LOOKS AND COSTUMES', go: { screen: 'customize', args: { next: 'map' } } },
+  { id: 'index', kind: 'prop', x: 392, prop: 'index', label: 'OPPONENT INDEX', sub: 'SCOUTING REPORTS', go: { screen: 'handbook' } },
+  { id: 'gallery', kind: 'prop', x: 452, prop: 'gallery', label: 'GALLERY', sub: 'EVERY FIGHTER, UP CLOSE', go: { screen: 'gallery' }, lock: { kind: 'unlock', id: 'gallery', hint: 'THE GALLERY OPENS AT 16 MEDALS.' } },
+  { id: 'trophy', kind: 'prop', x: 514, prop: 'trophy', label: 'TROPHY CASE', sub: 'MEDALS AND RECORD TIMES', go: { screen: 'medals' } },
+  { id: 'shop', kind: 'prop', x: 578, prop: 'shop', label: 'MEDAL SHOP', sub: 'WHAT YOUR MEDALS HAVE OPENED', go: { screen: 'unlocks' } },
+  { id: 'tv', kind: 'prop', x: 642, prop: 'tv', label: 'TV: THEATER', sub: 'WATCH ANY SCENE AGAIN', go: { screen: 'theater' } },
+  { id: 'jukebox', kind: 'prop', x: 702, prop: 'jukebox', label: 'JUKEBOX', sub: 'EVERY SONG AND SOUND', go: { screen: 'soundtest' }, lock: { kind: 'unlock', id: 'sound', hint: 'THE JUKEBOX NEEDS 8 MEDALS.' } },
+  { id: 'desk', kind: 'prop', x: 768, prop: 'desk', label: 'DESK', sub: 'SAVE, PASSWORD, OPTIONS, CONTROLS', go: { screen: 'desk' } },
 ];
 
 // ---- the Title Defense hall: five entrances, one per division (each locked until its zone's last boss is beaten), each with its own records board
@@ -127,7 +126,7 @@ export const HALL_STEP = 64, HALL_MARGIN = 80;
 
 // every interior by id (the circuit halls are built from data/circuits.js)
 export function interiorFor(id) {
-  if (id === 'home') return { id: 'home', name: 'HOME GYM', sub: 'TRAIN, PRACTICE, SAVE', theme: 'home', scroll: true, stations: HOME_STATIONS, end: 0, parent: null };
+  if (id === 'home') return { id: 'home', name: 'HOME GYM', sub: 'TRAIN, PRACTICE, SAVE', theme: 'home', scroll: true, loop: true, stations: HOME_STATIONS, end: 0, parent: null };
   if (id === 'td') return { ...TD_HALL, end: 0 };
   if (id === 'gauntlet') return { ...GAUNTLET_HALL, end: 0 };
   if (id.startsWith('td.')) {

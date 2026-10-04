@@ -25,8 +25,9 @@ export const ReforgeRoute = host(() => 'story.reforge');
 export const TrueEndingRoute = host(() => 'story.trueEnding');
 export const EndingRoute = host((a) => (a.kind === 'main' ? 'story.ending.main' : 'story.ending.interim'));
 
-// after the road or the river: the training camp if a session is waiting, else the map
-const afterTravel = (c, to) => (c && c.training.pending ? ['training', { to }] : ['map', {}]);
+// after the road or the river: the map. (Until 2026-10-04 a training session was offered here after every belt; training is now only the Home gym's TRAINING station,
+// and nothing asks for it.)
+const afterTravel = () => ['map', {}];
 
 // the road between circuits: the trainer's lines for where you are going, plus any news of a secret circuit
 export class JogRoute extends Route {

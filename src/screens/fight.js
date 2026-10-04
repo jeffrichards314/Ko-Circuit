@@ -68,6 +68,7 @@ export class FightScreen {
         handbook: game.handbook ? handbookStore(game.handbook) : null, // the corner's notes on him
         rivalRecord: rivalStore(), // Dash keeps a file on you (K3)
         corner: practice ? null : cornerStore(), // the cornerman remembers who beat you, and what he told you (not in Practice)
+        solidPlayer: !game.options.seeThrough, // (Options, YOUR BOXER: filled in by default; see-through lets you watch the opponent behind you)
         onEnd: (r) => this.done(r),
         ...modeOpts,
         ...opts,

@@ -7,7 +7,7 @@ import { ICONS } from '../../data/sprites/ui.js';
 import { save } from '../save/storage.js';
 import { Hits, swipe } from '../engine/hits.js';
 
-export const DEFAULT_OPTIONS = { sound: true, music: 7, sfx: 8, crt: 0, screenFit: 0, touchMode: 0, touchSize: 3, touchOpacity: 6, touchSide: 0, touchY: 1 };
+export const DEFAULT_OPTIONS = { sound: true, music: 7, sfx: 8, crt: 0, seeThrough: 0, screenFit: 0, touchMode: 0, touchSize: 3, touchOpacity: 6, touchSide: 0, touchY: 1 };
 export const CRT_NAMES = ['OFF', 'SCANLINES', 'FULL CRT'];
 const TOUCH_MODES = ['AUTO', 'ALWAYS ON', 'OFF'];
 const FITS = ['AUTO', 'FILL', 'SHARP']; // FILL: as big as the window allows; SHARP: whole-number sizes only; AUTO: FILL on a touch device
@@ -31,6 +31,7 @@ const ALL_ROWS = [
   { k: 'music', label: 'MUSIC', kind: 'bar', min: 0, max: 10 },
   { k: 'sfx', label: 'EFFECTS', kind: 'bar', min: 0, max: 10 },
   { k: 'crt', label: 'CRT FILTER', kind: 'toggle', show: (o) => CRT_NAMES[o.crt] },
+  { k: 'seeThrough', label: 'YOUR BOXER', kind: 'toggle', show: (o) => (o.seeThrough ? 'SEE-THROUGH' : 'FILLED IN') },
   { k: 'screenFit', label: 'SCREEN SIZE', kind: 'toggle', show: (o) => FITS[o.screenFit ?? 0] },
   { k: 'touchMode', label: 'TOUCH PAD', kind: 'toggle', show: (o) => TOUCH_MODES[o.touchMode] },
   { k: 'touchSize', label: 'PAD SIZE', kind: 'bar', min: 1, max: 5, n: 5 },
@@ -50,6 +51,7 @@ export class OptionsScreen {
     const r = this.rows.find((x) => x.k === row);
     if (row === 'sound') o.sound = !o.sound;
     else if (row === 'crt') o.crt = (o.crt + (d || 1) + CRT_NAMES.length) % CRT_NAMES.length;
+    else if (row === 'seeThrough') o.seeThrough = o.seeThrough ? 0 : 1;
     else if (row === 'screenFit') o.screenFit = ((o.screenFit ?? 0) + (d || 1) + FITS.length) % FITS.length;
     else if (row === 'touchMode') o.touchMode = (o.touchMode + (d || 1) + TOUCH_MODES.length) % TOUCH_MODES.length;
     else if (row === 'touchSide') o.touchSide = o.touchSide ? 0 : 1;
@@ -74,7 +76,7 @@ export class OptionsScreen {
       if (this.sel !== h.id) { this.sel = h.id; this.g.audio.sfx('menu'); if (r.kind === 'bar') continue; }
       I.fake('a');
     }
-    const sw = swipe(I, 13);
+    const sw = swipe(I, 12);
     if (sw) { this.sel = Math.max(0, Math.min(n - 1, this.sel + sw)); this.g.audio.sfx('menu'); }
     if (I.pressed('up')) { this.sel = (this.sel + n - 1) % n; this.g.audio.sfx('menu'); }
     if (I.pressed('down')) { this.sel = (this.sel + 1) % n; this.g.audio.sfx('menu'); }
@@ -91,7 +93,7 @@ export class OptionsScreen {
   render(f) {
     f.clear(COL.black);
     drawTextBig(f, 'OPTIONS', 128, 8, COL.yellow, COL.black, 2);
-    const PITCH = 13, Y0 = 30, rows = this.rows;
+    const PITCH = 12, Y0 = 30, rows = this.rows;
     panel(f, 14, Y0 - 4, 228, rows.length * PITCH + 6);
     this.hits.clear();
     const o = this.g.options;

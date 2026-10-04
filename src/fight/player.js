@@ -26,6 +26,10 @@ export const PT = {
   SLIDE_PX: 1.4,     // ...and carries you that many extra pixels per frame of slide
 };
 
+// Any button counts for a mash (a get-up, a clinch): the punches, the star, START and the pad. PAUSE does not.
+export const MASH_BUTTONS = ['a', 'b', 'star', 'start', 'up', 'down', 'left', 'right'];
+export const anyButton = (input) => MASH_BUTTONS.some((b) => input.pressed(b));
+
 export class Player {
   constructor(fight) {
     this.fight = fight;
@@ -195,7 +199,7 @@ export class Player {
     const H = this.held, f = this.fight;
     if (!H) { this.set('idle'); return; }
     H.t++;
-    if (input.pressed('a') || input.pressed('b')) { H.mash += H.power; f.sfx('mash'); }
+    if (anyButton(input)) { H.mash += H.power; f.sfx('mash'); } // (any button: the clinch is broken by pushing anything)
     H.mash = Math.max(0, H.mash - H.decay);
     if (H.t % H.every === 0 && H.t < H.timeout) f.squeeze(H);
     if (H.mash >= 100) { this.held = null; this.set('idle'); f.sfx('crowd'); f.event('clinchBreak'); f.opp.hook('clinchBroken', true); return; }

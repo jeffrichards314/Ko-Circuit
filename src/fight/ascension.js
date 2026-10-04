@@ -466,7 +466,7 @@ export const ASCENSION_MODIFIERS = {
       if (P.state === 'held' && P.held && fight.phase === 'fight') {
         panel(frame, 64, 128, 128, 30);
         // (the hold's meter keeps a steady label, like the get-up meter: an input prompt while you can't fight, not a tip; nothing flashes)
-        drawText(frame, 'MASH A / B', 128 - (textWidth('MASH A / B') >> 1), 132, fight.COL.yellow);
+        drawText(frame, 'MASH ANY BUTTON', 128 - (textWidth('MASH ANY BUTTON') >> 1), 132, fight.COL.yellow);
         frame.rect(70, 144, 116, 8, fight.COL.barBack);
         frame.rect(71, 145, Math.round(114 * Math.min(1, P.held.mash / 100)), 6, fight.COL.cyan);
       }

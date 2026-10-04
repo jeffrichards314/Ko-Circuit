@@ -121,7 +121,7 @@ const podium = (H, i) => H.L.stations.find((q) => q.kind === 'podium' && q.index
   g.saveCareer = () => {}; g.input.takeTaps = () => [];
   const H = new InteriorScreen(g, { id: 'home' }); H.enter();
   const at = (id) => H.L.stations.find((q) => q.id === id);
-  for (const [id, scr] of [['bag', 'training'], ['rope', 'training'], ['run', 'training'], ['mirror', 'customize'], ['index', 'handbook'], ['trophy', 'medals'], ['shop', 'unlocks'], ['tv', 'theater'], ['desk', 'desk'], ['perks', 'perks']]) {
+  for (const [id, scr] of [['training', 'training'], ['mirror', 'customize'], ['index', 'handbook'], ['trophy', 'medals'], ['shop', 'unlocks'], ['tv', 'theater'], ['desk', 'desk'], ['perks', 'perks']]) {
     g.next = null; H.use(at(id));
     ok(g.next && g.next[0] === scr, `the ${id} station opens ${scr} (${g.next && g.next[0]})`);
   }
@@ -206,7 +206,7 @@ const podium = (H, i) => H.L.stations.find((q) => q.kind === 'podium' && q.index
   ok(r.seen.join() === 'jog.continental' && r.next[0] === 'map', `the jogging scene, then the map (${r.seen} ${r.next && r.next[0]})`);
   g.next = null; g.career.training.pending = true; new JogRoute(g, { from: 'major', to: 'continental' }).enter();
   r = chain(T);
-  ok(r.next[0] === 'training', 'a waiting training session comes after the road');
+  ok(r.next[0] === 'map', 'no training session is offered after the road: training is the Home gym\'s station (2026-10-04)');
   g.next = null; new BeltScreen(g, { circuit: 'dream', next: null }).enter();
   r = chain(T);
   ok(r.seen.join() === 'victory.dream' && r.next[0] === 'ending', 'the Dream Fight belt leads to the credits');

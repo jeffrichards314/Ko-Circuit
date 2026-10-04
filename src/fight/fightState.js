@@ -10,7 +10,7 @@
 // stages that stand in for rounds wherever a gimmick changes by round (the
 // Warden's riot, ZERO's silence, the Nightmare void's colours): see `stage`.
 
-import { Player, PT } from './player.js';
+import { Player, PT, anyButton } from './player.js';
 import { mashDecay, boutOf, roundFrames, REGULATION, CHAMPIONSHIP, MASH, escalation } from '../../data/difficulty.js';
 import { OpponentAI } from './opponentAI.js';
 import { drawHUD, COL, UIPAL, panel } from './hud.js';
@@ -275,7 +275,7 @@ export class Fight {
         if (this.pt === 1) this.roundMusic();
         if (this.pt === 2) this.sfx('crowd');
         if (this.pt === 110) this.sfx('crowd', true);
-        if (this.pt >= 220 || (this.pt > 30 && (inp.pressed('start') || inp.pressed('star') || this.tapped()))) this.setPhase('intro');
+        if (this.pt >= 220 || (this.pt > 30 && (inp.anyPressed() || this.tapped()))) this.setPhase('intro');
         break;
       case 'intro':
         if (this.pt === 1) this.roundMusic();
@@ -299,7 +299,7 @@ export class Fight {
         break;
       case 'between': this.updateBetween(); break;
       case 'ko':
-        if (this.pt >= 220 && (this.input.confirm() || this.tapped() || this.pt >= 480)) this.end();
+        if (this.pt >= 220 && (this.input.anyPressed() || this.tapped() || this.pt >= 480)) this.end();
         break;
       default: break;
     }
@@ -634,7 +634,7 @@ export class Fight {
       const G = this.d.getUp, M = this.circuit.mash, k = this.kdTotal.player;
       const decay = G ? mashDecay(G, k) : M.decay * (1 + M.perKnockdown * (k - 1));
       const power = (G ? G.power : M.power) + (this.trainer.id === 'oldschool' ? 1 : 0) + this.perk.getUp; // Old-school: +1 get-up strength
-      if (this.input.pressed('a') || this.input.pressed('b')) { this.mash += power; this.sfx('mash'); }
+      if (anyButton(this.input)) { this.mash += power; this.sfx('mash'); } // (any button gets him up)
       this.mash = Math.max(0, this.mash - decay);
       if (this.mash >= 100) { P.set('getup'); this.sfx('crowd'); return; }
       if ((this.pt - 40) % this.countFrames === 0) {
@@ -817,7 +817,7 @@ export class Fight {
         if (this.count > 0 && this.player.state !== 'getup') drawTextBig(frame, String(this.count), 128, 60, COL.white, COL.black, 4);
         if (!this.tko && this.player.state !== 'getup' && this.pt >= 40) {
           panel(frame, 64, 140, 128, 30);
-          drawTextCentered(frame, 'MASH A / B', 128, 144, COL.yellow); // (a steady input prompt while you're down; nothing flashes)
+          drawTextCentered(frame, 'MASH ANY BUTTON', 128, 144, COL.yellow); // (a steady input prompt while you're down; nothing flashes)
           frame.rect(70, 156, 116, 8, COL.barBack);
           frame.rect(71, 157, Math.round(114 * Math.min(1, this.mash / 100)), 6, COL.cyan);
         }
@@ -828,7 +828,7 @@ export class Fight {
         break;
       case 'ko':
         drawTextBig(frame, this.banner, 128, 84, (this.clock >> 3) & 1 ? COL.yellow : COL.red, COL.black, 4);
-        if (this.pt >= 220 && blink) drawTextCentered(frame, 'PUSH START', 128, 124, COL.white);
+        if (this.pt >= 220 && blink) drawTextCentered(frame, 'PUSH ANY BUTTON', 128, 124, COL.white);
         break;
       default: break;
     }

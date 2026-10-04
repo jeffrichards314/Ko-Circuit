@@ -225,7 +225,8 @@ for (const id of INTERIOR_IDS) {
 {
   const L = interiorFor('home'), screens = new Set(L.stations.filter((s) => s.go).map((s) => s.go.screen));
   for (const need of ['training', 'perks', 'practice', 'customize', 'handbook', 'gallery', 'medals', 'unlocks', 'theater', 'soundtest', 'desk', 'replay']) ok(screens.has(need), `the Home gym has a station for ${need}`);
-  ok(L.stations.filter((s) => s.go && s.go.screen === 'training').map((s) => s.go.args.drill).sort().join() === 'bag,rope,run', 'speed bag, jump rope and road run are separate stations');
+  ok(L.stations.filter((s) => s.go && s.go.screen === 'training').length === 1 && L.stations.find((s) => s.id === 'training').prop === 'speedbag', 'all the training is one station (the speed bag), with the drills inside');
+  ok(L.loop === true, 'the Home gym loops: out past one end you come in at the other');
   const td = interiorFor('td'), ga = interiorFor('gauntlet');
   ok(td.stations.filter((s) => s.kind === 'door' && !s.origin).length === 5 && td.stations.filter((s) => s.id.startsWith('board.')).length === 5, 'the Title Defense hall has five entrances and a records board for each');
   ok(ga.stations.filter((s) => s.kind === 'door' && !s.origin).length === 5, 'the Gauntlet tower has five doors');

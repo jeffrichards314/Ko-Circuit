@@ -17,7 +17,7 @@ import { paletteFor } from '../engine/spriteCache.js';
 import { EVERYONE } from '../save/records.js';
 import { scoutEntries } from '../fight/knowledge.js';
 import { scoutProgress, isScouted } from '../save/scouting.js';
-import { FighterGrid } from './fighterGrid.js';
+import { FighterGrid, silhouetteSprite } from './fighterGrid.js';
 import { Hits, swipe, swipeX } from '../engine/hits.js';
 
 const BG = c32(3, 3, 8), STRIPE = c32(4, 7, 12), BOX = c32(11, 22, 27), SIL = c32(6, 7, 10), GOLD = c32(30, 24, 6);
@@ -102,7 +102,7 @@ export class HandbookScreen {
     PAGES.forEach((p, i) => { const x = 10 + [0, 70, 132][i]; this.hits.add(x - 4, 24, textWidth(p, false) + 8, 14, `tab${i}`); drawText(f, p, x, 28, i === this.page ? COL.yellow : COL.grey, { mono: false }); });
     // portrait (a silhouette until he's met)
     f.rect(9, 40, 66, 62, COL.white); f.rect(10, 41, 64, 60, BOX);
-    f.blit(this.portrait, 10, 41, this.known ? this.pal : this.sil);
+    f.blit(this.known ? this.portrait : silhouetteSprite(this.portrait), 10, 41, this.known ? this.pal : this.sil);
     const x = 82;
     if (!this.known) {
       drawText(f, '???', x, 48, COL.grey);

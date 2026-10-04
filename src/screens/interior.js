@@ -168,9 +168,22 @@ export class InteriorScreen {
     for (const tp of taps) this.tap(tp);
     let dir = (I.held('right') ? 1 : 0) - (I.held('left') ? 1 : 0);
     if (dir) { this.goal = null; this.armed = null; }
-    if (!dir && this.goal != null) { const d = this.goal - this.px; if (Math.abs(d) < 2) { this.px = this.goal; this.goal = null; } else dir = Math.sign(d); }
+    // the Home gym is a loop (L.loop): out past either end you come in at the other, and a walk to a station takes the shorter way round
+    const lo = 16, hi = this.width - 16, ring = hi - lo, loop = !!this.L.loop;
+    const toward = (g) => { let d = g - this.px; if (loop && Math.abs(d) > ring / 2) d -= Math.sign(d) * ring; return d; };
+    if (!dir && this.goal != null) { const d = toward(this.goal); if (Math.abs(d) < 2) { this.px = this.goal; this.goal = null; } else dir = Math.sign(d); }
     this.moving = !!dir;
-    if (dir) { this.face = dir; this.px = Math.max(16, Math.min(this.width - 16, this.px + dir * 1.8)); if ((this.t & 15) === 0) A.sfx('tick'); }
+    if (dir) {
+      this.face = dir;
+      let nx = this.px + dir * 1.8;
+      if (loop && (nx > hi || nx < lo)) {
+        // pushing on at the wall for a moment (not just touching it) takes you round, so the door at the left end is still easy to stop at; a walk to a station goes at once
+        this.wallT = (this.goal != null ? 99 : (this.wallT || 0) + 1);
+        if (this.wallT > 18) { nx = nx > hi ? lo + (nx - hi) : hi - (lo - nx); this.camX = this.clampCam(nx - W / 2); this.wallT = 0; A.sfx('menu'); }
+      } else this.wallT = 0;
+      this.px = Math.max(lo, Math.min(hi, nx));
+      if ((this.t & 15) === 0) A.sfx('tick');
+    } else this.wallT = 0;
     const tx = this.clampCam(this.px - W / 2);
     this.camX += (tx - this.camX) * 0.14; if (Math.abs(tx - this.camX) < 0.3) this.camX = tx;
     const near = this.near();

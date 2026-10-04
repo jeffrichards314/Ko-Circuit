@@ -249,8 +249,9 @@ async function flow() {
       await H.touch('touchStart', [await H.dir(n.x > 128 ? 'right' : 'left')]); await H.wait(350); await H.touch('touchEnd', []); await H.wait(100);
     }
     let q = await stationNat(id); await H.tapNat(q.x, q.y); await H.wait(200); const t = await atStation(id); q = await stationNat(id); await H.tapNat(q.x, q.y); await H.wait(500); return t; };
-  await useStation('bag');
-  await step('bag drill opens', async () => (await H.until('TrainingScreen', 3000)), 'two taps on the speed bag');
+  await useStation('training');
+  await step('training opens', async () => (await H.until('TrainingScreen', 3000)), 'two taps on the TRAINING station');
+  await H.tapNat(128, 115); await H.wait(500); // the speed bag, first in the list
   // the speed bag on the pad: a tap anywhere starts the drill, A and B are the hands
   await H.tapNat(128, 110); await H.wait(300);
   const A = await H.ctl('a'), B = await H.ctl('b');

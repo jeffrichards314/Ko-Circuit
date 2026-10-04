@@ -1,6 +1,6 @@
 // Between-rounds corner screen (§4): the cornerman's strategy hint for this opponent and this round (src/fight/cornerman.js;
-// the Tactician adds a second one), mash A/B to recover health, hearts reset. The hint sits in the shared text box
-// (src/engine/textbox.js): it pages with a ▼ when it runs long, and START turns the page (on the last page START starts the
+// the Tactician adds a second one), health comes back by itself, hearts reset. The hint sits in the shared text box
+// (src/engine/textbox.js): it pages with a ▼ when it runs long, and any button turns the page (on the last page it starts the
 // round). Driven by the Fight, which keeps all round state; update() returns true when the next round starts.
 
 import { COL, panel } from '../fight/hud.js';
@@ -14,7 +14,8 @@ const BG = c32(3, 4, 9), POST = c32(9, 10, 14), POST_HI = c32(16, 17, 22);
 const PAD = c32(22, 5, 6), PAD_DK = c32(13, 2, 3), ROPE = c32(26, 26, 28), ROPE_DK = c32(14, 14, 18);
 const BOX_T = c32(24, 16, 9), BOX_P = c32(9, 24, 12);
 
-export const CORNER = { mashFrames: 300, maxHeal: 30, minFrames: 90, maxFrames: 900 };
+// (the corner patches you up by itself: the health comes back over the first `regenFrames`, and any button moves on once `minFrames` have passed)
+export const CORNER = { regenFrames: 90, maxHeal: 30, minFrames: 90, maxFrames: 900 };
 // the hint's text box: 222 pixels wide, 5 lines a page
 export const HINT_BOX = { w: 222, lines: 5 };
 
@@ -51,14 +52,16 @@ export class BetweenRounds {
   update() {
     this.t++;
     const f = this.f, P = f.player, I = f.input;
-    if (this.t < CORNER.mashFrames && (I.pressed('a') || I.pressed('b')) && this.healed < this.healCap() && P.health < P.maxHealth) {
+    // no mashing: the cornerman works on you and the health rises to what this corner gives, steadily, in the first moments
+    const want = Math.min(this.healCap(), Math.round(this.healCap() * Math.min(1, this.t / CORNER.regenFrames)));
+    while (this.healed < want && P.health < P.maxHealth) {
       P.health = Math.min(P.maxHealth, P.health + 1);
       this.healed++;
-      f.sfx('mash');
+      if (this.healed % 5 === 0) f.sfx('mash');
     }
     this.box.update();
-    const tapped = typeof I.takeTaps === 'function' && I.takeTaps().length > 0; // (a tap on the picture is START)
-    if (I.pressed('start') || I.pressed('star') || tapped) {
+    const tapped = typeof I.takeTaps === 'function' && I.takeTaps().length > 0; // (a tap on the picture is a button)
+    if (I.anyPressed() || tapped) {
       if (this.box.more) { this.box.next(); f.sfx('menu'); return false; } // (turn the hint's page)
       if (this.t >= CORNER.minFrames) return true;
     }
@@ -106,12 +109,12 @@ export class BetweenRounds {
 
     // recovery
     const y = Math.max(172, 104 + h + 6);
-    const canMash = this.t < CORNER.mashFrames && this.healed < this.healCap();
-    drawText(fr, canMash ? 'MASH A / B TO RECOVER!' : this.healCap() === 0 ? 'NO TIME TO RECOVER' : 'RECOVERED', 12, y, canMash && (f.clock >> 3) & 1 ? COL.yellow : COL.off, { mono: false });
+    const healing = this.t < CORNER.regenFrames && this.healed < this.healCap();
+    drawText(fr, healing ? 'RECOVERING...' : this.healCap() === 0 ? 'NO TIME TO RECOVER' : 'RECOVERED', 12, y, healing && (f.clock >> 3) & 1 ? COL.yellow : COL.off, { mono: false });
     fr.rect(12, y + 10, 232, 8, COL.barBack);
     fr.rect(13, y + 11, Math.round(230 * P.health / P.maxHealth), 6, COL.off);
     fr.rect(13, y + 11, Math.round(230 * P.health / P.maxHealth), 1, COL.white);
     drawText(fr, `HEARTS RESET: ${f.maxHearts}`, 12, y + 22, COL.pink, { mono: false });
-    if (this.t >= CORNER.minFrames && !this.box.more && (f.clock >> 4) & 1) drawText(fr, 'PUSH START', 244 - textWidth('PUSH START'), y + 22, COL.yellow);
+    if (this.t >= CORNER.minFrames && !this.box.more && (f.clock >> 4) & 1) drawText(fr, 'PUSH ANY BUTTON', 244 - textWidth('PUSH ANY BUTTON'), y + 22, COL.yellow);
   }
 }

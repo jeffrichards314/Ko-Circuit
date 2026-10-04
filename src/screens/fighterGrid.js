@@ -18,6 +18,50 @@ import { medalsOf } from '../save/medals.js';
 import { Hits, swipe } from '../engine/hits.js';
 
 // a boss: a champion who defends his belt in Title Defense
+// A portrait for a silhouette (a fighter you have not met): its figure, never its backdrop. Most portraits are the fighter on nothing; the Underworld's and the
+// Void's are painted on a dark backdrop, which as a silhouette would be a solid box. For those the backdrop is found from the picture's edges (everything of the
+// colour the border is mostly made of that touches the border) and taken out, so what is left is the shape of the fighter.
+const silCache = new Map();
+export function silhouetteSprite(s) {
+  if (silCache.has(s)) return silCache.get(s);
+  let out = s;
+  if (s.data.every((v) => v)) {
+    const { w, h, data } = s, seen = new Uint8Array(w * h), count = new Map();
+    const edge = [];
+    for (let x = 0; x < w; x++) edge.push([x, 0], [x, h - 1]);
+    for (let y = 0; y < h; y++) edge.push([0, y], [w - 1, y]);
+    for (const [x, y] of edge) count.set(data[y * w + x], (count.get(data[y * w + x]) || 0) + 1);
+    const main = [...count.entries()].sort((a, b) => b[1] - a[1])[0][0], q = [...edge];
+    while (q.length) {
+      const [x, y] = q.pop();
+      if (x < 0 || y < 0 || x >= w || y >= h) continue;
+      const k = y * w + x;
+      if (seen[k] || data[k] !== main) continue;
+      seen[k] = 1; q.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+    }
+    const d = data.slice();
+    for (let k = 0; k < d.length; k++) if (seen[k]) d[k] = 0;
+    // ...and the dust and sparks of the backdrop that are left: any bit of the picture smaller than a hand is not the fighter
+    const lab = new Int32Array(w * h);
+    for (let k0 = 0; k0 < d.length; k0++) {
+      if (!d[k0] || lab[k0]) continue;
+      const comp = [k0], st = [k0]; lab[k0] = 1;
+      while (st.length) {
+        const k = st.pop(), x = k % w, y = (k / w) | 0;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          const nk = ny * w + nx;
+          if (d[nk] && !lab[nk]) { lab[nk] = 1; comp.push(nk); st.push(nk); }
+        }
+      }
+      if (comp.length < 40) for (const k of comp) d[k] = 0;
+    }
+    out = { ...s, data: d };
+  }
+  silCache.set(s, out);
+  return out;
+}
 export const isBoss = (id) => !!(FIGHTERS[id] && FIGHTERS[id].titleDefense);
 // maxed: every habit scouted and all three medals won
 export function isMaxed(g, id) {
@@ -45,7 +89,7 @@ export class FighterGrid {
   select(id) { const i = this.ids.indexOf(id); if (i >= 0) { this.sel = i; this.scrollTo(); } }
   scrollTo() { const row = Math.floor(this.sel / GC); if (row < this.top) this.top = row; if (row >= this.top + GR) this.top = row - GR + 1; }
   thumb(id) {
-    if (!this.thumbs.has(id)) { const p = paletteFor(FIGHTERS[id].palette), sil = new Uint32Array(p.u32.length).fill(SIL); sil[0] = 0; this.thumbs.set(id, { s: (PORTRAITS[id] || PORTRAITS.barney)(p), pal: p.u32, sil }); }
+    if (!this.thumbs.has(id)) { const p = paletteFor(FIGHTERS[id].palette), sil = new Uint32Array(p.u32.length).fill(SIL); sil[0] = 0; const s = (PORTRAITS[id] || PORTRAITS.barney)(p); this.thumbs.set(id, { s, ss: silhouetteSprite(s), pal: p.u32, sil }); }
     return this.thumbs.get(id);
   }
   update(I, A) {
@@ -75,7 +119,7 @@ export class FighterGrid {
       f.rect(x - 1, y - 1, PW + 2, PH + 2, sel ? ((t >> 3) & 1 ? COL.yellow : GOLD) : COL.dark);
       if (sel) f.rect(x - 2, y - 2, PW + 4, PH + 4, (t >> 3) & 1 ? GOLD : COL.yellow), f.rect(x - 1, y - 1, PW + 2, PH + 2, (t >> 3) & 1 ? COL.yellow : GOLD);
       f.rect(x, y, PW, PH, BOX);
-      f.blit(T.s, x, y, known ? T.pal : T.sil, { scale: K });
+      f.blit(known ? T.s : T.ss, x, y, known ? T.pal : T.sil, { scale: K });
       if (known && isBoss(id)) crown(f, x + 1, y + 1);
       if (known && isMaxed(this.g, id)) star(f, x + PW - 10, y + 1, t);
       const tg = known && this.tag && this.tag(id);

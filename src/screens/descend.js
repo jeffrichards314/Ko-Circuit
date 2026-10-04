@@ -177,7 +177,7 @@ export class FerryScreen {
     this.lines = (TALK[key] || TALK.u4).map((x) => ['ferry', x]);
   }
   enter() { this.g.audio.play(this.g.songs.ferrymanTheme || this.g.songs.map); this.g.audio.sfx('oarDip'); }
-  leave() { const c = this.g.career; if (c && c.training.pending) this.g.go('training', { to: this.to }); else this.g.go('map'); }
+  leave() { this.g.go('map'); } // (no training session is offered on the way any more: the Home gym's TRAINING station is where it is)
   update() {
     this.t++;
     const I = this.g.input, D = this.D;
