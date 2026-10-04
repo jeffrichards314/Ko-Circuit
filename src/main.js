@@ -127,7 +127,8 @@ function wake() {
   audio.resume();
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) leave(); else if (awayHandled) wake(); });
-window.addEventListener('pagehide', leave);
+window.addEventListener('pagehide', () => { audio.suspend(); leave(); }); // (the sound is faded out before the page goes)
+document.addEventListener('freeze', () => audio.suspend());
 window.addEventListener('blur', leave);
 window.addEventListener('focus', () => { if (awayHandled) wake(); });
 window.addEventListener('pageshow', () => { if (awayHandled) wake(); });

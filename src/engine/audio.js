@@ -86,9 +86,27 @@ export class Audio {
     this.muted = false;
   }
 
-  // (app in the background / phone upright: the clock stops with the sound, so the music picks up where it was)
-  suspend() { if (this.ctx && this.ctx.state === 'running') this.ctx.suspend().catch(() => {}); }
-  resume() { if (this.ctx && this.ctx.state !== 'running' && this.ctx.state !== 'closed') this.ctx.resume().catch(() => {}); }
+  // The app goes to the background, the device locks or the page closes: the sound is faded out over a few milliseconds and only then is the clock stopped,
+  // so the music picks up where it was. (Stopping the clock under a note that is sounding leaves a click or a held tone: the beep heard at closing.)
+  suspend() {
+    if (!this.ctx || this.ctx.state !== 'running' || this.hushed) return;
+    this.hushed = true;
+    try {
+      const g = this.master.gain, t = this.ctx.currentTime;
+      g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(0, t + 0.03);
+    } catch { /* closing already */ }
+    clearTimeout(this.suspendT);
+    this.suspendT = setTimeout(() => { if (this.hushed && this.ctx.state === 'running') this.ctx.suspend().catch(() => {}); }, 60);
+  }
+  resume() {
+    if (!this.ctx || this.ctx.state === 'closed') return;
+    clearTimeout(this.suspendT);
+    if (this.hushed) {
+      this.hushed = false;
+      try { const g = this.master.gain, t = this.ctx.currentTime; g.cancelScheduledValues(t); g.setValueAtTime(0, t); g.linearRampToValueAtTime(this.muted ? 0 : 0.5, t + 0.05); } catch { /* closing already */ }
+    }
+    if (this.ctx.state !== 'running') this.ctx.resume().catch(() => {});
+  }
 
   unlock() {
     // (iOS: play through the speaker even with the ring switch on silent, where the browser has this)
@@ -109,7 +127,7 @@ export class Audio {
 
   setMuted(m) {
     this.muted = m;
-    if (this.master) this.master.gain.value = m ? 0 : 0.5;
+    if (this.master && !this.hushed) this.master.gain.value = m ? 0 : 0.5;
   }
 
   // Mixer (Options): music and effects bus levels, 0-1.
