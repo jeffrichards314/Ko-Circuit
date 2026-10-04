@@ -1,0 +1,35 @@
+// The Pantheon's fighters (spec §18, #51-63): one data file each (the §10 format).
+import oro from './oro.js';
+import lark from './lark.js';
+import ember from './ember.js';
+import aurora from './aurora.js';
+import zephyr from './zephyr.js';
+import nimbus from './nimbus.js';
+import ulla from './ulla.js';
+import cirrus from './cirrus.js';
+import tom from './tom.js';
+import jules from './jules.js';
+import reuben from './reuben.js';
+import simone from './simone.js';
+import oldguard from './oldguard.js';
+import polaris from './polaris.js';
+import kira from './kira.js';
+import orbit from './orbit.js';
+import nebula from './nebula.js';
+import anvil from './anvil.js';
+import spark from './spark.js';
+import bellows from './bellows.js';
+import hale from './hale.js';
+import reflection from './reflection.js';
+import glass from './glass.js';
+import doubt from './doubt.js';
+import prism from './prism.js';
+import aldric from './aldric.js';
+import valkyr from './valkyr.js';
+import scribe from './scribe.js';
+import verity from './verity.js';
+import rho from './rho.js';
+import barney2 from './barney2.js';
+import halcyon from './halcyon.js';
+
+export const PANTHEON_FIGHTERS = { oro, lark, ember, aurora, zephyr, nimbus, ulla, cirrus, tom, jules, reuben, simone, oldguard, polaris, kira, orbit, nebula, anvil, spark, bellows, hale, reflection, glass, doubt, prism, aldric, valkyr, scribe, verity, rho, barney2, halcyon };

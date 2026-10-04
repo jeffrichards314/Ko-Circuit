@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KO Circuit — Knowledge Audit</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #101218; color: #c8ccd8; font: 13px ui-monospace, Menlo, monospace; }
+  header { position: sticky; top: 0; z-index: 2; background: #101218ee; padding: 10px 16px; border-bottom: 1px solid #262a36; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+  header h1 { font-size: 15px; margin: 0; color: #f0c040; letter-spacing: 1px; }
+  header label { cursor: pointer; }
+  .sum { color: #9aa0b4; }
+  .sum b.e { color: #ff6060; } .sum b.w { color: #f0c040; } .sum b.n { color: #60b0ff; }
+  h2 { margin: 20px 16px 8px; font-size: 14px; color: #f09040; letter-spacing: 1px; }
+  table { border-collapse: collapse; margin: 0 16px; width: calc(100% - 32px); }
+  th, td { text-align: left; vertical-align: top; padding: 5px 8px; border-bottom: 1px solid #22252f; }
+  th { color: #7a8196; font-weight: normal; font-size: 11px; text-transform: uppercase; }
+  td.name { color: #fff; white-space: nowrap; }
+  .role { color: #f0c040; font-size: 11px; }
+  .t { color: #7a8196; font-size: 11px; }
+  .issue.error { color: #ff6060; } .issue.warn { color: #f0c040; } .issue.note { color: #60b0ff; }
+  .ok { color: #50d070; }
+  tr.todo td { opacity: .45; }
+  ul { margin: 0; padding-left: 16px; }
+  .types { margin: 0 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 4px 16px; }
+</style>
+</head>
+<body>
+<!-- Every fighter's exploits, anti-strategies and scripted moments, checked against the
+     knowledge spec's K4 rules (counts, same-circuit duplicates, missing hints, anti-strategy
+     types that never appear). The checks live in knowledge-audit.js (also run headless by
+     `node tools/knowledge-audit.mjs`). http://localhost:8420/tools/knowledge-audit.html -->
+<header>
+  <h1>KO CIRCUIT · KNOWLEDGE AUDIT</h1>
+  <span class="sum" id="sum"></span>
+  <label><input type="checkbox" id="done" checked> Only fighters with a knowledge layer</label>
+</header>
+<h2>DIFFICULTY CURVE (STORY ORDER)</h2>
+<div style="margin:0 16px" class="t">Every fight's difficulty score (tools/difficulty-score.js: tell 33%, damage 19%, get-up 14%, pattern 11%, supers 10%, anti-strategies 7%, boss phases 6%), in the order a career meets them. Dots: champions and Dash (filled), bosses (white); a red ring is a flagged fight. The curve should be a sawtooth: each circuit climbs to its champion, the next one opens below him, every boss tops the run to him, ZERO's true form tops everything. Tune it in data/difficulty.js (or live in the fight lab).</div>
+<div id="graph" style="margin:8px 16px; overflow-x:auto"></div>
+<div id="dflags" style="margin:0 16px"></div>
+<h2>ROSTER-WIDE</h2>
+<div id="global" style="margin:0 16px"></div>
+<h2>ANTI-STRATEGY TYPES (EACH MUST APPEAR)</h2>
+<div class="types" id="types"></div>
+<h2>FIGHTERS</h2>
+<table><thead><tr><th>Fighter</th><th>Exploits</th><th>Anti-strategies</th><th>Scripted moments</th><th>K4 check</th></tr></thead><tbody id="rows"></tbody></table>
+<script type="module">
+import { FIGHTERS } from '../data/fighters/index.js';
+import { CIRCUITS } from '../data/circuits.js';
+import { audit } from './knowledge-audit.js';
+import { curve, graphSVG } from './difficulty-score.js';
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+const R = audit(FIGHTERS, CIRCUITS);
+const issues = (L) => L.length ? `<ul>${L.map((i) => `<li class="issue ${i.level}">${esc(i.level.toUpperCase())}: ${esc(i.text)}</li>`).join('')}</ul>` : '<span class="ok">OK</span>';
+
+function draw() {
+  const only = $('done').checked;
+  const shown = R.rows.filter((r) => !only || r.done);
+  const cnt = { error: 0, warn: 0, note: 0 };
+  for (const i of [...R.global, ...shown.flatMap((r) => r.issues)]) cnt[i.level]++;
+  $('sum').innerHTML = `${R.rows.filter((r) => r.done).length}/${R.rows.length} fighters done · <b class="e">${cnt.error} errors</b> · <b class="w">${cnt.warn} warnings</b> · <b class="n">${cnt.note} notes</b>`;
+  $('global').innerHTML = issues(R.global);
+  $('types').innerHTML = Object.entries(R.typeUse).map(([t, ids]) => `<div><b>${t}</b> <span class="${ids.length ? 't' : 'issue error'}">${ids.length ? ids.map((id) => FIGHTERS[id].name).join(', ') : 'NONE'}</span></div>`).join('');
+  $('rows').innerHTML = shown.map((r) => `<tr class="${r.done ? '' : 'todo'}">
+    <td class="name">${esc(r.name)}<br><span class="t">${r.circuit}</span> ${r.role !== 'fighter' ? `<span class="role">${r.role}</span>` : ''}</td>
+    <td>${r.exploits.map((x) => `${esc(x.name)} <span class="t">${x.type} · ${x.hint}${x.hidden ? ' · hidden' : ''}</span>`).join('<br>') || '<span class="t">-</span>'}</td>
+    <td>${r.antis.map((a) => `${esc(a.name)} <span class="t">${a.type}${a.mild ? ' · mild' : ''}${a.override ? ' · ' + a.override : ''}</span>`).join('<br>') || '<span class="t">-</span>'}</td>
+    <td>${r.moments.map((s) => `${esc(s.name)} <span class="t">${s.when}</span>`).join('<br>') || '<span class="t">-</span>'}</td>
+    <td>${issues(r.issues)}</td></tr>`).join('');
+}
+const D = curve(FIGHTERS, CIRCUITS);
+$('graph').innerHTML = graphSVG([{ rows: D.rows, color: '#f0c040', label: 'difficulty score', flags: true, labels: true, width: 2 }], { width: 1400, height: 420 });
+$('dflags').innerHTML = D.flags.length ? `<ul>${D.flags.map((f) => `<li class="issue warn">${esc(f.text)}</li>`).join('')}</ul>` : '<span class="ok">Curve OK: a sawtooth, every champion and boss a local peak, ZERO\'s true form the global peak on every lever.</span>';
+$('done').onchange = draw;
+draw();
+</script>
+</body>
+</html>

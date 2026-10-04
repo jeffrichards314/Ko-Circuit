@@ -1,0 +1,30 @@
+// Contact sheet of the landmarks (spec §19): node tools/landmark-sheet.mjs out.png [zone=base] [--k 1] [--t 0] [--cols 4] [--sky night] [--only id,id] [--sil]
+import { Frame } from '../src/engine/renderer.js';
+import { writePNG } from './png.mjs';
+import { Gfx } from '../src/scene/gfx.js';
+import { c32 } from '../src/engine/palette.js';
+import { drawText } from '../src/engine/font.js';
+const store = new Map();
+globalThis.localStorage = { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: (k) => store.delete(k) };
+const args = process.argv.slice(2);
+const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
+const out = args[0], zone = args[1] && !args[1].startsWith('--') ? args[1] : 'base';
+const { LANDMARKS } = await import('../src/scene/landmarks/index.js');
+const only = (opt('only', '') || '').split(',').filter(Boolean);
+const k = +opt('k', 1), t = +opt('t', 0), cols = +opt('cols', k > 1 ? 1 : 5), sil = args.includes('--sil');
+const ids = Object.keys(LANDMARKS).filter((id) => (only.length ? only.includes(id) : (LANDMARKS[id].zone || 'base') === zone || zone === 'all'));
+const cw = Math.floor(256 / cols) , ch = k > 1 ? 54 * k + 24 : 64;
+const rows = Math.ceil(ids.length / cols);
+const W = 256, H = Math.max(64, Math.ceil(rows * ch));
+const f = new Frame(W, H);
+const skies = { night: c32(3, 4, 10), day: c32(14, 20, 28), dusk: c32(14, 8, 16), grey: c32(9, 9, 12), black: c32(0, 0, 1) };
+f.clear(skies[opt('sky', 'night')] || skies.night);
+ids.forEach((id, i) => {
+  const L = LANDMARKS[id], cx = (i % cols) * cw + cw / 2, gy = Math.floor(i / cols) * ch + ch - 14;
+  const g = new Gfx(f, L.pal, Math.round(cx), Math.round(gy), k, t, sil ? { sil: c32(2, 2, 4) } : { shade: args.includes('--shade') });
+  L.draw(g);
+  f.rect(Math.round(cx - cw / 2 + 2), Math.round(gy), cw - 4, 1, c32(10, 10, 14));
+  drawText(f, id.toUpperCase(), Math.round(cx - id.length * 2.5), Math.round(gy + 4), c32(28, 28, 28), { mono: false });
+});
+writePNG(out, f.buf, W, H, +opt('s', 3));
+console.log(ids.length, 'landmarks', ids.join(' '));

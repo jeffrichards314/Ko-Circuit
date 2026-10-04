@@ -1,0 +1,621 @@
+// Cornerman hints (src/fight/cornerman.js): the Void's twelve Hollowed and Dash Unbound (the Ferryman's voice: short, in riddles),
+// and ZERO's true form (Dash's voice: cocky, but honest). Each list is [first attempt, after one loss, after two or more].
+export default {
+  // --- THE VOID I: THE FUNDAMENTALS -----------------------------------------------------------------------------------
+  dodgeShard: {
+    general: [
+      'HE WILL NOT BE BLOCKED. LEARN TO LEAN. LEFT, THEN RIGHT, THEN LEFT. A RIVER DOES NOT STOP.',
+      'EIGHT IN A ROW AND EVEN A RUNNER BREATHES.',
+    ],
+    super: {
+      breakneck: [
+        'BREAKNECK IS A RUNNER AT FULL STRIDE. A RUNNER\'S BODY LEADS. HIS LEGS FOLLOW.',
+        'WHEN HE WINDS UP BREAKNECK, HE LEANS HIS WHOLE BODY FORWARD.',
+        'AT THE GLEAM OF BREAKNECK, MEET THE BODY THAT LEADS. LOW.',
+      ],
+    },
+    exploit: {
+      winded: [
+        'A RUNNER BREATHES AFTER A LONG RUN. COUNT HIS STRIDES.',
+        'SLIP HIM AGAIN AND AGAIN, AND DO NOT BE TOUCHED. THE COUNT GROWS.',
+        'SLIP EIGHT IN A ROW, UNTOUCHED. HE IS WINDED.',
+      ],
+      swingAndMiss: [
+        'EVERY RUN ENDS WITH A FULL STRIDE.',
+        'THE LAST STRIDE IS THE LONGEST. LET IT FIND NOTHING.',
+        'SLIP THE FULL STRIDE AT THE END OF THE RUN.',
+      ],
+      caughtMidStride: [
+        'AT THE END OF THE FULL STRIDE, HE LEANS BACK TO STOP.',
+        'A RUNNER LEANING BACK HAS NO BALANCE.',
+        'COUNTER THE LAST FRAMES OF THE FULL STRIDE.',
+      ],
+    },
+    anti: {
+      cutsYouOff: [
+        'YOU LEAN ONE WAY. HE RUNS TO MEET YOU.',
+        'HE COCKS THE GLOVE ON THE SIDE YOU FAVOR.',
+        'LEAN BOTH WAYS. WATCH THE GLOVE HE COCKS.',
+      ],
+    },
+  },
+  blockShard: {
+    general: [
+      'HE WILL NOT BE OUTRUN. STAND, AND LET IT BREAK ON YOUR HANDS.',
+      'ONE BLOW BLOCKED IS ONE BLOW OWED. A GUARD HELD TOO LONG IS A GUARD DROPPED.',
+    ],
+    super: {
+      breaker: [
+        'THE BULWARK BREAKER IS A WALL THROWN AT YOU. A MAN THROWING A WALL RAISES IT TO HIS EYES.',
+        'WHEN HE WINDS UP THE BREAKER, HIS ARMS ARE UP AND HIS FACE IS BEHIND THEM... BARELY.',
+        'AT THE GLEAM OF THE BREAKER, STRIKE OVER THE WALL. HIGH.',
+      ],
+    },
+    exploit: {
+      bulwarkFalls: [
+        'THE BULWARK RAISES BOTH ARMS. AT ITS END, THEY ARE HIGHEST.',
+        'WAIT FOR THE ARMS TO REACH THE TOP.',
+        'COUNTER THE LAST FRAMES OF THE BULWARK.',
+      ],
+      heldTooLong: [
+        'A WALL THAT IS STRUCK AND STRUCK TIRES.',
+        'BLOCK, AND BLOCK, AND BLOCK. DO NOT STRIKE BETWEEN.',
+        'BLOCK THREE IN A ROW, NOTHING BETWEEN. HIS ARMS GIVE OUT.',
+      ],
+      wrongWall: [
+        'THE BULWARK IS SLOW AND BIG. A WALL MEETS A WALL.',
+        'DO NOT RUN FROM THE BULWARK. STAND BEHIND YOUR HANDS.',
+        'BLOCK THE BULWARK. HE RECOILS.',
+      ],
+    },
+    anti: {
+      armsTire: [
+        'YOUR GUARD IS UP BEFORE HE STRIKES. ARMS TIRE.',
+        'HOLD THE GUARD TOO LONG, AND A HEART DRAINS.',
+        'BLOCK WHEN HE PUNCHES. NOT BEFORE.',
+      ],
+    },
+  },
+  duckShard: {
+    general: [
+      'EVERYTHING HE THROWS IS LOW. GO LOWER. A SECOND BLOW COMES LATE. DO NOT STAND UP TO MEET IT.',
+      'THE LONG ONE LEAVES HIM STANDING ON ONE LEG.',
+    ],
+    super: {
+      whirlwind: [
+        'THE WHIRLWIND SPINS LOW. A SPINNING DANCER HOLDS HIS HEAD STILL.',
+        'WHEN HE WINDS UP THE WHIRLWIND, HIS HEAD IS THE ONE THING NOT TURNING.',
+        'AT THE GLEAM OF THE WHIRLWIND, STRIKE THE STILL HEAD.',
+      ],
+    },
+    exploit: {
+      scytheMissed: [
+        'THE SCYTHE IS SLOW AND WIDE. IT ENDS EVERY RUN.',
+        'LET THE SCYTHE PASS OVER YOU.',
+        'DUCK THE SCYTHE. HE STANDS ON ONE LEG.',
+      ],
+      legsTangled: [
+        'LATE IN THE SCYTHE, HIS LEGS CROSS.',
+        'A MAN WITH CROSSED LEGS CANNOT STAND A BLOW.',
+        'COUNTER LATE IN THE SCYTHE.',
+      ],
+    },
+    anti: {
+      sweepsTheJabber: [
+        'YOU STRIKE WITHOUT AN OPENING. HE SWEEPS THE STRIKER.',
+        'THREE OUTSIDE AN OPENING, AND THE SCYTHE COMES.',
+        'WAIT FOR AN OPENING.',
+      ],
+    },
+  },
+  counterShard: {
+    general: [
+      'HE WILL NOT BE STRUCK. HE CAN ONLY BE ANSWERED.',
+      'WHEN HE FLASHES, THAT IS THE DOOR. A PUNCH THAT ARRIVES EARLY ONLY WARNS HIM.',
+    ],
+    super: {
+      riposte: [
+        'THE RIPOSTE IS HIS ANSWER TO EVERYTHING. A FENCER LUNGING EXTENDS HIS WHOLE BODY.',
+        'WHEN HE WINDS UP THE RIPOSTE, HIS BODY STRETCHES TOWARD YOU.',
+        'AT THE GLEAM OF THE RIPOSTE, ANSWER THE ANSWER. LOW.',
+      ],
+    },
+    exploit: {
+      starInTheWindow: [
+        'THE FLECHE HAS THE WIDEST DOOR. A BRIGHT BLOW FITS THROUGH IT.',
+        'IN THE FLASH OF THE FLECHE, SOMETHING SPECIAL.',
+        'LAND A STAR INSIDE THE FLASH OF THE FLECHE.',
+      ],
+      firstOfMany: [
+        'HIS POINT AND HIS TIERCE BEGIN THINGS.',
+        'ANSWER THEM ON THE FLASH, AND THE REST NEVER COMES.',
+        'COUNTER THE FLASH OF HIS POINT OR TIERCE.',
+      ],
+      rebukeSlipped: [
+        'STRIKE HIM WRONG, AND HE REBUKES YOU. THE REBUKE IS SLOW.',
+        'LET THE REBUKE MISS.',
+        'SLIP OR DUCK THE REBUKE.',
+      ],
+    },
+    anti: {
+      answersTheSwinger: [
+        'YOU SWING WITHOUT ANSWERING. HE ANSWERS INSTEAD.',
+        'TWO SWINGS OUTSIDE HIS FLASH, AND THE REBUKE COMES AT ONCE.',
+        'ONLY STRIKE ON THE FLASH.',
+      ],
+      lastWord: [
+        'WHEN YOU RISE, HE HAS THE LAST WORD.',
+        'THE FIRST BLOWS AFTER YOU RISE ARE HEAVIER.',
+        'RISE, AND DEFEND.',
+      ],
+    },
+  },
+  // --- THE VOID II: THE SENSES ----------------------------------------------------------------------------------------
+  sightShard: {
+    general: [
+      'THERE IS NOTHING TO HEAR. LOOK. HIS EYE TELLS YOU THE DEFENSE: THE COLOUR, NOT THE SIZE.',
+      'EVEN A WATCHER BLINKS.',
+    ],
+    super: {
+      gaze: [
+        'THE GAZE IS HIS EYE OPENING WIDE. AN OPEN EYE CAN BE STRUCK.',
+        'LATE IN THE GAZE, THE EYE FLARES OPEN AT HEAD HEIGHT.',
+        'AT THE GLEAM OF THE GAZE, STRIKE THE EYE. HIGH.',
+      ],
+    },
+    exploit: {
+      aBlink: [
+        'EVERY FEW BREATHS, THE EYE CLOSES.',
+        'WHILE HE STANDS AND HIS EYE SHUTS, HE SEES NOTHING.',
+        'STRIKE HIM WHILE HE BLINKS.',
+      ],
+      lidDrops: [
+        'THE LOWERED LID SWEEPS LOW. A YELLOW HALO.',
+        'LET THE LOWERED LID PASS OVER YOU.',
+        'DUCK THE LOWERED LID.',
+      ],
+    },
+    anti: {
+      watchesYourHands: [
+        'TWICE THE SAME, AND HE HAS SEEN IT.',
+        'THE SAME TWO BLOWS TWICE, AND THE BROW RISES.',
+        'NEVER THE SAME TWICE IN A ROW.',
+      ],
+    },
+  },
+  soundShard: {
+    general: [
+      'DO NOT LOOK FOR HIM. LISTEN. UP AND DOWN IS LEFT AND RIGHT. LOW IS THE FLOOR. CLICK IS THE WALL.',
+      'HE GLOWS WHERE YOU HIT HIM. FOR A MOMENT.',
+    ],
+    super: {
+      chord: [
+        'THE CHORD IS EVERY NOTE AT ONCE. A CHORD RESONATES IN THE BODY.',
+        'WHEN HE WINDS UP THE CHORD, THE HUM IS IN HIS CHEST.',
+        'AT THE GLEAM OF THE CHORD, STRIKE WHERE IT HUMS. LOW.',
+      ],
+    },
+    exploit: {
+      aQuietMoment: [
+        'IN SILENCE, HE LISTENS FOR YOU.',
+        'GIVE HIM NOTHING TO HEAR.',
+        'STAND STILL A WHILE. HE STOPS TO LISTEN, OPEN.',
+      ],
+      wrongNote: [
+        'THE CHIME RINGS TWO BRIGHT NOTES. IF IT FINDS NOTHING, IT RINGS WRONG.',
+        'LET THE CHIME MISS.',
+        'SLIP THE CHIME.',
+      ],
+      throbSilenced: [
+        'THE LOW WUB SWEEPS THE FLOOR.',
+        'LET THE THROB PASS OVER YOU.',
+        'DUCK THE SWEEP.',
+      ],
+    },
+    anti: {
+      heardYourStars: [
+        'YOUR STARS RING IN YOUR HANDS. HE HEARS THEM.',
+        'THREE STARS HELD TOO LONG, AND HE TAKES ONE.',
+        'SPEND THEM.',
+      ],
+    },
+  },
+  rhythmShard: {
+    general: [
+      'EVERYTHING HE THROWS LANDS ON THE CLICK. COUNT WITH HIM. THE FIRST BEAT OF THE BAR IS THE LOUD ONE.',
+      'WHEN THE TEMPO TURNS, HE HAS TO FIND HIS FEET.',
+    ],
+    super: {
+      crescendo: [
+        'THE CRESCENDO RISES. A DRUMMER RISING LIFTS HIS HEAD WITH THE SOUND.',
+        'WHEN HE WINDS UP THE CRESCENDO, HIS FACE RISES WITH IT.',
+        'AT THE GLEAM OF THE CRESCENDO, STRIKE THE RISING FACE.',
+      ],
+    },
+    exploit: {
+      losesTheCount: [
+        'THE LOUD BEAT IS THE FIRST OF THE BAR.',
+        'DEFEND THE BLOW THAT LANDS ON THE LOUD BEAT.',
+        'DEFEND A PUNCH ON THE FIRST BEAT OF THE BAR. HE LOSES THE COUNT.',
+      ],
+      offTheTempo: [
+        'WHEN THE TEMPO CHANGES, A FLOURISH.',
+        'JUST AFTER THE FLOURISH, HE IS FINDING HIS FEET.',
+        'STRIKE HIM JUST AFTER THE TEMPO CHANGES.',
+      ],
+      crashLanded: [
+        'THE CRASH RAISES BOTH ARMS. AT ITS END, THEY ARE HIGHEST.',
+        'WAIT FOR THE ARMS TO TOP OUT.',
+        'COUNTER THE LAST FRAMES OF THE CRASH.',
+      ],
+    },
+    anti: {
+      holdsTheBeat: [
+        'YOU MOVE BEFORE THE BEAT. HE HOLDS IT.',
+        'SLIP EARLY, AND HE HOLDS THE BLOW FOR YOU.',
+        'WAIT FOR THE CLICK.',
+      ],
+    },
+  },
+  memoryShard: {
+    general: [
+      'THERE IS NOTHING TO SEE. THERE IS ONLY THE ORDER OF THINGS. FOUR VERSES, EACH LIKE THE LAST.',
+      'IN THE MIDDLE HE FORGETS. BE THERE.',
+    ],
+    super: {
+      recital: [
+        'THE RECITAL IS HIM READING FROM MEMORY. A MAN RECITING HOLDS HIS BREATH IN HIS CHEST.',
+        'WHEN HE WINDS UP THE RECITAL, HIS BODY IS HELD STILL TO REMEMBER.',
+        'AT THE GLEAM OF THE RECITAL, KNOCK THE WORDS OUT OF HIM. LOW.',
+      ],
+    },
+    exploit: {
+      lostHisPlace: [
+        'HALFWAY THROUGH THE SEQUENCE, A LONG PAUSE.',
+        'IN THE PAUSE AFTER THE THIRTIETH, HE IS SEARCHING.',
+        'STRIKE HIM IN THE LONG PAUSE AFTER THE THIRTIETH MOVE.',
+      ],
+      theLastLine: [
+        'THE LAST LINE RAISES BOTH ARMS. AT ITS END, THEY ARE HIGHEST.',
+        'WAIT FOR THE LAST LINE TO TOP OUT.',
+        'COUNTER THE LAST FRAMES OF THE SIXTIETH MOVE.',
+      ],
+      misreadFinale: [
+        'THE LAST LINE IS THE LONGEST. IF IT FINDS NO ONE, HE MISQUOTES.',
+        'LET THE LAST LINE MISS.',
+        'SLIP THE SIXTIETH MOVE.',
+      ],
+    },
+    anti: {
+      itAllComesBack: [
+        'YOU STAND STILL. IT ALL COMES BACK TO HIM.',
+        'WAIT, AND EVERY BLOW GROWS HEAVIER.',
+        'STRIKE, AND HE FORGETS AGAIN.',
+      ],
+      startsAgain: [
+        'WHEN YOU RISE, HE STARTS FROM THE TOP.',
+        'THE FIRST BLOWS AFTER YOU RISE ARE HEAVIER.',
+        'RISE, AND DEFEND.',
+      ],
+    },
+  },
+  // --- THE VOID III: THE MIND -----------------------------------------------------------------------------------------
+  echoShard: {
+    general: [
+      'HE ONLY KNOWS WHAT YOU SHOWED HIM. THROW LESS, AND HE HAS LESS TO SAY.',
+      'YOUR OWN STAR PUNCH IS SLOW. HE KNOWS IT.',
+    ],
+    super: {
+      mimic: [
+        'THE MIMIC IS YOU, THROWN BACK. YOU KNOW WHERE YOUR OWN FACE IS WHEN YOU WIND UP.',
+        'WHEN HE WINDS UP THE MIMIC, HE HOLDS HIS HEAD LIKE YOU DO.',
+        'AT THE GLEAM OF THE MIMIC, STRIKE YOUR OWN FACE. HIGH.',
+      ],
+    },
+    exploit: {
+      nothingToEcho: [
+        'A QUIET ROUND LEAVES HIM NOTHING.',
+        'THROW LITTLE IN ONE ROUND. HE BEGINS THE NEXT EMPTY.',
+        'THROW FEWER THAN A HANDFUL IN A ROUND. STRIKE HIM AT THE START OF THE NEXT.',
+      ],
+      ownStarSlipped: [
+        'YOUR OWN STAR, ECHOED. SLOW.',
+        'LET YOUR OWN STAR MISS.',
+        'SLIP THE ECHO OF YOUR STAR PUNCH.',
+      ],
+      echoOfAnEcho: [
+        'AT THE END OF YOUR ECHOED STAR, BOTH GLOVES ARE RAISED.',
+        'WAIT FOR THE GLOVES TO TOP OUT.',
+        'COUNTER THE LAST FRAMES OF THE ECHOED STAR.',
+      ],
+    },
+    anti: {
+      repeatsYourJabs: [
+        'YOU STRIKE WITHOUT AN OPENING. HE REPEATS YOU.',
+        'THREE OUTSIDE AN OPENING, AND YOUR OWN STAR COMES BACK.',
+        'WAIT FOR AN OPENING.',
+      ],
+    },
+  },
+  chaosShard: {
+    general: [
+      'HE HAS NO HABITS. WATCH HIS HANDS, NOT HIS HISTORY. WHEN THE COLOUR TURNS, THE DICE ARE IN THE AIR.',
+      'A ROLL DAZES THE ROLLER.',
+    ],
+    super: {
+      snakeEyes: [
+        'SNAKE EYES IS THE WORST ROLL. A GAMBLER ROLLING HUNCHES OVER THE DICE.',
+        'WHEN HE WINDS UP SNAKE EYES, HE IS BENT OVER HIS HANDS. HIS MIDDLE IS FOLDED.',
+        'AT THE GLEAM OF SNAKE EYES, STRIKE THE FOLD. LOW.',
+      ],
+    },
+    exploit: {
+      diceInTheAir: [
+        'WHEN THE COLOUR TURNS, HE IS WATCHING THE DICE.',
+        'JUST AFTER THE FLASH OF A ROLL, HE IS DAZED.',
+        'STRIKE JUST AFTER THE RE-ROLL.',
+      ],
+      jackpotMissed: [
+        'THE JACKPOT IS A SLOW RISE. LATE IN IT, THE PRIZE IS IN THE AIR.',
+        'WAIT FOR THE JACKPOT TO NEARLY PAY.',
+        'COUNTER LATE IN THE JACKPOT.',
+      ],
+      allInLoses: [
+        'ALL IN IS EVERYTHING ON ONE BLOW.',
+        'LET ALL IN FIND NOTHING.',
+        'SLIP ALL IN.',
+      ],
+    },
+    anti: {
+      readsYourSide: [
+        'YOU LEAN ONE WAY. EVEN THE DICE LEARN.',
+        'HIS BLOWS COME FROM YOUR FAVORED SIDE.',
+        'LEAN BOTH WAYS. WATCH THE GLOVE HE COCKS.',
+      ],
+    },
+  },
+  timeShard: {
+    general: [
+      'DO NOT COUNT WITH HIM. THE COUNT WILL BETRAY YOU. WHEN TIME TURNS, YOU HAVE A HEARTBEAT.',
+      'SLOW TIME LEAVES DOORS OPEN. FAST TIME CLOSES THEM.',
+    ],
+    super: {
+      stopped: [
+        'THE STOPPED CLOCK FREEZES EVERYTHING BUT HIM. A STOPPED CLOCK STILL HAS A FACE.',
+        'WHEN HE WINDS UP THE STOPPED CLOCK, HIS FACE IS THE FACE OF IT.',
+        'AT THE GLEAM OF THE STOPPED CLOCK, STRIKE THE FACE.',
+      ],
+    },
+    exploit: {
+      timeTurns: [
+        'WHEN TIME SPEEDS OR SLOWS, A HEARTBEAT OF CONFUSION.',
+        'JUST AFTER THE PACE CHANGES, HE IS LOST IN IT.',
+        'STRIKE HIM JUST AFTER TIME TURNS.',
+      ],
+      slowHour: [
+        'WHEN TIME SLOWS, THE BLOW THAT TURNS IT HANGS.',
+        'IN SLOW TIME, DEFEND THE BLOW THAT BROUGHT IT.',
+        'WHEN TIME SLOWS, DEFEND THE PUNCH THAT TURNED IT. HE HANGS OPEN.',
+      ],
+      midnightStrikes: [
+        'MIDNIGHT RAISES BOTH HANDS. LATE IN IT, THE HANDS MEET AT THE TOP.',
+        'WAIT FOR THE HANDS TO MEET.',
+        'COUNTER LATE IN MIDNIGHT.',
+      ],
+    },
+    anti: {
+      borrowedTime: [
+        'YOU STAND STILL. HE BORROWS YOUR TIME.',
+        'WAIT, AND EVERY BLOW GROWS HEAVIER.',
+        'STRIKE, AND HE GIVES IT BACK.',
+      ],
+    },
+  },
+  willShard: {
+    general: [
+      'FIVE ROUNDS. THE CORNER GIVES NOTHING BACK. EVERY ROUND HE GROWS.',
+      'HE STAYS DOWN ONLY WHEN HE HAS NOTHING LEFT TO GET UP WITH.',
+    ],
+    super: {
+      lastWord: [
+        'THE LAST WORD IS HIS WILL MADE A FIST. A WILL HAS A CENTER.',
+        'WHEN HE WINDS UP THE LAST WORD, HIS WHOLE BODY BRACES AT THE MIDDLE.',
+        'AT THE GLEAM OF THE LAST WORD, BREAK THE CENTER. LOW.',
+      ],
+    },
+    exploit: {
+      willBreaks: [
+        'THE WILL BREAKER RAISES HIS ARMS. LATE IN IT, THEY ARE HIGHEST.',
+        'WAIT FOR THE ARMS TO TOP OUT.',
+        'COUNTER LATE IN THE WILL BREAKER.',
+      ],
+      willBent: [
+        'THE WILL BREAKER IS HIS GREATEST BLOW.',
+        'LET IT MISS.',
+        'SLIP THE WILL BREAKER.',
+      ],
+      stubbornGetUp: [
+        'WHEN HE RISES, HE RISES SLOWLY.',
+        'JUST AFTER HE GETS UP, HE IS STILL GATHERING HIS WILL.',
+        'STRIKE HIM AS HE GETS UP.',
+      ],
+    },
+    anti: {
+      wearsYouDown: [
+        'YOUR GUARD IS UP BEFORE HE STRIKES. HE WEARS IT DOWN.',
+        'HOLD THE GUARD TOO LONG, AND A HEART DRAINS.',
+        'BLOCK WHEN HE PUNCHES. NOT BEFORE.',
+      ],
+      willNotStayDown: [
+        'WHEN YOU RISE, HE WILL NOT LET YOU STAY UP.',
+        'THE FIRST BLOWS AFTER YOU RISE ARE MUCH HEAVIER.',
+        'RISE, AND DEFEND.',
+      ],
+    },
+  },
+  // --- DASH UNBOUND -----------------------------------------------------------------------------------------------------
+  dash9: {
+    general: [
+      'HE HAS EVERYTHING HE EVER LEARNED. SO HAVE YOU. THIS IS THE GYM WHERE YOU BEGAN. IT REMEMBERS.',
+      'THE VOID CANNOT KEEP HIM AND HIS PRIDE AT ONCE.',
+    ],
+    super: {
+      finaleCall: [
+        'HE CALLS HIS FINALE INTO THE VOID. THE VOID DOES NOT ANSWER.',
+        'WHEN HE CALLS IT, HIS CHIN IS RAISED TO NOTHING.',
+        'AT THE GLEAM OF THE CALL, THE RAISED CHIN. IT WILL NOT DROP HIM. IT WILL OPEN HIM.',
+      ],
+      flashbulb: [
+        'EVEN HERE, HIS LIGHT FLICKERS BEFORE IT FLASHES.',
+        'BETWEEN FLICKER AND FLASH, THE FACE.',
+        'AT THE GLEAM, THE FACE.',
+      ],
+      highlightReel: [
+        'HE POINTS AT A SCREEN IN THE VOID. WHAT POINTS AT YOU?',
+        'WHEN HE CALLS THE REEL, HIS MIDDLE IS FORGOTTEN.',
+        'AT THE GLEAM OF THE CALL, LOW.',
+      ],
+      recklessFlurry: [
+        'THE ROAR EMPTIES HIM BEFORE THE FLURRY.',
+        'WHEN HE ROARS, THE BREATH LEAVES FROM BELOW.',
+        'AT THE GLEAM OF THE ROAR, LOW.',
+      ],
+    },
+    exploit: {
+      gloat: [
+        'EVEN UNBOUND, HE BOASTS.',
+        'WHEN HE LANDS, HE SPEAKS.',
+        'AFTER HE HITS YOU, ANSWER THE GLOAT.',
+      ],
+      outOfGas: [
+        'AFTER THE FLURRY, THE GASP.',
+        'A GASPING MAN BREATHES FROM BELOW.',
+        'WHILE HE GASPS, STRIKE LOW.',
+      ],
+      darkReprise: [
+        'OUT OF THE SHADOW, A HOOK.',
+        'THE HOOK FROM THE SHADOW IS THE ONE TO MEET.',
+        'COUNTER THE HOOK AS HE COMES OUT OF THE SHADOW STEP.',
+      ],
+      tautChain: [
+        'THE CHAIN STILL HAS A LENGTH.',
+        'GO WHERE THE CHAIN CANNOT FOLLOW.',
+        'SLIP LEFT OF THE CHAIN HOOK.',
+      ],
+      burnedBulb: [
+        'A BULB BURNS ONLY SO LONG.',
+        'LET THE FLASH FIND NOTHING.',
+        'SLIP THE FLASHBULB.',
+      ],
+    },
+    anti: {
+      fileOnYou: [
+        'HE REMEMBERS YOUR LAST FIGHT. BE SOMEONE ELSE.',
+        'WHAT YOU DID MOST, HE HAS AN ANSWER FOR.',
+        'CHANGE FROM THE FIRST BELL.',
+      ],
+      knowsItAll: [
+        'TWICE THE SAME, AND HE KNOWS IT.',
+        'NEVER BACK TO BACK.',
+        'NEVER THE SAME BLOW TWICE.',
+      ],
+      nothingToLose: [
+        'WHEN YOU RISE, HE HAS NOTHING LEFT TO LOSE.',
+        'THE FIRST BLOWS AFTER YOU RISE ARE THE HEAVIEST.',
+        'RISE, AND DEFEND.',
+      ],
+    },
+    phase: {
+      1: [
+        'IN THE FIRST, HE IS EVERY FIGHT YOU HAD WITH HIM, ALL AT ONCE.',
+        'LONG STRINGS. EVERY GIMMICK IN THEM, IN ORDER. YOU HAVE SEEN EACH ONE.',
+        'IN THE FIRST, NAME EACH GIMMICK AS IT COMES. YOU HAVE BEATEN ALL OF THEM.',
+      ],
+      2: [
+        'EMPTY HIM, AND THE VOID GETS INTO HIM.',
+        'IN THE SECOND, HIS TELLS TEAR. LISTEN. EVERY BLOW KEEPS ITS SOUND.',
+        'IN THE SECOND, TRUST YOUR EARS OVER YOUR EYES. AND ONLY NOW CAN HE FALL.',
+      ],
+    },
+  },
+  // --- ZERO'S TRUE FORM: DASH IN YOUR CORNER --------------------------------------------------------------------------
+  zeroTrue: {
+    general: [
+      'OKAY. HE\'S EVERYTHING. EVERY SHARD, EVERY CHAMPION, HALCYON, VORGATH. GUESS WHAT? WE BEAT EVERY ONE OF THEM. YOU MORE THAN ME, FINE.',
+      'HE THINKS HE DOESN\'T NEED PIECES. PIECES ARE ALL HE IS. TAKE HIM APART ONE AT A TIME.',
+    ],
+    super: {
+      echo_gus: [
+        'EVERY ECHO, HE PUTS ON SOMEBODY ELSE\'S FACE. IT\'S A COSTUME. AND I KNOW COSTUMES.',
+        'WHEN HE BECOMES A CHAMPION, HE HOLDS THEIR HEAD UP LIKE THEY DID. HIGH AND PROUD. DUMB.',
+        'WHEN THE ECHO GLEAMS, HIT THE FACE HE BORROWED. UPSTAIRS. IT WON\'T DROP HIM, BUT HE\'LL STAND THERE. TRUST ME.',
+      ],
+    },
+    exploit: {
+      'slip_*': [
+        'EVERY SIGNATURE HE BORROWS, HE OWES BACK. MAKE ONE MISS AND WATCH HIM COME APART.',
+        'SLIP A BORROWED SIGNATURE CLEAN. EACH ONE ONLY WORKS ONCE, SO SPREAD THEM AROUND.',
+        'SLIP THE MOVE HE STOLE FROM WHOEVER\'S COLOURS HE\'S WEARING. HE COMES UNDONE. ONCE PER CHAMP.',
+      ],
+      shadowHead: [
+        'WHEN HE WEARS HALCYON AT NOON, YOU CAN\'T SEE HIM. YOU CAN SEE HIS SHADOW. I LEARNED THAT THE HARD WAY.',
+        'ON THE FLASH, THE SHADOW SHOWS WHERE HIS HEAD IS.',
+        'IN HIS NOON BIT, HIT THE SHADOW\'S HEAD RIGHT ON THE FLASH OF A WINDUP.',
+      ],
+      firstRayMissed: [
+        'WHEN HE\'S HALCYON AT DAWN, HIS COMBOS END BIG. BIG ENDINGS MISS.',
+        'SURVIVE THE DAWN COMBO, MAKE THE LAST HIT WHIFF.',
+        'IN HIS DAWN BIT, SLIP THE LAST HIT OF A COMBO.',
+      ],
+      kingStumbles: [
+        'WHEN HE WEARS VORGATH, THE SLOW OVERHEADS ARE STILL SLOW. EVEN FOR HIM.',
+        'MAKE THE CROWN BREAKER OR THE FLOOR BREAKER MISS.',
+        'IN HIS VORGATH BITS, SLIP OR DUCK THE SLOW OVERHEADS. HE STUMBLES.',
+      ],
+      comesUndone: [
+        'IN HIS SECOND FACE, HIS PLAIN ROUTINE ENDS WITH HIM COMING APART. HE CAN\'T HELP IT.',
+        'WAIT OUT THE PLAIN ROUTINE. THE END OF IT IS FREE.',
+        'IN PHASE TWO, HIT HIM WHEN HE COMES UNDONE AT THE END OF HIS PLAIN ROUTINE.',
+      ],
+    },
+    anti: {
+      adaptsToYou: [
+        'HE\'S WATCHING WHAT YOU LEAN ON. SAME AS I USED TO. HE\'S JUST FASTER ABOUT IT.',
+        'WHATEVER YOU DO MOST, HE ANSWERS. TWO THINGS AT A TIME.',
+        'KEEP CHANGING IT UP. THE SECOND HE ADAPTS, ADAPT BACK.',
+      ],
+      nothingToHold: [
+        'YOU\'RE HIDING BEHIND YOUR GLOVES AGAINST NOTHING. COME ON. YOU\'RE BETTER THAN THAT.',
+        'BLOCK TOO LONG AND YOUR HEARTS DRAIN.',
+        'MOVE. SLIP. DUCK. DON\'T SIT THERE.',
+      ],
+      backToZero: [
+        'WHEN YOU GET UP, HE WANTS YOU BACK AT ZERO. HE HITS HARDER RIGHT AFTER.',
+        'DON\'T TRADE THE MOMENT YOU\'RE UP.',
+        'AFTER A KNOCKDOWN, DEFEND A FEW. THEN GO.',
+      ],
+    },
+    phase: {
+      1: [
+        'FIRST HE\'S THE TWELVE TESTS. EVERY SHARD YOU FREED, ONE AFTER ANOTHER. YOU ALREADY PASSED THEM.',
+        'EACH TEST IS ONE RULE. SLIP-ONLY, BLOCK-ONLY, DUCK-ONLY, COUNTER-ONLY... FIGURE OUT WHICH ONE, FAST.',
+        'WHEN A TEST STARTS, NAME THE SHARD IN YOUR HEAD AND FIGHT HIM THE WAY YOU BEAT HIM.',
+      ],
+      2: [
+        'NEXT IS EVERY CHAMPION. EVERY BELT YOU EVER TOOK. HE\'LL WEAR THEIR COLOURS FOR EACH ONE.',
+        'THE ECHO TELLS YOU WHO\'S NEXT. YOU KNOW HOW EACH OF THEIR BIG ONES MOVES.',
+        'IN THE CHAMPIONS, READ THE COLOURS, SLIP THE SIGNATURE, MAKE HIM PAY. ONE CHAMP AT A TIME.',
+      ],
+      3: [
+        'THEN HE BORROWS HALCYON AND VORGATH. THE LIGHT AND THE FLOOR. I WAS THERE FOR ONE OF THOSE. NOT FUN.',
+        'WHEN HE\'S HALCYON, THINK DAWN, NOON, DUSK. WHEN HE\'S VORGATH, THE FLOOR GOES.',
+        'IN THE BORROWED FORMS, FIGHT EACH ONE LIKE THE REAL THING. THE SAME OPENINGS ARE STILL THERE.',
+      ],
+      4: [
+        'LAST IS THE WHOLE OF NOTHING. A WHITE SCREEN. FULL SPEED. AND HE\'S THIN, PAL. HE\'S SPENT EVERYTHING GETTING THERE.',
+        'IN THE WHITE, IT\'S ONLY HEARTS AND BARS. NO TIME TO THINK. ONLY WHAT YOU KNOW.',
+        'THE END: FULL SPEED, BUT HIS HEALTH IS THIN AND HE CAN FINALLY GO DOWN. DEFEND PERFECT AND TAKE EVERY OPENING. FINISH IT.',
+      ],
+    },
+  },
+};

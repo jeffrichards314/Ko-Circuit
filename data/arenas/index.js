@@ -1,0 +1,34 @@
+// Arena registry: one file per circuit arena.
+import rookie from './rookie.js';
+import minor from './minor.js';
+import metro from './metro.js';
+import major from './major.js';
+import carnival from './carnival.js';
+import continental from './continental.js';
+import world from './world.js';
+import storm from './storm.js';
+import legends from './legends.js';
+import grandprix from './grandprix.js';
+import dream from './dream.js';
+import underground from './underground.js';
+import nightmare from './nightmare.js';
+import zero from './zero.js';
+import { NIGHT_GYM } from './nightgym.js';
+import pantheon1 from './pantheon1.js';
+import pantheon2 from './pantheon2.js';
+import { HEROES_HALL } from './pantheon3.js';
+import pantheon4 from './pantheon4.js';
+import pantheon5 from './pantheon5.js';
+import pantheon7 from './pantheon7.js';
+import halcyon from './halcyon.js';
+import { MIRROR_SANCTUM } from './pantheon6.js';
+import underworld1 from './underworld1.js';
+import underworld2 from './underworld2.js';
+import { CHAIN_PITS } from './underworld3.js';
+import underworld4 from './underworld4.js';
+import { VOID_ARENAS } from './void.js';
+import underworld5 from './underworld5.js';
+import { ABYSS_GATE } from './underworld6.js';
+import vorgath from './vorgath.js';
+
+export const ARENAS = { rookie, minor, metro, major, carnival, continental, world, storm, legends, grandprix, dream, underground, nightmare, zero, ...NIGHT_GYM, pantheon1, pantheon2, ...HEROES_HALL, pantheon4, pantheon5, ...MIRROR_SANCTUM, pantheon7, halcyon, underworld1, underworld2, ...CHAIN_PITS, underworld4, underworld5, ...ABYSS_GATE, vorgath, ...VOID_ARENAS };

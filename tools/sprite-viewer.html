@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KO Circuit — Sprite Viewer</title>
+<style>
+  :root { --bg: #14161c; --panel: #1d2029; --line: #333846; --text: #d8dbe3; --dim: #8a90a0; --acc: #f0b429; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 13px/1.4 system-ui, sans-serif; display: flex; min-height: 100vh; }
+  aside { width: 260px; background: var(--panel); border-right: 1px solid var(--line); padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+  h1 { font-size: 15px; margin: 0; color: var(--acc); }
+  label { display: block; color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+  select, button { width: 100%; background: #262a35; color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 5px 6px; font: inherit; }
+  button { cursor: pointer; }
+  button:hover { border-color: var(--acc); }
+  .row { display: flex; gap: 6px; }
+  .row > * { flex: 1; }
+  #anims { display: flex; flex-direction: column; gap: 2px; max-height: 42vh; overflow: auto; }
+  #anims button { text-align: left; padding: 3px 6px; }
+  #anims button.on { border-color: var(--acc); color: var(--acc); }
+  main { flex: 1; padding: 16px; overflow: auto; }
+  .stage { display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap; }
+  .box { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px; }
+  .box h2 { margin: 0 0 8px; font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
+  canvas { image-rendering: pixelated; display: block; }
+  #info { color: var(--dim); font-family: ui-monospace, monospace; font-size: 12px; margin-top: 8px; min-height: 18px; }
+  #sheet { display: flex; flex-wrap: wrap; gap: 10px; }
+  #sheet figure { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 6px; text-align: center; }
+  #sheet figcaption { font-size: 10px; color: var(--dim); margin-top: 4px; font-family: ui-monospace, monospace; }
+  #pal { display: flex; flex-wrap: wrap; gap: 2px; }
+  #pal span { width: 14px; height: 14px; border: 1px solid #0006; }
+</style>
+</head>
+<body>
+<aside>
+  <h1>Sprite Viewer</h1>
+  <div><label>Fighter</label><select id="fighter"></select></div>
+  <div><label>Palette</label><select id="palette"></select></div>
+  <div><label>Background</label><select id="bg"><option value="canvas">Ring canvas</option><option value="dark">Dark</option><option value="green">Green</option></select></div>
+  <div><label>Animation</label><div id="anims"></div></div>
+  <div class="row"><button id="play">Pause</button><button id="step">Step</button></div>
+  <div><label>Speed</label><select id="speed"><option value="1">1x (60 fps)</option><option value="0.5">0.5x</option><option value="0.25">0.25x</option></select></div>
+  <div><label>Palette colors</label><div id="pal"></div></div>
+</aside>
+<main>
+  <div class="stage">
+    <div class="box"><h2>1x</h2><canvas id="c1"></canvas></div>
+    <div class="box"><h2>4x</h2><canvas id="c4"></canvas></div>
+  </div>
+  <div id="info"></div>
+  <h2 style="font-size:12px;color:#8a90a0;text-transform:uppercase;letter-spacing:.06em;margin:22px 0 8px">All frames (2x)</h2>
+  <div id="sheet"></div>
+</main>
+<script type="module">
+import { fighterSprites, playerSprites, paletteFor } from '../src/engine/spriteCache.js';
+import { spritePalette, swapPalette } from '../src/engine/palette.js';
+import { PALETTES } from '../data/palette.js';
+import { FIGHTERS } from '../data/fighters/index.js';
+import { OpponentAI } from '../src/fight/opponentAI.js';
+import { Player, PT } from '../src/fight/player.js';
+import { PORTRAITS, playerPortrait } from '../data/sprites/portraits.js';
+import { TITLE_DEFENSE, remixed } from '../data/fighters/titleDefense.js';
+import { jogFrames, ropeFrames } from '../data/sprites/jog.js';
+import { DEFAULT_PROFILE, playerPalettes, hairStyleOf, costumeIdOf, frontPalette } from '../data/customization.js';
+import { COSTUMES } from '../data/costumes.js';
+
+const $ = (id) => document.getElementById(id);
+const BG = { canvas: [168, 184, 208], dark: [20, 22, 28], green: [40, 150, 70] };
+
+function brighten(p) {
+  const o = {};
+  for (const k of p.keys) { const [r, g, b] = p.spec[k]; o[k] = [Math.min(31, r + 8), Math.min(31, g + 8), Math.min(31, b + 8)]; }
+  return swapPalette(p.name + '.hi', p, o);
+}
+
+// --- subjects: each exposes sprites, palettes, and animations as frame->pose functions
+const subjects = {};
+// (the Title Defense remixes too: their new moves and alternate costumes)
+for (const [key, d] of [...Object.entries(FIGHTERS), ...TITLE_DEFENSE.map((id) => [`${id}.td`, remixed(id)])]) {
+  const bank = fighterSprites(d.spriteLayers);
+  const base = PALETTES[d.palette];
+  const pals = { default: paletteFor(d.palette).u32 };
+  for (const [k, v] of Object.entries(bank.layers.palettes)) if (k !== 'default') pals[k] = paletteFor(v).u32;
+  pals.highlight = spritePalette(brighten(base.A), base.B && brighten(base.B)).u32;
+  const ai = new OpponentAI(d, { randomness: 'fixed' }, { round: 1, clock: 0, sfx() {}, opponentAttack: () => 'dodged' });
+  const at = (state, extra = {}) => (t) => {
+    Object.assign(ai, { state, t, moveT: t, ...extra }); ai.fight.clock = t;
+    return ai.view().pose;
+  };
+  const anims = {
+    idle: { len: 88, fn: at('idle') },
+  };
+  for (const [id, m] of Object.entries(d.moves)) {
+    const mv = { id, ...m };
+    const len = m.windupFrames + m.activeFrames + m.recoveryFrames;
+    anims['move: ' + id] = {
+      len, marks: [m.windupFrames, m.windupFrames + m.activeFrames],
+      fn: (t) => {
+        ai.move = mv; ai.moveResult = 'dodged'; ai.fight.clock = t;
+        if (t < m.windupFrames) Object.assign(ai, { state: 'windup', moveT: t });
+        else if (t < m.windupFrames + m.activeFrames) Object.assign(ai, { state: 'active', moveT: t - m.windupFrames });
+        else Object.assign(ai, { state: 'recovery', moveT: t - m.windupFrames - m.activeFrames });
+        return ai.view().pose;
+      },
+    };
+  }
+  Object.assign(anims, {
+    block: { len: 30, fn: at('block') },
+    'hit-high': { len: 20, fn: at('hit', { hitHeight: 'high' }) },
+    'hit-low': { len: 20, fn: at('hit', { hitHeight: 'low' }) },
+    stunned: { len: 72, fn: at('stunned') },
+    knockdown: { len: 70, fn: at('kd') },
+    'on-canvas': { len: 30, fn: at('down') },
+    'get-up': { len: 40, fn: at('getup') },
+    taunt: { len: 40, fn: at('taunt') },
+    victory: { len: 32, fn: at('victory') },
+  });
+  // fighter-specific states (gasping, eating...) played as `open` steps
+  const STD = ['idle', 'block', 'hitHigh', 'hitLow', 'stunned', 'knockdown', 'down', 'getup', 'taunt', 'victory'];
+  for (const k of Object.keys(d.anims)) if (!STD.includes(k)) anims[k] = { len: 96, fn: at('open', { openStep: { anim: k }, flinch: 0 }) };
+  subjects[key] = {
+    name: d.name + (d.remix ? ' (REMIX)' : ''), bank, pals, anims,
+    portrait: () => (PORTRAITS[d.id] || PORTRAITS.barney)(paletteFor(d.palette)),
+  };
+}
+{
+  const bank = playerSprites();
+  const pals = { default: paletteFor('player').u32, pink: paletteFor('playerPink').u32, gold: paletteFor('playerGold').u32 };
+  const p = new Player({ phase: 'fight', sfx() {}, playerPunch() {} });
+  const at = (state, extra = {}) => (t) => { Object.assign(p, { state, t, clock: t, shake: 0, pink: false, ...extra }); return p.view().pose; };
+  const anims = {
+    idle: { len: 96, fn: at('idle') },
+    'jab L high': { len: PT.JAB_TOTAL, fn: at('jab', { dir: -1, high: true }) },
+    'jab R high': { len: PT.JAB_TOTAL, fn: at('jab', { dir: 1, high: true }) },
+    'jab L low': { len: PT.JAB_TOTAL, fn: at('jab', { dir: -1, high: false }) },
+    'jab R low': { len: PT.JAB_TOTAL, fn: at('jab', { dir: 1, high: false }) },
+    'dodge L': { len: PT.DODGE_TOTAL, fn: at('dodge', { dir: -1 }) },
+    'dodge R': { len: PT.DODGE_TOTAL, fn: at('dodge', { dir: 1 }) },
+    block: { len: 20, fn: at('block') },
+    duck: { len: PT.DUCK_TOTAL, fn: at('duck') },
+    'star punch': { len: PT.STAR_TOTAL, fn: at('star', { dir: 1 }) },
+    hit: { len: PT.HIT_STUN, fn: at('hit') },
+    'pink exhausted': { len: 64, fn: at('idle', { pink: true }) },
+    'knocked down': { len: 60, fn: at('down') },
+    'get-up': { len: 36, fn: at('getup') },
+    victory: { len: 32, fn: at('victory') },
+  };
+  // dodge / jab offsets matter for the preview too
+  for (const a of Object.values(anims)) { const fn = a.fn; a.off = (t) => { fn(t); return p.view(); }; }
+  subjects.player = { name: 'PLAYER', bank, pals, anims, portrait: () => playerPortrait(paletteFor('playerFront')), portraitPal: paletteFor('playerFront').u32 };
+}
+// every costume: the ring's back view (its own pieces), and the side view (the road, the map, the halls, cutscenes, the jump rope)
+for (const [ci, K] of COSTUMES.entries()) {
+  const prof = { ...DEFAULT_PROFILE, costume: ci };
+  const pp = playerPalettes(prof), fp = frontPalette(prof);
+  const back = playerSprites(hairStyleOf(prof), costumeIdOf(prof));
+  subjects['player:' + K.id] = { name: 'PLAYER BACK: ' + K.id.toUpperCase(), bank: back, pals: { default: pp.default.u32, pink: pp.pink.u32, gold: pp.gold.u32 }, anims: subjects.player.anims, portrait: () => playerPortrait(fp, hairStyleOf(prof)), portraitPal: fp.u32 };
+  const run = jogFrames(prof), rope = ropeFrames(prof), run2 = jogFrames(prof, undefined, 2), rope2 = ropeFrames(prof, 2);
+  const S = { run0: run.frames[0], run1: run.frames[1], run2: run.frames[2], run3: run.frames[3], rope0: rope.frames[0], rope1: rope.frames[1],
+    'run0@2x': run2.frames[0], 'run1@2x': run2.frames[1], 'rope0@2x': rope2.frames[0], 'rope1@2x': rope2.frames[1] };
+  const sideBank = { poses: Object.keys(S), get: (k) => S[k] };
+  subjects['side:' + K.id] = { name: 'PLAYER SIDE: ' + K.id.toUpperCase(), bank: sideBank, pals: { default: run.pal },
+    anims: { jog: { len: 28, fn: (t) => 'run' + (Math.floor(t / 7) % 4) }, 'jump rope': { len: 24, fn: (t) => 'rope' + (Math.floor(t / 12) % 2) } },
+    portrait: () => playerPortrait(fp, hairStyleOf(prof)), portraitPal: fp.u32 };
+}
+
+// --- UI
+let cur = null, anim = null, frame = 0, playing = true, acc = 0, last = performance.now();
+for (const [id, s] of Object.entries(subjects)) $('fighter').append(new Option(s.name, id));
+$('fighter').onchange = () => pick($('fighter').value);
+$('palette').onchange = () => { drawPal(); drawSheet(); };
+$('bg').onchange = () => drawSheet();
+$('play').onclick = () => { playing = !playing; $('play').textContent = playing ? 'Pause' : 'Play'; };
+$('step').onclick = () => { playing = false; $('play').textContent = 'Play'; frame = (frame + 1) % anim.len; };
+
+function pick(id) {
+  cur = subjects[id];
+  $('palette').innerHTML = '';
+  for (const k of Object.keys(cur.pals)) $('palette').append(new Option(k, k));
+  $('anims').innerHTML = '';
+  for (const name of Object.keys(cur.anims)) {
+    const b = document.createElement('button');
+    b.textContent = name;
+    b.onclick = () => { anim = cur.anims[name]; frame = 0; [...$('anims').children].forEach((x) => x.classList.toggle('on', x === b)); };
+    $('anims').append(b);
+  }
+  $('anims').firstChild.click();
+  drawPal(); drawSheet();
+}
+
+function drawPal() {
+  const u = cur.pals[$('palette').value];
+  $('pal').innerHTML = '';
+  for (let i = 1; i < u.length; i++) {
+    if (!u[i]) continue;
+    const s = document.createElement('span');
+    s.style.background = `rgb(${u[i] & 255},${(u[i] >> 8) & 255},${(u[i] >> 16) & 255})`;
+    s.title = `index ${i}`;
+    $('pal').append(s);
+  }
+}
+
+function paint(canvas, sprite, pal, scale, W, H, ox = 0, oy = 0, ax = null, ay = null) {
+  canvas.width = W * scale; canvas.height = H * scale;
+  const ctx = canvas.getContext('2d');
+  const img = ctx.createImageData(W, H);
+  const buf = new Uint32Array(img.data.buffer);
+  const bg = BG[$('bg').value];
+  buf.fill((255 << 24) | (bg[2] << 16) | (bg[1] << 8) | bg[0]);
+  const x0 = (ax ?? Math.floor(W / 2)) - sprite.ax + ox, y0 = (ay ?? H - 4) - sprite.ay + oy;
+  for (let y = 0; y < sprite.h; y++) for (let x = 0; x < sprite.w; x++) {
+    const v = sprite.data[y * sprite.w + x];
+    const X = x0 + x, Y = y0 + y;
+    if (v && X >= 0 && Y >= 0 && X < W && Y < H) buf[Y * W + X] = pal[v];
+  }
+  const off = new OffscreenCanvas(W, H);
+  off.getContext('2d').putImageData(img, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(off, 0, 0, W * scale, H * scale);
+}
+
+function drawSheet() {
+  const el = $('sheet');
+  el.innerHTML = '';
+  const pal = cur.pals[$('palette').value];
+  for (const pose of cur.bank.poses) {
+    const s = cur.bank.get(pose);
+    const fig = document.createElement('figure');
+    const c = document.createElement('canvas');
+    paint(c, s, pal, 2, s.w + 4, s.h + 4, 0, 0, s.ax + 2, s.ay + 2);
+    fig.append(c);
+    const cap = document.createElement('figcaption');
+    cap.textContent = `${pose} ${s.w}x${s.h}`;
+    fig.append(cap);
+    el.append(fig);
+  }
+  const port = cur.portrait();
+  const fig = document.createElement('figure');
+  const c = document.createElement('canvas');
+  paint(c, port, cur.portraitPal || pal, 2, port.w, port.h, 0, 0, 0, 0);
+  fig.append(c);
+  const cap = document.createElement('figcaption'); cap.textContent = 'intro portrait'; fig.append(cap);
+  el.append(fig);
+}
+
+function tick(now) {
+  const dt = Math.min(100, now - last); last = now;
+  if (playing && anim) {
+    acc += dt * +$('speed').value;
+    while (acc >= 1000 / 60) { acc -= 1000 / 60; frame = (frame + 1) % anim.len; }
+  }
+  if (anim) {
+    const pose = anim.fn(frame);
+    const v = anim.off ? anim.off(frame) : { dx: 0, dy: 0 };
+    const s = cur.bank.get(pose);
+    const pal = cur.pals[$('palette').value];
+    const small = cur === subjects.player || cur.name.startsWith('PLAYER'); const W = small ? 96 : 150, H = small ? 100 : 150;
+    paint($('c1'), s, pal, 1, W, H, v.dx || 0, v.dy || 0);
+    paint($('c4'), s, pal, 4, W, H, v.dx || 0, v.dy || 0);
+    const marks = anim.marks ? `  [windup 0-${anim.marks[0] - 1} | active ${anim.marks[0]}-${anim.marks[1] - 1} | recovery]` : '';
+    $('info').textContent = `frame ${String(frame).padStart(3)} / ${anim.len}   pose: ${pose}   ${s.w}x${s.h}${marks}`;
+  }
+  requestAnimationFrame(tick);
+}
+pick(Object.keys(subjects)[0]);
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

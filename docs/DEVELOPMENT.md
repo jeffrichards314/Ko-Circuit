@@ -1,0 +1,595 @@
+# KO Circuit: development notes
+
+(These are the build notes, kept with the code. The player-facing README is [../README.md](../README.md); how the public copy is built is in `tools/build.mjs`. Paths below are from the repo root. The reference images and the spec files are not in the repository.)
+
+An original NES-style tell-and-counter boxing game. `GAME_SPEC_BOXING.md` is the source of truth.
+This build is **Phase 7**, the last one: the other modes (§6: Title Defense, the Gauntlet and
+Practice; since 2026-09-30 reached on the world map, see below), the training camp (§7: a drill between circuits,
+six perks, up to three equipped), the music and SFX pass (§12), the CRT filter (§1) and the
+balance pass against §9 (`tools/balance.mjs`).
+**Phases 8-11** (the rival update): an audit (Phase 8), the rival Dash Maddox and circuit replay
+(Phase 9, 9b), medals and record times (Phase 10; Challenge mode was replaced by podium rematches), and medal unlockables (Phase 11). See
+"Rival, replay, medals and unlockables" below.
+(Phase 6: the secret Underground (#43-46), post-game Nightmare (#47-50), ZERO, their arenas and
+themes, and both endings. Phase 5: Legends #34-37, Grand Prix #38-42 and Jax Crane, their arenas and themes. Phase 4: Continental #22-25, World #26-29, Storm #30-33, their arenas and themes, the giant build,
+circuit fakes, per-round star caps and the perfect-play bot. Phase 3: Metro #9-12, Major #13-16, the secret Carnival #17-21 and their arenas and themes. Phase 2: Rookie #2-4 and Minor #5-8, career mode, map, lives, corner, customization, passwords,
+belt ceremony, jogging. Phase 1: engine, fight rules, player, AI executor and modifiers,
+sprite/arena pipelines, dev tools, Barney.)
+
+## Playtest fixes (2026-10-03, spec T8)
+
+- **Saves:** three slots (slot 1 = the original `kocircuit.*` keys). Everything that is progress belongs to one slot; only options and key bindings are global. Opening a save (`src/save/session.js`) replaces all in-memory state. Title: CONTINUE / LOAD GAME / NEW GAME (pick a slot) / PASSWORD (a password makes a save of its own). `node tools/save-test.mjs`.
+- **Interiors:** every hall scrolls (the camera follows you, stops at the room's edges); the board, prompt bar and confirm box are drawn on the screen and never clipped. `node tools/interior-edges.mjs [--png out.png]`.
+- **Cutscenes are text-driven:** a line must finish typing and be pushed past; `auto` waits for a reading delay; only holding START skips (a tap only advances text). `node tools/scene-text-test.mjs`.
+- **Practice:** a VERSION row offers each opponent's Title Defense version, per division, once you have reached him in a defense. `node tools/practice-td-test.mjs`.
+
+## The world map (2026-09-30, spec §19 G4, G10, G11)
+
+Everything outside the title screen (CONTINUE / NEW GAME / PASSWORD / OPTIONS) is a **place on a scrolling tile map** that you walk to and go inside. The world is
+**six maps, each a world of its own**, joined by journeys (there are no other menus).
+
+- **The maps** (`data/world/`: `main`, `champ`, `zero`, `pantheon`, `underworld`, `void`, and `index.js` with the portals, when each world opens and where it is
+  entered from; `src/world/`: tiles, terrain, paint, walk, state, sky, markers, ambient; `src/screens/worldMap.js`).
+  - **The circuit road** (main): four compact islands up a sea, Hometown -> the City (a bus; the Carnival pier off Metro) -> the harbor (a bridge, then a ferry) -> the
+    Continent -> the Highlands (the Underground quarry off Legends), with the Champions' Road at the top.
+  - **The city of champions** (champ): Victory Plaza, the Dream arena on its walled terrace, the Title Defense hall and the Gauntlet tower, and the Sky Gate on the mountain. The
+    warp to ZERO's world tears open in an east alley once Jax is beaten, and the chasm opens in the west district after The Fall.
+  - **The warped city** (zero): the Nightmare circuit, then ZERO's throne. **The Pantheon**: one climbing terrace of marble over a floor of cloud. **The Underworld**: caverns
+    cut through solid rock, from the ferry over the Styx down to Vorgath. **The Void**: a black glass floor that goes on past the edge, holes of nothing in it.
+  - You walk the paths: a direction takes the path that leaves that way, nothing happens if none does. Clouds hide what is ahead: the sky's clouds on the road and in the
+    Pantheon, smoke below you in the Underworld, static to the east in the Void. Clearing a circuit lifts them and draws the next path. START skips a reveal. A tap
+    walks to a place, and a touch pad appears on touch screens (`src/engine/touch.js`).
+  - Each world has its own **song** and its own **life** (`src/world/ambient.js`):
+    - road: gulls, boats, whales, jumping fish
+    - city: searchlights, fireworks, a blimp, confetti
+    - warp: lightning, rising debris, the picture glitching
+    - Pantheon: light beams, spirits, rolling clouds
+    - Underworld: embers, falling ash, the ferry on the Styx
+    - Void: drifting debris, glitching tiles, silent white figures
+  - Every place stands on a plinth in its world's style, with banners in its belt's colours (or lamps, crystals, braziers, cubes) either side and a medallion marker in front.
+- **The journeys** (`src/screens/travel.js`): a portal at a map's edge leads to another world through a full scene, and the way back is the same scene reversed:
+  - road trip to the city of champions
+  - the warp into ZERO's world
+  - the climb through the clouds to the Pantheon
+  - the fall down the chasm
+  - the pull through the tear into the Void
+
+  The first time you take one it plays in full (9 s); after that it's short (2.5 s) and START skips it. When the career moves on to another world, the runner walks
+  to the portal and sets off by itself.
+- **The interiors** (`data/interiors.js`, `src/screens/interior.js`, `src/world/themes.js`, `props.js`): one side-view engine for every hall, defined in data (a station
+  or a podium is a row). A circuit's hall has a door, themed walls, and a podium for each fighter: the one you stand at grows and shows his board (name, best time, the three
+  medals and what they need, scouting), a fighter not reached is a black silhouette, the next one is a Career fight (a loss costs a life), one already beaten in this run is
+  an **instant rematch** (never a life, never the ladder; medals and record times count). A reset circuit makes every fighter unbeaten again; **the Void never resets**
+  (no lives there: a loss just refights). The Title Defense belt hall (three tiers, each a podium hall with the champions' own medals and times) and the Gauntlet tower
+  (five doors and a records board) appear when Jax is beaten. The **Home gym** holds every old menu as a station: speed bag, jump rope, road run, perks clipboard, fight tapes
+  (replay), practice ring, locker and mirror, opponent index, gallery, trophy case, medal shop, TV (theater), jukebox and the desk (save, password, options, controls).
+- Tools:
+  - `node tools/map-audit.mjs`: the six maps, the layout rules, walking, portals, reveals, journeys, every hall
+  - `node tools/flow-test.mjs`
+  - `node tools/world-sheet.mjs out.png --zone champ`: a whole map as one picture
+  - `node tools/interior-sheet.mjs out.png`: every hall on one sheet
+  - `node tools/screen-shot.mjs out.png travel --args '{"travel":"climb","to":"pantheon","first":true}' --at 40,200,400`: a journey
+  - `node tools/screen-shot.mjs out.png map|interior --args '{"id":"rookie"}' --career new|zero|...`: the map and the halls
+- Saves: the map remembers where you stood and what it has revealed in `kocircuit.world`; Title Defense champions' own medals are `records.tdChamps`.
+
+## Run
+
+It is plain ES modules, so it needs a static server (opening the file directly will not work, because of module CORS).
+Use the bundled no-cache server so the browser never runs stale modules after an edit:
+
+```bash
+cd ko-circuit
+python3 tools/serve.py 8420
+```
+
+Then open:
+
+- Game: http://localhost:8420/
+- Sprite viewer: http://localhost:8420/tools/sprite-viewer.html
+- Fight lab: http://localhost:8420/tools/fight-lab.html
+- Fight lab perfect-play bot: tick "Perfect-play bot" (and optionally "Bot attacks too"). It
+  defends every punch frame-exactly, fakes included; any punch it takes is listed under Live state.
+- Headless perfect-play check (every opponent, full fights, needs Node 22+):
+
+```bash
+node tools/perfect-play.mjs rusty tia --fights 8
+```
+
+  `--sloppy` also throws punches into his guard to provoke parries, ice counters, snowballs, possum
+  traps and meditation bounces; `--defense-only` / `--attack-only` run one pass. Exit code 1 if any
+  punch landed or a fight was lost. `--latency N` gives the bot an N-frame reaction time (no
+  anticipation), a rough difficulty gauge: failures there are expected from Legends on.
+- Pose/portrait check (composes every pose a fighter can show, and its portrait):
+
+```bash
+node tools/check-poses.mjs rourke jax
+```
+  `--td` runs the Title Defense remixes instead, `--rounds 1` plays one-round (Gauntlet) fights,
+  and with `--latency N`, `--learned` applies the reaction time to combo openers only (a player
+  who knows the fighter's fixed chains).
+- Balance audit (§9): every fighter against his circuit's row of the table (tells, block drain,
+  hardest punch, get-ups, star sources, the perfect-hit rule); `--curve` adds the reaction-time
+  curve (% of his punches that land on a learned player with an 8/12/16/20-frame reaction time),
+  `--td` audits the remixes:
+
+```bash
+node tools/balance.mjs --curve
+```
+- Button-mash check: a pure masher, a masher with good defense and a patient player (the
+  same defense, only counters and punishes) against each opponent; mashing should lose or
+  cost far more than patience: `node tools/spam-test.mjs [ids] [--circuit metro] [--latency 14]`
+- Audio audit (§12): every referenced song and sound exists, every looping song's channels are
+  the same length: `node tools/audio-audit.mjs`
+- Training drill calibration (simulated players vs the medal scores): `node tools/training-sim.mjs`
+- Pose sheet (zoomed frames for art review): http://localhost:8420/tools/pose-sheet.html?f=gus&p=idle1,eat1,eat2&s=4
+  (`f` can list several fighters, `f=null,eclipse`, or be `portrait:kid,mort` or `trainer:oldschool,hype`;
+  `pal=` draws them in another palette, e.g. `f=warden&pal=warden.riot` or `f=zero&pal=zero.gus`;
+  `f=referee&p=refStand,refCount1,refWave` shows the referee)
+- Opponent gallery (every opponent's portrait and key poses in roster order, champions' Title
+  Defense looks beside them): http://localhost:8420/tools/gallery.html (`?circuit=world&td=1&zoom=3`)
+- Sprite sizes (idle height and width of every fighter, and any pose cut off by its canvas):
+  `node tools/sprite-sizes.mjs`
+
+`npx serve` or VS Code Live Server also work, but may cache modules: hard-reload (Cmd+Shift+R) after edits.
+
+**Ascension Phase C** (Underworld I-III, the Ferryman, Dash in Chains): see GAME_SPEC_BOXING.md §18 A11. New tools
+behavior: `tools/screen-shot.mjs` has `--career u1|u2|u3` presets and the `underworld`, `descend` and `ferry` screens.
+
+**Ascension Phase D** (Underworld IV-VI, Dash the King's Champion, Vorgath, the deal): see GAME_SPEC_BOXING.md §18 A12. New tools behavior:
+`tools/screen-shot.mjs` has `--career u4|u5|u6|vorgath` presets and the `deal` screen; `tools/portrait-grid.mjs out.png id,id,... [--pal id:palette]` is a
+contact sheet of intro-card portraits. The perfect-play bot keeps a jab 18-19 frames from a block-only or duck-only punch (`safeJab`), and `circuit.special`
+lists a circuit's own modifiers (the Furnace's heat).
+
+**Ascension Phase E** (the Void, Dash Unbound, ZERO's true form, the Reforging, the true ending): see GAME_SPEC_BOXING.md §18 A13. New tools behavior:
+`tools/screen-shot.mjs` has `--career door|v1|v2|v3|rival9|zeroTrue` presets and the `void`, `voidDoor`, `free`, `reforge` and `trueEnding` screens; `perfect-play`, `medal-sim` and
+`spam-test` use each fighter's own round count (the Will Shard's five, ZERO's four); `tools/fight-shot.mjs` works again. Modifiers in `src/fight/asc/void.js`.
+
+**Ascension Phase F** (the last one: Ascension medals and unlocks, five costumes, gallery / sound test / scouting for every new zone, the Full Gauntlet, the balance
+pass and the final knowledge audit): see GAME_SPEC_BOXING.md §18 A14. `node tools/final-audit.mjs [--render] [--calibrate N]` is the one-command sweep (roster, the A3
+table, K4 counts, medals, gallery, palettes, music, unlocks; `--render` fights every fighter in Practice mode with exploit view; `--calibrate` has the perfect-play bot fight
+everyone N times against the Bronze targets); `perfect-play --gauntlet` fights exactly as the Full Gauntlet does; `tools/screen-shot.mjs` has the `extras`, `records`, `medals`,
+`gallery`, `soundtest`, `unlocks`, `modes` and `run` screens and `--medals N --ascmedals N --met base,pantheon,underworld,void --rec jax,zero,full --set sel=100 --scout N`.
+
+## Rival, replay, medals and unlockables (Phases 8-11)
+
+- **Rival: Dash Maddox** (§11b). Four extra story fights after the Minor, Major, World and Grand Prix
+  titles; the last one (the showdown) gates Jax. Data: `data/fighters/rival/dash1-4.js` on a shared
+  move module (`rival/moves.js`); one set of sprite layers with four outfits
+  (`data/sprites/fighters/dash.js`, signature teal kept in every stage), portraits
+  (`data/sprites/portraits/rival.js`). Each fight is a one-fighter "circuit" (`rival1`-`rival4` in
+  `data/circuits.js`) that copies its §9 row. Arena: the Night Gym, four dressings
+  (`data/arenas/nightgym.js`). Music: `data/music/rival.js` (rival theme, Showdown mix, cutscene
+  arrangement, entrance jingle). Cutscenes: `src/screens/rival.js` with the lines in
+  `rival/scenes.js` (first-attempt / rematch, before / after). Know-It-All is the Knox combo reader in
+  single-punch mode (`comboReader` `single: true`). Dash IV is in the Gauntlet right before Jax.
+- **Circuit replay** (§5). The fight tapes in the Home gym: any cleared circuit, its own 2 lives, the
+  rival at the end if you've beaten him; the career never changes except the second-chance
+  Carnival / Underground unlock. `career.replay` in `src/save/career.js`.
+- **Password**: 13 characters now (rival fights won); 12- and 10-character codes still work, and an
+  old save's skipped rival fights become optional "unfinished business" nodes (the showdown still
+  comes before Jax).
+- **Medals** (§15): every fight records telemetry (`src/fight/tracker.js`); `data/medals.js` has the
+  speed targets and the reusable Gold checks; each fighter's Gold is `medals.signature` in his data
+  file. Medals and best KO times live in `kocircuit.medals` (`src/save/medals.js`), never in the
+  password; they count in Career (replays and podium rematches too). Intro cards and the results show them.
+- **Unlockables** (§16): medal-count thresholds (`data/unlocks.js`): sound test, fighter gallery
+  (sprite, 4x view, bio, stats, record, medals, trainer notes), 8 costumes (`data/costumes.js`, a
+  COSTUME row in Customize), and alternate palettes for every opponent in Practice
+  (generated: `ensureAltPalette` in `data/palette.js`). The Home gym's trophy case (medal grid and record times), medal shop (unlocks), gallery and jukebox (sound test): `src/screens/extras.js`.
+- Tools: `node tools/career-test.mjs` (every career / lives / rival / replay / password / save
+  path, 1240 checks), `node tools/medal-sim.mjs [--static] [--patient]` (every Gold is meetable; bot
+  KO times vs the speed targets), `node tools/sheet-png.mjs out.png --f dash1 --p idle1 --s 3 [--alt]`
+  and `node tools/fight-shot.mjs out.png dash4 [--arena nightgym4]` (headless PNGs for art review).
+
+## Fight knowledge (Phases 12 and 13a, spec §17)
+
+- **Behavior tracker** (`src/fight/behavior.js`): what the player does over the last 20 s and the
+  whole fight (punch rate, head/body, left/right, blocking, dodge bias, early dodges, passivity,
+  star hoarding, counters vs free hits, repeated combos, rushing, get-ups). `fight.behavior`.
+- **Knowledge layer** (`src/fight/knowledge.js`): each fighter's `exploits`, `antiStrategies`,
+  `scriptedMoments` and `stateTriggers` (data format at the top of the file and in spec §10), plus
+  the move defense rules `unblockable`, `undodgeable`, `wrongDefensePenalty` and `defenseCost`.
+  Built for #1-50 (Rookie through Nightmare), Jax Crane, all four Dash Maddox fights and the first ZERO
+  encounter (Phase 13b part 1); the whole Pantheon (I-VII, Barney Ascended, Halcyon), the whole Underworld (U1-U6, Vorgath) and Dash V-VIII are built too; the Void and ZERO's true form are next. An exploit's `tip` joins his
+  corner hints (`data/hints/`, `src/fight/cornerman.js`); `clean: n` keeps mashing from
+  triggering precise exploits.
+- **Dash's file on you** (`src/save/rivalRecord.js`, `kocircuit.rivalrecord`): after every fight against any
+  Dash the tracker's `strategy()` (jab, turtle, early, bias, hoard, zone, passive, rush, repeat, or none) is
+  saved, and the next Dash's `grudge` anti-strategy switches on the matching answer at the bell for the first
+  25 seconds. The answers are ordinary anti-strategies (`dashGrudge()` in `data/fighters/rival/moves.js`) that
+  only act while primed. Also new: the trash-talk state trigger (`on: 'landed'` + `mark`), `blockStreak` bait
+  (the Mirror), the pride meter (`passivity` response `buff`, Jax) and round-limited moments.
+- **Scouting** (`src/save/scouting.js`, `kocircuit.scouting`): "SCOUTED!" in the fight, progress
+  on the intro card, a Scouting Report page in the gallery (STAR cycles the pages), and a Scouting
+  page on the Unlocks screen (LEFT/RIGHT): a fully scouted circuit opens EXPLOIT VIEW in Practice.
+- **Fight lab:** green exploit-window bars, force toggles for every exploit and anti-strategy, the
+  live tracker (with the file Dash would write so far), the knowledge log, "Run knowledge tests", and a
+  "Dash's file on you" picker for the four rival fights.
+- Tools: `node tools/knowledge-test.mjs [ids] [--forced]` (every exploit and anti-strategy triggered
+  through the real fight code, and each entry must reveal itself in the scouting report; exit 1 on a
+  failure), `node tools/rival-record-test.mjs` (Dash's file: what gets saved, what the next fight does
+  with it, every answer fair), `node tools/spam-test.mjs ... --strip` (a fighter without his knowledge
+  layer, to compare), `node tools/knowledge-audit.mjs [--done]` and
+  http://localhost:8420/tools/knowledge-audit.html (the K4 rules).
+
+## The Ascension, Phase A (spec §18, §18 A9)
+
+- **First ZERO changed** (4f tell, 2 lives, 9 signatures, shatter cutscene, interim ending). The Pantheon opens
+  with the first ZERO plus 84 base medals (`pantheonGate` in `src/save/unlocks.js`); the entry cutscene is
+  `src/screens/ascend.js`, (the staircase is part of the world map now).
+- **Circuits P1-P3** (13 fighters, `data/fighters/pantheon/`, sprites `data/sprites/fighters/pantheon/`,
+  arenas `pantheon1-3`, music `data/music/pantheon.js`) and **Dash Ascendant** (`data/fighters/rival/dash5.js`).
+- **Modifiers** (`src/fight/ascension.js`, reusable): `shield`, `fanfare`, `lantern`, `afterglow`, `hover`, `cloud`,
+  `slide`, `weather`, `era`, `clinch`, `rope`, `lunge` (a fighter's `special` list; config in his data file).
+- **Password V4:** 15 characters (1 in 799 checksum); V1-V3 codes still load. Ascension progress is `career.asc`.
+- Tools: `tools/screen-shot.mjs out.png <screen> --career zero|pantheon|p3` (headless screen PNGs);
+  `career-test` now covers the Ascension flow (1292 checks).
+
+## The Ascension, Phase B (spec §18 A10)
+
+- **Pantheon IV-VII** (#64-81, `data/fighters/pantheon/`), **Halcyon** (three forms, one per round: `forms: 3` on his circuit,
+  `Fight.formBroken`, a theme per form), **Dash Desperate** (`rival/dash6.js`, the Reckless Flurry and the gasp after it) and
+  **The Fall** (`src/screens/fall.js`, played after Halcyon). Arenas `pantheon4-7`, `pantheon6d`, `halcyon`.
+- **Rigs** so a fighter's file is only what makes him different: sprites `data/sprites/fighters/pantheon/_rig.js`, portraits
+  `data/sprites/portraits/rig.js`, moves `data/fighters/pantheon/_kit.js` (`mv('jab' | 'hook' | ...)`, `superMove`, `stats`), music
+  `data/music/summit.js` (chord progression + two motifs), arenas `data/arenas/_zone.js`.
+- **Modifiers** in `src/fight/asc/`: `constellation comet orbit gas`, `tally shock forge`, `glass callout prism`, `dive scribe judge sigTint`, `halcyon`.
+- Reflection wears your colours (`mirrorPlayer`, `data/reflection.js`). Verity can disqualify you (result method `DQ`).
+- Tools: `node tools/move-shot.mjs out.png <fighter> <move> --sheet 3,8,14,20` (a contact sheet of one move's tell as it
+  develops, `--round n` for Halcyon's forms), `tools/screen-shot.mjs ... fall --career halcyon`; the audit, knowledge test (529 scenarios),
+  career test (1370 checks) and the rest cover the new fighters.
+
+## The difficulty curve (2026-10-01, spec §9 and §18 A3)
+
+Every fight goes through `data/difficulty.js`. Fighter files keep the timings and damage they were written with;
+`tuneFighter()` puts each one on the curve at load (`data/fighters/index.js`: `AUTHORED` is the raw data, `FIGHTERS`
+the tuned fighters, `retune()` rebuilds them in place). The shape is a sawtooth: each circuit climbs to its
+champion, each boss spikes, the next circuit opens below him. ZERO's true form is the peak on every lever.
+
+- **Tells:** `TELLS` gives each circuit its [first fighter, champion] tell. One factor per fighter puts his median
+  opening tell there, and the windows inside the windup move with it (perfect-hit and exploit windows keep their width).
+- **Everything else** follows the fight's *heat* (0 at a 34-frame tell, 1 at 5): damage (`DAMAGE`, `IDENTITY`), the
+  player's get-up mash (`GETUP` in presses per second, `WALL` for the knockdown that's near-impossible: never in the
+  main game, the 3rd from Jax to the Underworld, the 2nd for Halcyon / Vorgath / the Void, the 1st for ZERO's true
+  form), star window width, pace (the longer idles), adaptive randomness, anti-strategy strictness, supers per round by
+  role (`SUPERS`), and the golden chance (`GOLDEN`: a perfect hit needs a deliberate punch, no other punch 18-30 frames
+  before it, and its window narrows from 4 frames to 2). `TWEAKS` holds the few per-fighter exceptions, each with its reason.
+- **Tuning knobs (dev only):** `KNOBS` at the top of the file: a global multiplier for tell windows and one for damage
+  taken, the same per zone (main, championship, pantheon, underworld, void), and an override per boss (tell frames,
+  damage, get-up wall, supers). The fight lab's "Difficulty knobs" panel has them as live sliders (they retune every
+  fighter at once and apply to his next punch) plus the fighter's own numbers; "Copy KNOBS" gives the block to paste
+  back into the file. Nothing saves on its own.
+- **The check:** `tools/difficulty-score.js` scores every fight (tell 33%, damage 19%, get-up 14%, pattern 11%,
+  supers 10%, anti-strategies 7%, boss phases 6%) in story order and flags anything out of place. It is graphed at the top of
+  http://localhost:8420/tools/knowledge-audit.html, and headless:
+
+```
+node tools/difficulty-graph.mjs --table                          # every fight's score and levers, flags, reports/difficulty.svg
+node tools/difficulty-graph.mjs --before <old copy> --out x.svg  # overlay another copy of the game (before/after)
+node tools/knowledge-audit.mjs --difficulty                      # the K4 audit plus the curve (exit 1 on a flag)
+```
+
+`tools/final-audit.mjs` checks the A3 table, each fighter's median tell against his slot, the get-up walls and the
+curve's flags. After retuning, rerun `perfect-play` (default, `--sloppy --defense-only --fights 40`, `--gauntlet`,
+`--td`), `knowledge-test`, `spam-test` and `final-audit --calibrate 20`.
+
+## Text boxes, the cornerman, supers and boss phases (2026-10-02, spec §4 and §20)
+
+- **Text** goes through `src/engine/textbox.js`: word wrap, clean breaks for long words, paging with a ▼ (cutscenes, corner
+  hints), fixed blocks that log overflow, and passwords in groups (`XXXX-XXXX-XXXX-XXX`). `node tools/text-fit.mjs` renders every
+  screen with every string and fails on any text off screen, out of its panel, overlapping, or cut short (`--only <suite>`, `--quick`).
+- **Default name** ACE. **No in-fight pop-ups** but SCOUTED!.
+- **Cornerman:** per-opponent hint banks in `data/hints/`, picked by `src/fight/cornerman.js` from what the round did (a super
+  that caught you, an anti-strategy that fired, the boss's phase, something not yet found), three tiers that sharpen after losses,
+  the last two heard skipped. `node tools/cornerman-test.mjs`.
+- **Supers:** armored from the start; one golden moment each (`hit`, window width from `GOLDEN` in `data/difficulty.js`);
+  knockdown for fighters, a `GOLDEN_STUN` for the six big bosses. `node tools/golden-test.mjs`.
+- **Boss phases:** `BOUTS` in `data/difficulty.js` (phases, staging); emptying a phase's bar starts the next; KO only in the
+  last phase; a longer regular bout (`BOUTS.rounds`: 4 to 7) on the slower boss clock, then the championship rounds on top of the phases. Phase pips on the HUD.
+
+## Controls (remappable from the title screen, saved to localStorage)
+
+| Input | Action |
+|---|---|
+| Left / Right | Dodge |
+| Down (tap) | Block (hold to keep blocking) |
+| Down, Down | Duck |
+| X / Z | Right / left body jab |
+| Up + X / Up + Z | Right / left head jab |
+| Space (or Enter) | Star punch (uses 1 star) |
+| P / Esc | Pause |
+
+Gamepad (standard mapping): D-pad, B = right jab, A = left jab, Y/X = star, Start, Back = pause.
+F2 cycles the CRT filter (off / scanlines / full CRT) anywhere; OPTIONS on the title screen has it
+too, with sound on/off and music and effects volume.
+
+## Modes (Phase 7)
+
+(Title Defense and the Gauntlet were extended on 2026-09-30, three tiers and five lists: see "Post-game modes update" below. What follows is how they were first built.)
+
+- **Title Defense** (beat Jax): the 12 champions remixed, easiest to hardest (Gus first, Eclipse
+  last), then a Jax rematch. Normal 3-round fights, 2 lives for the whole defense. A remix is the champion's own
+  `titleDefense` block (built by `data/fighters/titleDefense.js`): `tell` scales every windup (and
+  its counter / star / perfect-hit windows) but never recoveries or `call` moves, `keep` exempts
+  moves, 1-2 new `moves` and the `patterns` that use them go first, a `costume` palette swap
+  (registered as `<palette>.td`), new card, lines and trainer `tips`. The new look itself lives in
+  the champion's sprite layers as a `remix` block (`data/sprites/remix.js`: extra colours, a body
+  tweak, and pieces drawn over or instead of his own): Gus's toque, Brody's goggles and chain,
+  McBride's stovepipe hat, Midnight's cape, Rex's boa, the Baron's eye patch and half-cape,
+  Maestro's flaming mane, Avalanche's ushanka, the cracked Mirror, Karver's new crown, the
+  Warden's riot gear, Eclipse's ring of fire, bearded Jax.
+- **Gauntlet** (beat Jax; ZERO joins after you beat him): every opponent in roster order (#1-46,
+  Jax, #47-50, ZERO), one 3:00 round each, one loss ends the run. Hearts reset between fights,
+  health comes back +50% (never past full), stars carry over. A one-round fight counts every 60
+  game seconds as a new "round" for everything that changes by round: round-gated patterns
+  (`when.rounds`), the Warden's riot, ZERO's music, the Nightmare void's colour, Downpour's rain,
+  Static's glitch bands, Quinn's draw speed and Maestro's per-round tempo step. The Gemini Twins
+  tag, Jinx's wheel lands on a new slice and Doc Sutures stitches up (if hurt) the next time he's
+  back in his stance: `Fight.stage`, hook `stageChange`.
+- The round clock reads 3:00 but runs at 2.5 clock seconds per real second (72-second rounds; a big boss's reads 3:00 over 90 seconds).
+  Gimmicks timed in seconds use real seconds (`Fight.realSeconds()`): Jax's storm lasts all of
+  round 1 (72 s), Maestro's tempo steps every 24 s.
+- **Practice**: anyone you've met, with tell flash, no heart loss, no damage (on by default: your
+  health never drops), 50% slow-mo, and the Title Defense version of a champion once it's
+  unlocked. Nothing counts.
+- Runs are saved between fights (PAUSE on the run screen leaves; walking out of a run's fight
+  counts as a loss). In the career, QUIT is free until round 1's bell; after it the pause menu
+  says FORFEIT and walking out is a loss that costs a life (`opts.forfeit`). Records (`src/save/records.js`, localStorage, never in the password): Title
+  Defense best and clears, Gauntlet best streak (+ its time), best clear time, the last runs and
+  who ended them, unlocks, and every opponent you've met.
+- **Training camp** (`src/screens/training.js`): after each belt, the jogging cutscene leads to one
+  drill (SPEED BAG rhythm, JUMP ROPE timing, ROAD RUN mashing). The speed bag, jump rope and road run stations of the Home gym open
+  the camp any time, for as many drills as you like (medals and perks count there too). Silver wins the drill's first perk,
+  gold its second (`data/perks.js`). Equip up to 3 at the clipboard in the Home gym (PERKS). Perks only touch the
+  player's side (hearts, damage taken, counter damage, star loss, get-ups, corner recovery), never
+  a tell or any timing. The password (12 characters) carries each drill's best medal (a restored best
+  is that medal's score), the equipped perks and a waiting training session; perks won follow from
+  the medals. Old 10-character passwords still work and keep the local training camp.
+
+## Post-game modes update (2026-09-30, spec §6 and §7)
+
+- **Title Defense, three tiers** (the belt hall's three doors): Classic (the 12 champions and a Jax rematch, beat Jax), Ascension (the 7 Pantheon
+  champions, Barney Ascended, Halcyon, the 6 Underworld champions, Vorgath, Dash Unbound, ZERO's true form: 18) and Combined (Classic, the first ZERO,
+  the Ascension: 32), the last two after the true ending. Lists in `data/fighters/titleDefense.js` (`TD_LISTS`). Every remix now has **its own
+  exploits, anti-strategies and scripted moments** that replace the original fight's (`data/fighters/remixes/classic.js` and `ascension.js`, written
+  with the builders of `remixes/kit.js`, which also fills in counter-window frames and scouting texts from the remixed moves). The Ascension's remix
+  blocks (nickname, tell, recolour, new move, patterns, tips) are in `remixes/ascension.js`; `data/fighters/index.js` joins them to each fighter's
+  `titleDefense` before his supers are wired. A remix keeps the original's guard counter (`quickestPunch`) and never drops a windup under 3 frames
+  (4 in a circuit of 4-frame tells). Best defenses, clears, best clear time, three medals (bronze: defend the title; silver: no fight lost; gold: and under
+  `TD_PAR`) are saved per tier.
+- **Five Gauntlets**: Main (#1-50 and Jax), Pantheon (#51-81 and Halcyon), Underworld (#82-107 and Vorgath), Void (#108-119, Dash Unbound, ZERO's true
+  form), each open once its zone boss is beaten, and Full (133 fights, every Dash where he stands, the first ZERO; the true ending). Lists and unlocks in
+  `src/save/records.js` (`gauntletList`, `GAUNTLET_INFO`, `syncRecords`). The Will Shard fights one round in his fifth-round form (`stageLock`).
+  Records per Gauntlet; the **Mode Records** screen (`src/screens/modeRecords.js`) has a page for each Gauntlet and each tier.
+- **Training**: every drill, the camp's flow, perks and saves are tested end to end (`tools/training-test.mjs`); see spec §7 for the rulings (perks apply
+  in every fight mode, never touch timing, Grit never adds to a corner that gives nothing).
+- Tools: `node tools/modes-test.mjs` (lists, unlocks, records, migration, whole runs, the menu, every screen), `node tools/training-test.mjs`,
+  `node tools/remix-audit.mjs` (K4 and "different from the original" for all 32 remixes), `node tools/knowledge-test.mjs --td --forced`,
+  `node tools/perfect-play.mjs --td --sloppy <ids>` / `--gauntlet`, `node tools/spam-test.mjs --td`, `node tools/mode-calibrate.mjs` (the bot runs every
+  defense and Gauntlet; checks the par times), `node tools/balance.mjs --td`.
+
+## Layout
+
+```
+src/engine   loop, input, renderer (256x224 framebuffer), palette (15-bit), audio (chiptune + MML),
+             font, sprites (part/shade/outline pipeline), figure (build+pose+layers composer),
+             arena (arena pipeline), spriteCache
+src/fight    fightState (rules/phases/render), player, opponentAI (+ MODIFIERS), hud, scoring, bot
+src/screens  title, worldMap, interior, desk, replay, customize, passwordEntry, intro, fight, betweenRounds, results,
+             cutscenes (belt ceremony + jogging), ending (both endings), controls,
+             modes (modes menu, run hub, practice), training (camp, drills, perks), options
+src/save     storage (localStorage, three slots), session (opening a save), password (15-char code; 13-, 12- and 10-char codes still accepted), career
+             (ladder, lives, unlocks, training, rival, replay), records (mode records, unlocks, runs), medals, unlocks, scouting, handbook, cutscenes
+data/        palette.js, circuits.js, customization.js, perks.js, arenas/, fighters/ (+ titleDefense.js),
+             music/ (+ walkups.js: every non-champion's walk-up jingle), sprites/ (builds
+             lean/medium/heavy/giant, fighters/ + _face kit, referee, player, portraits/, trainers, jog, ui)
+tools/       sprite-viewer.html, fight-lab.html, pose-sheet.html, perfect-play.mjs, check-poses.mjs,
+             balance.mjs, audio-audit.mjs, training-sim.mjs, spam-test.mjs, sprite-sizes.mjs
+reference/   style references (never traced)
+```
+
+Adding an opponent: a data file in `data/fighters/`, sprite layers (+ their palettes) in
+`data/sprites/fighters/`, a portrait in `data/sprites/portraits/`, one line in each registry
+(`data/fighters/index.js`, `data/sprites/index.js`, `data/palette.js`, the `PORTRAITS` map), the id in
+its circuit's ladder in `data/circuits.js`, and a modifier in `src/fight/opponentAI.js` only if the
+gimmick is truly new. Reusable pieces already there: `open` pattern steps (vulnerable states like
+gasping, eating, waving, landing), `feint` moves, `punishStar`, one-hit `knockdown` moves, and the
+modifiers:
+
+| Modifier | What it does | Used by |
+|---|---|---|
+| hardHat / teleport / comboReader / unstaggerable | (Phase 2) | Rocco, Gambini, Knox, Brody |
+| cueLamp | a lamp on the fighter lights up per move (`cue`), as a palette swap + glow | Rush Hour Ray |
+| onBeat | punches land on a beat: a visual rhythm (`period`) or a song's audio clock (`song`), with scheduled audio cues | Pidge, DJ Drop |
+| crowdMeter | a CHEER meter that fills and buffs damage; knockdowns reset it | Mayor McBride |
+| tagTeam | a random member per round, each with a palette and pattern `set` | Gemini Twins |
+| lightsOut | a trigger move blacks out the arena; only the eyes (`eyes` per move) show | Count Midnight |
+| charge | a completed `open` step powers up the next punch; hitting it cancels | The Strongman |
+| evasive | slips every punch except in chosen states (and perfect hits) | Tightrope Tess |
+| prizeWheel | a wheel spins before each round and picks the pattern `set` | Jester Jinx |
+| spotlight | a trigger move blinds one half of the screen | Ringmaster Rex |
+| stance | an `open` step (the hop) switches orthodox/southpaw: poses and dodge sides mirror | Tempest Tia |
+| cutman | once per fight, below a health fraction at a corner break, he heals to full | Doc Sutures |
+| parry | punches into his guard are parried and answered at once with a riposte move | The Baron |
+| hurricane | `flurry` chains; get hit once and the `flurryEnd` punch becomes a knockdown | Hurricane Hank |
+| frozen | everything bounces off (and he counters) except counters in short windows, which flash | Glacier |
+| tempo | windups, recoveries and gaps shrink every N game seconds (and each round) | Maestro Vale |
+| lightning | a flash starts each `bolt` move but the strike comes 12-60 frames later; the real tell is late | Bolt Brennan |
+| rain | rain streaks over the opponent, heavier each round (every move keeps its own sound) | Downpour |
+| spinCount | `spins: n` windups: a whoosh and an arrow per turn, n hits follow | Cyclone Cole |
+| avalanche | blocked punches cost hearts; every 3 landed hits queue a dodge-only rush | Avalanche |
+| possum | an `open` step (`trap: true`) that only looks like a stagger; punch it and a trap combo fires | Old Man Rourke |
+| ironJaw | nothing but a Star Punch takes his last HP; once ROCKED a star drops him (`kdStar` perfect hit) | Iron Jaw Ignatius |
+| homage | each pattern is a past champion's signature (`homage` on the pattern), announced | Duchess Kane |
+| reflect | records your last N actions; its `call` move replays them as mirror-image moves | The Mirror |
+| afterimage | moves with `dash: -1/1` dart to that side, leaving dithered ghost copies | Nova Reyes |
+| kneel | head shots whiff until body damage fills a meter and he drops to one knee (an `open` step) | Goliath Gunn |
+| quickdraw | a `call` move freezes the fight (`takeover`) for a standoff: press first after DRAW! | Quickdraw Quinn |
+| stillwater | never attacks first: answers each thing you do with its own move (`reactions`), meditates while you wait (heals, fills CALM: his next answer is harder and quicker), super = the answer to a Star Punch | The Monk |
+| adapt | aggression follows your hearts; reads slip habits (move `twin`s) and punch heights | King Karver |
+| thunder | pattern `set` 'fresh' for the first N seconds of round 1, then 'tired' for good | Jax Crane |
+| glitch | the picture tears (sliding rows, snow) around him during every tell; silent hiccups in between | Static |
+| dirty | throws `bell` the instant a round starts (creeping in, cocked, all intro); get-up entries `sneak` him up mid-count into a punch | Crowbar Cade |
+| phases | `phases: [{ from: round, set, name, palette, shout, note }]`: a new pattern set and look from a round on | The Warden |
+| vanish | invisible except while attacking (fades in over the windup), hurt, down or taunting | Hollow |
+| undying | counts his rises (get-up table `upAt: [1, 1]`) and speeds him up after each | Revenant Rourke |
+| frenzy | every punch you land adds HEAT; heat shrinks windups, recoveries and gaps; it cools with time | Frenzy |
+| eclipse | a `call` move with a sun/moon countdown, then the whole ring and LEFT/RIGHT flip (until the next call) | Eclipse |
+| echo | an `echo` call turns him a champion's colours (palette `zero.<id>`) before that champion's signature (`echoOf`) | ZERO |
+
+New hooks for modifiers: `eligible`, `moveStart`, `openDone`, `openBroken`, `onKnockdown`, and (Phase 4)
+`moveResolved` and `betweenRounds`. Phase 4 executor data: `open` steps can carry `kd: [a, b]` (a
+perfect hit inside a vulnerable state); `cancels: n` on a move skips the next n steps when he is
+countered out of it (the chain after a TIMBER call never comes); `openAfter` turns a result (e.g.
+`dodged`) into an `open` step (Big Rig crashing into the ropes); `call: true` marks a windup that is
+not a punch at all (a shout, a spin); `noFake` keeps a move out of the circuit fakes. Any pose can be
+drawn mirrored as `~pose`. Phase 5 adds the `takeover` hook (freeze the fight for a scene),
+`ai.playerAction()` (what the player just started: for modifiers that watch you), `trap: true` on
+`open` steps (looks open, isn't), `fixed: true` / `shuffle: true` / `set` on patterns (Legends and
+up shuffle move order, so combos live in `fixed` patterns), `kdStar: true` on a fighter (its perfect
+hit needs a Star Punch; the glint is timed for one), and `adaptive` randomness (patterns that landed
+on you come back more often). Circuits can set `fakes` (chance a real move is cut short into a harmless
+fake) and `starsPerRound`. A fighter
+can also name its own `fightMusic` (DJ Drop fights to his entrance track).
+
+**Every fighter has his own body and his own walk-up.** A fighter's sprite layers carry a `body`
+block on top of his build (lean / medium / heavy / giant): `size` (times the build's scale),
+`dims` (thickness of neck, arms, legs, belly, chest, head...), `legLen`, `torsoLen`, `shoulders` and
+`neckLen`. The shared poses are reshaped to fit (`reshape()` in `src/engine/figure.js`), so every
+pose, prop and costume detail follows, and the canvas grows to fit (`shapedBuild()` in
+`src/engine/spriteCache.js`). Aim for about 105-130 px tall (`tools/sprite-sizes.mjs`). On his intro
+card every fighter walks out to his own music: a champion's entrance theme or a three-bar walk-up
+jingle from `data/music/walkups.js` (`music: '<id>Walkup'`). The referee
+(`data/sprites/referee.js`) stands at the back of the ring during knockdowns, chopping down on each
+count, and waves it off at a KO.
+
+Phase 6 adds the hooks `fightStart` (the bell just went), `sneak` (he got up mid-count) and
+`postScene` (the ring is drawn, the HUD isn't: Eclipse mirrors the frame here); `view()` may
+return `ghost: true` (drawn dithered); get-up entries can carry `sneak: moveId` / `sneakAt`;
+randomness `'all'` (ZERO: adaptive and shuffled); arenas can set `musicFrom: round` (ZERO's void
+is silent until round 2) and read `state.round` (the Nightmare void changes colour every round).
+Revenant Rourke is built from Old Man Rourke's own data file and sprite layers (a palette swap),
+and ZERO's twelve signatures are pulled from the champions' data (`SIGNATURES` in
+`data/fighters/zero.js`): the move, its damage, sounds and poses (champion-only poses are pulled
+into ZERO's sprite layers, namespaced `champion:pose`). Nothing is copied.
+
+**Design rule: every opponent has a super, and one golden chance.** (`data/fighters/super.js`)
+Once or twice a round (per 60-second stage in the Gauntlet), at a break between his combos, he
+steps back out of reach (punches whiff), taunts, steps back in and throws his super (never faked).
+Taunts happen nowhere else. The fighter's `super: { move, golden, window, taunt, shout, ... }`
+says where his golden chance is: `taunt` (he taunts up close; `window` = frames of the taunt),
+`advance` (as he steps back in: the first frames of the super's windup), `windup` (mid-windup;
+the move's own `kdWindow` or `window`) or `recovery` (slip or duck it, then punch on `window`
+frames of its recovery). From the moment the super starts he is **armored** (punches clank and do nothing) until its last
+attack ends. Each super has exactly one **golden moment** with a defined punch (`hit`): a clean punch
+there drops a fighter instantly, and leaves a big boss stunned (`GOLDEN_STUN`, never skipping a
+phase). A subtle glint and a soft sound mark it; the fight lab shows the window as a white bar.
+Every super is listed in `reports/supers.md` (regenerate with the snippet in spec §20 T4). The first time he drops under half health, his next super comes early; a
+super 4+ seconds overdue replaces a gimmick's reply punch (Glacier's ice shard) so it still comes.
+`withSuper()` (applied in `data/fighters/index.js`) folds his old taunt steps into idles, puts a
+stand-in punch where the super used to sit in his patterns (`standIn`, default his slowest
+ordinary counterable punch) and removes every other perfect hit. The cornerman's hints about it
+live in `data/hints/` (spec §4: between rounds, per opponent, reacting to the round). `perfect-play.mjs` fails a fighter whose golden chance never lands.
+
+**Punch-Out rules: his guard stops everything but the openings.** (`OpponentAI.onPlayerPunch`)
+- A flurry (a chain of hits) only starts from an opening: a **counter** in his tell's counter window
+  stuns him (`stunComboLimit` hits); the first punch after you **slip or duck** his punch, or while he
+  **taunts** up close before a super, dazes him (`comboLimit` hits; `stats.punishDaze` sets the daze length); an `open` step
+  gives its own `comboLimit`. His open spot while idle (`idleGuard`) gives `idleHitLimit` hits and no
+  daze, and so does the recovery of a punch you only blocked (1 hit). Past the flurry he covers up.
+- **Braced:** punch before the counter window, or up to 28 frames before a tell starts, and that
+  tell can't be countered (mashing never lands counters by rhythm).
+- **Guard counter:** `circuit.guardCounter` punches into his gloves within 90 frames (3 in Rookie and
+  Minor, 2 from Metro on) and he fires his quickest real punch (or the fighter's `guardCounter` move;
+  `stats.guardCounter: 0` turns it off). Parries, ice counters, possum traps and other gimmicks that
+  already punish guard hits don't count.
+- **Rebuff:** a punch that bounces off his guard knocks your glove back: no new punch for
+  `PT.REBUFF` (18) frames after impact. You can still dodge out of the jab from frame 10.
+- A round with 10+ bounced punches gets the trainer's "quit swinging at his gloves" tip.
+
+**Wrong-defense callout:** when a punch lands while you were slipping, blocking or ducking the
+wrong way, the fight flashes what would have worked ("BLOCK IT!", "SLIP LEFT OR DUCK IT!").
+
+**Design rule: every attack is avoidable with perfect play (§9).** Run `node tools/perfect-play.mjs <id>`
+after adding or tuning an opponent; it must come back untouched (and with `--sloppy`). Useful timing
+facts: a clean dodge can chain into another dodge, a block or a duck from frame 10; a block can't turn
+into a dodge until it ends (20 frames), and a duck locks you for 26, so a block-only or duck-only punch
+needs room before whatever follows it.
+
+
+## Presentation pass: cutscenes, maps, Theater (spec §19)
+
+- One data-driven cutscene engine (`src/scene/`, scenes in `data/cutscenes/`): 161 scenes: arrivals and victories for all 33 circuits, 28 champion
+  entrances, 6 boss intros, 3 secret-circuit invitations, the jogging, ferry and Dash scenes, and the hosted story scenes. Hold START to skip; once seen, tap START.
+- Maps: a scrolling road map with a landmark for every circuit (`src/scene/landmarks/`), silhouettes for locked secrets, an animated trip along the road,
+  and the Pantheon, Underworld and Void maps in the same style. Every map moves the cursor spatially (`src/screens/mapkit.js`).
+- The TV in the Home gym (the Theater) replays anything you have seen, sorted by zone, on a throwaway copy of your career.
+- Tools: `node tools/scene-audit.mjs` (all scenes), `node tools/map-audit.mjs`, `node tools/flow-test.mjs`,
+  `node tools/scene-shot.mjs out.png <sceneId> --at 0,100,300 [--auto]`, `node tools/scene-sheet.mjs out.png arrive. --at 75`,
+  `node tools/landmark-sheet.mjs out.png base|pantheon|underworld|void [--k 3]`.
+
+## Divisions: Title Defense and the Gauntlet (2026-10-03, spec §6, §20 T7)
+
+Title Defense and the Gauntlet are now laid out the same way, in five divisions (`data/divisions.js`): **Classic** (the 12 champions, Jax, the first ZERO / #1-50, Jax, the first ZERO), **Pantheon**, **Underworld**, **Void** (the twelve Hollowed, Dash Unbound, ZERO's true form, fought as bosses in Title Defense) and **Combined** (everything, in story order). A division opens when its zone's last boss is beaten (Classic: the first ZERO; Combined: the true ending). The hall has five entrances and the tower five doors, each with a records board beside it.
+
+- **Exclusive attacks:** every Title Defense opponent has one extra armored super that exists only there (`data/fighters/remixes/exclusive.js`, hints in `data/hints/exclusive.js`); the table is `reports/exclusive-attacks.md`. Check with `node tools/exclusive-test.mjs [--runs 40] [--table]`, `node tools/golden-test.mjs --td`, `node tools/perfect-play.mjs --td [--sloppy --defense-only]`, `node tools/td-difficulty.mjs --table` (every remix above its career version).
+- **The Hollowed's remixes:** `data/fighters/remixes/void.js`, `data/hints/remixesVoid.js`.
+- **Arenas and themes:** `data/arenas/modes.js` (the championship hall; the endurance arena with its tally board and a crowd that grows with every win), `data/music/modeThemes.js` (an anthem per division; the Gauntlet's theme in five intensities). `node tools/arena-sheet.mjs out.png --mode td|g --wins 0,25,49` draws them.
+- **Records** are per division in both modes (`records.ver` 2 migrates old saves); `node tools/mode-calibrate.mjs` checks the par times (`TD_PAR`), `node tools/modes-test.mjs [--e2e td:void g:combined]` runs everything through the real screens.
+
+## The clock and the championship rounds (2026-10-03, spec §4, §6, §9, §18 A3)
+
+The clock update that gave every fighter his own round and judged fights on house points was **reverted**. The clock is the old one
+for every fight (Career, Title Defense, Gauntlet, Practice): a round is 3:00 on the game clock, 24 frames to a game second (a big boss's: 30). **There are no
+judges.** A fight ends by KO, TKO (three knockdowns in a round) or the player being knocked out; if nobody is down after the regular rounds
+(three, the Will Shard's five) the fight goes into **championship rounds**, each harder than the last, and from round 6 into **sudden death**
+(the first knockdown by either fighter ends it).
+
+- **Where it lives:** `data/difficulty.js` `CHAMPIONSHIP` (every escalation number, one array entry per championship round: `pace` his waits between
+  combos, `openings` his recoveries and `open` steps, `idle` the free hits he gives standing idle, `supers` extra supers a round, `damage`, `oppHeal` his
+  recovery between rounds, `youHeal` the corner's mash cap, `suddenFrom`), `ROUND` / `roundFrames()` (the clock), `REGULATION`, `escalation(c)`. The fight
+  reads `Fight.esc` (set every round), `Fight.round > Fight.rounds` is a championship round. The opponent AI applies it in `paced()` / `tightened()`,
+  `planSupers()` and the idle hit limit; golden moments, perfect-hit windows, armored supers and traps are never cut.
+- **Fight length:** `HEALTH` in `data/difficulty.js` multiplies every regular fighter's health by zone (3.0 main game down to 1.35 Void; per-fighter trims in `TWEAKS`), the medals' `speedTarget` and `TD_PAR` follow it. `MASH` makes wasted punches weaken the next ones (defend-and-mash).
+- **Bosses:** the phases come first (every phase must be finished; a phase break is never the sudden-death knockdown); only the last phase can end the fight.
+- **Gauntlet:** every fight starts at round 1 on the same system; health between fights stays 50%. The Will Shard keeps his final form (`stageLock`).
+- **The HUD:** ROUND n; in a championship round a strip says CHAMPIONSHIP ROUND, and SUDDEN DEATH from round 6. The ring announcer says it once
+  (the intro of round 4, and of round 6), and so does the cornerman in the corner before (`championshipCall`, `src/fight/cornerman.js`).
+- **The human-model player** (`src/fight/humanBot.js`, built on the perfect-play bot): reaction 200-280 ms, +-3 frames of timing jitter, about 3%
+  wrong inputs, learns a fighter over repeated attempts (a `Memory` per fighter). Profiles: no golden moments, uses golden moments, keep-away
+  (`keepAway`: dodges everything, a jab every five seconds), pure (never punches). `tools/lib/measure.mjs` plays one measured fight with it.
+
+```
+node tools/championship-test.mjs [ids...] [--td] [--fights 10] [--away 4] [--near 0.07] [--out file]   # every fighter: win round, championship reach, nearly-finished, keep-away
+```
+For every fighter it reports the round the aggressive player usually wins in, how often the fight reaches the championship rounds, how a fight that was
+nearly won at the end of round 3 (the opponent left on 7%) ends, and how a keep-away player and one who never punches fare (they must lose, by round 6 or 7).
+Exit code 1 on a flag. Reports: `reports/championship-table.txt` (Career), `reports/championship-table-td.txt` (Title Defense versions).
+
+## The final audit (2026-10-03, spec §22)
+
+A pass over the whole game before release; no features. Everything it found is in the spec's §22; the tools it added:
+
+```
+node tools/human-playthrough.mjs [--td] [--part fighters|td|runs] [--fights N]   # the human-model player (both profiles) through every fight, every Title Defense and Gauntlet division
+node tools/human-report.mjs [dir]                                                  # ...as tables (reports/human-playthrough.txt)
+node tools/gold-hunt.mjs [ids] [--fights N]                                        # can a human-model plan earn every Gold? (reports/gold-hunt.txt)
+node tools/tune-health.mjs id [id...] [--key health|damage|tdHealth] [--td]        # what health / damage factor puts a fighter where he belongs (prints, edits nothing)
+node tools/career-fuzz.mjs [--runs 400] [--seed 1]                                 # random careers, new save to the true ending, passwords restored at random: no soft lock
+node tools/art-audit.mjs                                                           # frames, palettes, sizes, every costume of the player (spec §2)
+node tools/reflection-test.mjs                                                     # Reflection wears your colours (every costume, 400 profiles) and slides away from punches at his stance
+```
+
+- **The human-model playthrough** (`reports/human-playthrough.txt`, raw data in `reports/playthrough/`): per fighter, Career and Title Defense version, in both profiles
+  ("no golden moments", "uses golden moments"): the first-attempt win rate of players who have never seen him (cold), the attempts a learning player needs for a first win,
+  the win rate once it has learned him, the round it wins in, KO or TKO, the three medals it earns, golden moments landed a fight. `--part runs` clears every Title Defense
+  division (two lives) and Gauntlet division (one loss ends it, 50% health back, stars carry) until the player has cleared it, with the medals.
+- **Health and damage by fighter** (`TWEAKS` in `data/difficulty.js`): `health` and `damage` as before, and now `tdHealth` (a Title Defense version's own factor, on top of
+  the other). Before the Underworld the aggressive player must rarely need the championship rounds: fifteen champions ended right at the end of round 3 and their health
+  came down a few percent (Lars, Duchess, Bolt, Cade, Static, Null, Dash III-V, Cirrus, Aurora, Orbit, Hale, Prism, Barney Ascended), Dash VI is shorter and lighter, Quinn
+  is easier (his WAITS FOR THE DRAW trap now needs a dodge 10 frames early, it was 8: a player slipping 5 frames early sprang it a third of the time).
+- **Sprites in a worker:** composing one pose costs 10-40 ms, so every attack's first frame in a new fight was a dropped frame. A fight (`FightScreen.enter`) and a hall
+  (`InteriorScreen.prep`) now have their poses composed off the main thread (`src/engine/spriteWorker.js`, `spriteCache.js warmInWorker`); a pose that has not arrived is
+  composed on the spot as before, so no Worker means the old behaviour. Frame cost in the browser: fights 0.3-4 ms, maps 2-4 ms, halls about 1 ms, no frame over 10 ms.
+- **Passwords:** a code taken once ZERO's true form is down carries the true ending (it opens the Combined division); it used to be lost on a restore.
+- **Removed:** the leftovers of the decision system (the `'decision'` phase names, the `koOnly` flag, `DEC` in the tools) and eighteen exports nothing used.

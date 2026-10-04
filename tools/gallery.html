@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KO Circuit — Opponent Gallery</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #101218; color: #c8ccd8; font: 13px ui-monospace, Menlo, monospace; }
+  header { position: sticky; top: 0; z-index: 2; background: #101218ee; padding: 10px 16px; border-bottom: 1px solid #262a36; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+  header h1 { font-size: 15px; margin: 0; color: #f0c040; letter-spacing: 1px; }
+  header label { cursor: pointer; }
+  header select { background: #1a1d26; color: inherit; border: 1px solid #333; padding: 2px 4px; }
+  h2 { margin: 22px 16px 8px; font-size: 14px; color: #f09040; letter-spacing: 1px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 12px; padding: 0 16px; }
+  .card { background: #181b24; border: 1px solid #262a36; border-radius: 6px; padding: 8px 10px 10px; }
+  .card.td { border-color: #6a5418; background: #1d1a14; }
+  .name { color: #fff; font-weight: bold; }
+  .nick { color: #f0d060; }
+  .meta { color: #7a8196; font-size: 11px; margin-bottom: 6px; }
+  .tag { color: #f0c040; font-size: 11px; }
+  canvas { image-rendering: pixelated; display: block; }
+  .poses { display: flex; flex-wrap: wrap; gap: 2px 4px; align-items: flex-end; }
+  .card { max-width: calc(100vw - 54px); box-sizing: border-box; }
+  .cap { color: #6a7086; font-size: 10px; text-align: center; }
+</style>
+</head>
+<body>
+<!-- Every opponent's art in roster order: portrait, idle, a tell, a punch, the
+     super's windup, the taunt, hit and down; champions' Title Defense looks
+     beside the originals. http://localhost:8420/tools/gallery.html
+     (?circuit=world&td=1&zoom=3 preselects the circuit, remixes only, zoom) -->
+<header>
+  <h1>KO CIRCUIT · OPPONENTS</h1>
+  <label>Circuit <select id="circuit"><option value="">all</option></select></label>
+  <label>Zoom <select id="zoom"><option>1</option><option selected>2</option><option>3</option></select></label>
+  <label><input type="checkbox" id="tdOnly"> Title Defense only</label>
+</header>
+<main id="out"></main>
+<script type="module">
+import { fighterSprites, paletteFor } from '../src/engine/spriteCache.js';
+import { FIGHTERS } from '../data/fighters/index.js';
+import { remixed, TITLE_DEFENSE } from '../data/fighters/titleDefense.js';
+import { CIRCUITS, CIRCUIT_ORDER as MAIN_ORDER, RIVAL_AFTER } from '../data/circuits.js';
+// every circuit, each rival fight right after the title it follows
+const CIRCUIT_ORDER = MAIN_ORDER.flatMap((c) => (RIVAL_AFTER[c] ? [c, RIVAL_AFTER[c]] : [c]));
+import { PORTRAITS } from '../data/sprites/portraits.js';
+import { superIds } from '../data/fighters/super.js';
+
+const $ = (id) => document.getElementById(id);
+for (const c of CIRCUIT_ORDER) $('circuit').append(new Option(CIRCUITS[c].name, c));
+
+const first = (a) => (!a ? null : Array.isArray(a) ? a[0] : a.frames ? a.frames[0] : a);
+// the poses shown for a fighter: [caption, pose]
+function posesOf(d) {
+  const out = [['IDLE', first(d.anims.idle)]];
+  const reg = Object.entries(d.moves).find(([k, m]) => !k.endsWith('*') && !m.super && !m.feint && !m.call && m.counterWindow && m.activeFrames);
+  if (reg) { out.push(['TELL', reg[1].animation.windup[0]]); out.push(['PUNCH', reg[1].animation.active[0]]); }
+  if (d.super) {
+    const sm = d.moves[superIds(d.super)[0]];
+    if (sm) out.push(['SUPER', sm.animation.windup[sm.animation.windup.length - 1]], ['SUPER!', sm.animation.active[0]]);
+  }
+  out.push(['TAUNT', first(d.anims.taunt)], ['HIT', first(d.anims.hitHigh)], ['DOWN', first(d.anims.down)]);
+  return out.filter(([, p]) => p);
+}
+
+function blitTo(buf, W, s, pal, x0, yBase) {
+  const y0 = yBase - s.h;
+  for (let y = 0; y < s.h; y++) for (let x = 0; x < s.w; x++) {
+    const v = s.data[y * s.w + x];
+    if (v && y0 + y >= 0 && x0 + x < W) buf[(y0 + y) * W + x0 + x] = pal[v];
+  }
+}
+
+function card(d, zoom) {
+  const el = document.createElement('div');
+  el.className = 'card' + (d.remix ? ' td' : '');
+  const circ = CIRCUITS[d.circuit];
+  el.innerHTML = `<div class="name">${d.name} ${d.remix ? '<span class="tag">TITLE DEFENSE</span>' : ''}</div>`
+    + `<div class="nick">"${d.nickname}"</div>`
+    + `<div class="meta">${circ.name}${d.rank ? ' #' + d.rank : ''} · ${d.card.hometown} · ${d.super ? 'SUPER: ' + (d.super.name || d.moves[superIds(d.super)[0]].name) : ''}</div>`;
+  const pal = paletteFor(d.palette).u32;
+  const bank = fighterSprites(d.spriteLayers);
+  const shots = [];
+  try { shots.push(['PORTRAIT', PORTRAITS[d.id](paletteFor(d.palette)), true]); } catch (e) { /* no portrait */ }
+  for (const [cap, p] of posesOf(d)) { try { shots.push([cap, bank.get(p)]); } catch (e) { shots.push([cap + '?', null]); } }
+  const row = document.createElement('div');
+  row.className = 'poses';
+  for (const [cap, s, isPortrait] of shots) {
+    const wrap = document.createElement('div');
+    if (s) {
+      const cv = document.createElement('canvas');
+      const W = s.w + 2, H = s.h + 2;
+      cv.width = W; cv.height = H; cv.style.width = W * zoom + 'px'; cv.style.height = H * zoom + 'px';
+      const ctx = cv.getContext('2d'), img = ctx.createImageData(W, H), buf = new Uint32Array(img.data.buffer);
+      if (isPortrait) buf.fill(0xff2a1c16);
+      blitTo(buf, W, s, pal, 1, H - 1);
+      ctx.putImageData(img, 0, 0);
+      wrap.append(cv);
+    }
+    const c = document.createElement('div'); c.className = 'cap'; c.textContent = cap;
+    wrap.append(c);
+    row.append(wrap);
+  }
+  el.append(row);
+  return el;
+}
+
+function render() {
+  const out = $('out'), zoom = +$('zoom').value, only = $('circuit').value, tdOnly = $('tdOnly').checked;
+  out.innerHTML = '';
+  for (const cid of CIRCUIT_ORDER) {
+    if (only && cid !== only) continue;
+    const ids = CIRCUITS[cid].fighters.filter((id) => FIGHTERS[id] && (!tdOnly || TITLE_DEFENSE.includes(id)));
+    if (!ids.length) continue;
+    const h = document.createElement('h2'); h.textContent = CIRCUITS[cid].name; out.append(h);
+    const grid = document.createElement('div'); grid.className = 'grid'; out.append(grid);
+    for (const id of ids) {
+      if (!tdOnly) grid.append(card(FIGHTERS[id], zoom));
+      if (TITLE_DEFENSE.includes(id)) grid.append(card(remixed(id), zoom));
+    }
+  }
+}
+// ?circuit=world&td=1&zoom=3 preselects the controls
+const q = new URLSearchParams(location.search);
+if (q.get('circuit')) $('circuit').value = q.get('circuit');
+if (q.get('zoom')) $('zoom').value = q.get('zoom');
+if (q.get('td')) $('tdOnly').checked = true;
+for (const id of ['circuit', 'zoom', 'tdOnly']) $(id).onchange = render;
+render();
+</script>
+</body>
+</html>

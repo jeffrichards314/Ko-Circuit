@@ -1,0 +1,51 @@
+Title Defense versions; 20 aggressive fights (warmed up), 12 keep-away fights each; human-model player (no golden moments)
+fighter       circuit      wins   round(med/max)  reach champ.   nearly-done: KO in round 4-5 / reached it   keep-away: wins  out in (median)  by r7  latest   pure (no punches): out in / latest
+gus           rookie       100%      2 /  3         0%        10/10 (r4)      0/12         6          100%   7         6 /  6
+brody         minor        100%      3 /  3         0%        10/10 (r4)      0/12         6          100%   7         6 /  6
+mcbride       metro        100%      2 /  2         0%        10/10 (r4)      0/12         6          100%   7         6 /  6
+midnight      major        100%      2 /  2         0%        10/10 (r4)      0/12         6          100%   6         6 /  7
+rex           carnival     100%      3 /  3         0%        10/10 (r4)      0/12         6          100%   7         6 /  6
+baron         continental  100%      3 /  3         0%        10/10 (r4)      0/12         6           92%   8         6 /  6
+maestro       world        100%      3 /  3         0%        10/10 (r4)      0/12         4          100%   7         4 /  4
+avalanche     storm        100%      3 /  3         0%        10/10 (r5)      0/12         6           92%   8         5 /  6
+mirror        legends      100%      3 /  3         0%        10/10 (r4)      0/12         1          100%   5         1 /  6
+karver        grandprix    100%      3 /  3         0%        10/10 (r4)      0/12         1          100%   1         1 /  1
+warden        underground  100%      3 /  3         0%         9/9  (r4)      0/12         1          100%   1         1 /  1
+jax           dream         95%      2 /  2         0%        10/10 (r5)      0/12         1          100%   1         1 /  1
+eclipse       nightmare    100%      3 /  3         0%        10/10 (r4)      0/12         1          100%   1         1 /  1
+zero          zero          95%      3 /  3         0%         6/7  (r5)      0/12         1          100%   1         1 /  1
+aurora        p1           100%      3 /  3         0%        10/10 (r4)      0/12         3          100%   6         1 /  1
+cirrus        p2           100%      3 /  3         0%        10/10 (r4)      0/12         1          100%   5         3 /  6
+oldguard      p3           100%      3 /  3         0%        10/10 (r4)      0/12         1          100%   5         1 /  1
+nebula        p4           100%      3 /  4         5%        10/10 (r4)      0/12         1          100%   1         1 /  1
+hale          p5           100%      2 /  3         0%        10/10 (r4)      0/12         1          100%   1         1 /  1
+prism         p6           100%      3 /  3         0%        10/10 (r4)      0/12         1          100%   1         1 /  1
+rho           p7           100%      3 /  4         5%         9/9  (r4)      0/12         1          100%   1         1 /  1
+barney2       p7            95%      3 /  3         0%         8/8  (r4)      0/12         1          100%   1         1 /  1
+halcyon       halcyon       80%      4 /  5         0%         8/8  (r6)      0/12         1          100%   1         1 /  1
+moros         u1           100%      3 /  3         0%        10/10 (r4)      0/12         1          100%   1         1 /  1
+soot          u2            95%      4 /  4        75%        10/10 (r5)      0/12         1          100%   1         1 /  1
+jailer        u3           100%      4 /  4        80%        10/10 (r5)      0/12         1          100%   1         1 /  1
+fkarver       u4           100%      4 /  4        60%        10/10 (r5)      0/12         1          100%   1         1 /  1
+crucible      u5           100%      4 /  4        90%        10/10 (r5)      0/12         1          100%   1         1 /  1
+herald        u6            80%      5 /  5        90%         3/10 (r6)      0/12         1          100%   1         1 /  1   !! nearly-finished: only 3/10 KO in round 4-5
+vorgath       vorgath       95%      4 /  5         0%         5/6  (r6)      0/12         1          100%   1         1 /  1
+dodgeShard    v1           100%      3 /  3         0%        10/10 (r4)      0/12         1          100%   1         1 /  1
+blockShard    v1           100%      4 /  6        95%         6/10 (r5)      0/12         1          100%   1         1 /  1
+duckShard     v1           100%      4 /  5       100%        10/10 (r5)      0/12         1          100%   1         1 /  1
+counterShard  v1           100%      3 /  3         0%        10/10 (r4)      0/12         1          100%   1         1 /  1
+sightShard    v2           100%      2 /  2         0%        10/10 (r4)      0/12         1          100%   1         1 /  1
+soundShard    v2           100%      2 /  3         0%        10/10 (r4)      0/12         1          100%   1         1 /  1
+rhythmShard   v2           100%      2 /  3         0%        10/10 (r4)      0/12         1          100%   1         1 /  1
+memoryShard   v2           100%      3 /  3         0%         9/10 (r4)      0/12         1          100%   1         1 /  1
+echoShard     v3           100%      2 /  3         0%        10/10 (r4)      0/12         1          100%   1         1 /  1
+chaosShard    v3           100%      3 /  3         0%        10/10 (r4)      0/12         1          100%   1         1 /  1
+timeShard     v3           100%      3 /  3         0%        10/10 (r4)      0/12         1          100%   1         1 /  1
+willShard     v3            95%      5 /  5         0%         2/10 (r8)      0/12         1          100%   1         1 /  1   !! nearly-finished: only 2/10 KO in round 4-5
+dash9         rival9        75%      3 /  4         0%         4/4  (r5)      0/12         1          100%   1         1 /  1
+zeroTrue      zeroTrue      10%      3 /  3         0%         1/1  (r8)      0/12         1          100%   1         1 /  1   !! aggressive wins only 10%
+
+3 flagged:
+  herald: nearly-finished: only 3/10 KO in round 4-5
+  willShard: nearly-finished: only 2/10 KO in round 4-5
+  zeroTrue: aggressive wins only 10%

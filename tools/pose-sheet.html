@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KO Circuit — Pose Sheet</title>
+<style>
+  body { margin: 0; background: #14161c; color: #8a90a0; font: 12px ui-monospace, monospace; }
+  canvas { image-rendering: pixelated; display: block; }
+  p { margin: 6px 8px; }
+</style>
+</head>
+<body>
+<!-- Zoomed side-by-side frames for art review.
+     ?f=<fighter id(s) (gus.td = his Title Defense remix) | player | referee | portrait:<id> | trainer:<id>>&p=pose1,pose2&s=<scale>&pal=<palette> -->
+<canvas id="c"></canvas>
+<p id="info"></p>
+<script type="module">
+import { fighterSprites, playerSprites, paletteFor } from '../src/engine/spriteCache.js';
+import { FIGHTERS } from '../data/fighters/index.js';
+import { remixed } from '../data/fighters/titleDefense.js';
+import { PORTRAITS, playerPortrait } from '../data/sprites/portraits.js';
+import { trainerPortrait } from '../data/sprites/trainers.js';
+
+const q = new URLSearchParams(location.search);
+const f = q.get('f') || 'barney', scale = +(q.get('s') || 3);
+let sprites = [], pal;
+if (f.startsWith('portrait:')) {
+  const ids = f.slice(9).split(',');
+  sprites = ids.map((id) => {
+    if (id === 'player') { const p = paletteFor('playerFront'); pal = p.u32; return { s: playerPortrait(p, q.get('hair') || 'spiky'), pal: p.u32 }; }
+    const d = FIGHTERS[id]; const p = paletteFor(d.palette); return { s: PORTRAITS[id](p), pal: p.u32 };
+  });
+} else if (f.startsWith('trainer:')) {
+  sprites = f.slice(8).split(',').map((id) => { const t = trainerPortrait(id); return { s: t.sprite, pal: t.pal }; });
+} else {
+  // f may list several fighters: every pose is shown for each, side by side
+  for (const id of f.split(',')) {
+    // (not a fighter: the player, or bare sprite layers such as the referee)
+    // `id.td` (or td=1 for all): the Title Defense remix
+    const td = id.endsWith('.td') || q.get('td');
+    const d = FIGHTERS[id.replace(/\.td$/, '')] ? (td ? remixed(id.replace(/\.td$/, '')) : FIGHTERS[id]) : { spriteLayers: id, palette: id };
+    const bank = id === 'player' ? playerSprites(q.get('hair') || 'spiky') : fighterSprites(d.spriteLayers);
+    const p = paletteFor(q.get('pal') || (id === 'player' ? 'player' : d.palette)).u32;
+    const poses = (q.get('p') || 'idle1').split(',');
+    sprites.push(...poses.map((name) => ({ s: bank.get(name), pal: p })));
+  }
+}
+const W = sprites.reduce((a, { s }) => a + s.w + 6, 6), H = Math.max(...sprites.map(({ s }) => s.h)) + 8;
+const cv = document.getElementById('c');
+cv.width = W; cv.height = H; cv.style.width = W * scale + 'px'; cv.style.height = H * scale + 'px';
+const ctx = cv.getContext('2d'), img = ctx.createImageData(W, H), buf = new Uint32Array(img.data.buffer);
+buf.fill(0xffd0b8a8);
+let x0 = 6;
+for (const { s, pal: P } of sprites) {
+  const y0 = H - 4 - s.h;
+  for (let y = 0; y < s.h; y++) for (let x = 0; x < s.w; x++) { const v = s.data[y * s.w + x]; if (v) buf[(y0 + y) * W + x0 + x] = P[v]; }
+  x0 += s.w + 6;
+}
+ctx.putImageData(img, 0, 0);
+document.getElementById('info').textContent = sprites.map(({ s }) => `${s.w}x${s.h}`).join('  ');
+</script>
+</body>
+</html>

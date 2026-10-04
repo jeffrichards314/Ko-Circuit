@@ -1,0 +1,72 @@
+// Sprite registry: builds, fighter layers and the player.
+import medium from './builds/medium.js';
+import lean from './builds/lean.js';
+import heavy from './builds/heavy.js';
+import giant from './builds/giant.js';
+import barney from './fighters/barney.js';
+import kid from './fighters/kid.js';
+import mort from './fighters/mort.js';
+import gus from './fighters/gus.js';
+import rocco from './fighters/rocco.js';
+import gambini from './fighters/gambini.js';
+import knox from './fighters/knox.js';
+import brody from './fighters/brody.js';
+import ray from './fighters/ray.js';
+import pidge from './fighters/pidge.js';
+import sam from './fighters/sam.js';
+import mcbride from './fighters/mcbride.js';
+import djdrop from './fighters/djdrop.js';
+import anchor from './fighters/anchor.js';
+import gemini from './fighters/gemini.js';
+import midnight from './fighters/midnight.js';
+import strongman from './fighters/strongman.js';
+import pockets from './fighters/pockets.js';
+import tess from './fighters/tess.js';
+import jinx from './fighters/jinx.js';
+import rex from './fighters/rex.js';
+import rusty from './fighters/rusty.js';
+import avalanche from './fighters/avalanche.js';
+import cole from './fighters/cole.js';
+import downpour from './fighters/downpour.js';
+import bolt from './fighters/bolt.js';
+import maestro from './fighters/maestro.js';
+import glacier from './fighters/glacier.js';
+import hank from './fighters/hank.js';
+import lars from './fighters/lars.js';
+import baron from './fighters/baron.js';
+import sutures from './fighters/sutures.js';
+import tia from './fighters/tia.js';
+import rourke from './fighters/rourke.js';
+import ignatius from './fighters/ignatius.js';
+import duchess from './fighters/duchess.js';
+import mirror from './fighters/mirror.js';
+import nova from './fighters/nova.js';
+import goliath from './fighters/goliath.js';
+import quinn from './fighters/quinn.js';
+import monk from './fighters/monk.js';
+import karver from './fighters/karver.js';
+import jax from './fighters/jax.js';
+import staticLayers from './fighters/static.js';
+import cadeLayers from './fighters/cade.js';
+import nullFLayers from './fighters/null.js';
+import wardenLayers from './fighters/warden.js';
+import hollowLayers from './fighters/hollow.js';
+import frenzyLayers from './fighters/frenzy.js';
+import eclipseLayers from './fighters/eclipse.js';
+import zeroLayers from './fighters/zero.js';
+import { dashLayers } from './fighters/dash.js';
+import { PANTHEON_LAYERS } from './fighters/pantheon/index.js';
+import { UNDERWORLD_LAYERS } from './fighters/underworld/index.js';
+import { VOID_LAYERS } from './fighters/void/index.js';
+import referee from './referee.js';
+import { remixLayers } from './remix.js';
+import { playerBuild, playerLayers, playerLayersFor, PLAYER_ANIMS } from './player/player.js';
+
+export const BUILDS = { medium, lean, heavy, giant };
+export const FIGHTER_LAYERS = { referee, barney, kid, mort, gus, rocco, gambini, knox, brody, ray, pidge, sam, mcbride, djdrop, anchor, gemini, midnight, strongman, pockets, tess, jinx, rex,
+  rusty, tia, sutures, baron, lars, hank, glacier, maestro, bolt, downpour, cole, avalanche,
+  rourke, ignatius, duchess, mirror, nova, goliath, quinn, monk, karver, jax,
+  static: staticLayers, zero: zeroLayers, eclipse: eclipseLayers, frenzy: frenzyLayers, hollow: hollowLayers, warden: wardenLayers, null: nullFLayers, cade: cadeLayers, ...dashLayers, ...PANTHEON_LAYERS, ...UNDERWORLD_LAYERS, ...VOID_LAYERS };
+// Title Defense costumes: `<id>.td` layers for every champion with a `remix` block (remix.js)
+for (const [id, L] of Object.entries(FIGHTER_LAYERS)) if (L.remix) FIGHTER_LAYERS[id + '.td'] = remixLayers(L);
+export const PLAYER = { build: playerBuild, layers: playerLayers, layersFor: playerLayersFor, anims: PLAYER_ANIMS };

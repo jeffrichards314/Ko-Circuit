@@ -1,0 +1,13 @@
+# the public copy is built from the source (node tools/build.mjs); never committed
+deploy/
+# screenshots of other games, used as art reference while drawing: copyrighted, never published
+reference/
+# a stray output file with a command-line flag for a name
+/--*
+# the game's specs live outside the repository; never add them
+GAME_SPEC*
+*.local.md
+node_modules/
+touch-shots/
+.DS_Store
+deploy-test/
