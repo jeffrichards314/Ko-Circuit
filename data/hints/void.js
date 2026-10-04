@@ -1,5 +1,7 @@
 // Cornerman hints (src/fight/cornerman.js): the Void's twelve Hollowed and Dash Unbound (the Ferryman's voice: short, in riddles),
 // and ZERO's true form (Dash's voice: cocky, but honest). Each list is [first attempt, after one loss, after two or more].
+import { CRYSTAL_SUPER_HINTS, CRYSTAL_GENERAL } from './crystals.js';
+
 export default {
   // --- THE VOID I: THE FUNDAMENTALS -----------------------------------------------------------------------------------
   dodgeShard: {
@@ -541,10 +543,12 @@ export default {
   // --- ZERO'S TRUE FORM: DASH IN YOUR CORNER --------------------------------------------------------------------------
   zeroTrue: {
     general: [
+      ...CRYSTAL_GENERAL,
       'OKAY. HE\'S EVERYTHING. EVERY SHARD, EVERY CHAMPION, HALCYON, VORGATH. GUESS WHAT? WE BEAT EVERY ONE OF THEM. YOU MORE THAN ME, FINE.',
       'HE THINKS HE DOESN\'T NEED PIECES. PIECES ARE ALL HE IS. TAKE HIM APART ONE AT A TIME.',
     ],
     super: {
+      ...CRYSTAL_SUPER_HINTS,
       echo_gus: [
         'EVERY ECHO, HE PUTS ON SOMEBODY ELSE\'S FACE. IT\'S A COSTUME. AND I KNOW COSTUMES.',
         'WHEN HE BECOMES A CHAMPION, HE HOLDS THEIR HEAD UP LIKE THEY DID. HIGH AND PROUD. DUMB.',

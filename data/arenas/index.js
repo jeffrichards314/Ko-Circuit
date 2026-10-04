@@ -30,5 +30,6 @@ import { VOID_ARENAS } from './void.js';
 import underworld5 from './underworld5.js';
 import { ABYSS_GATE } from './underworld6.js';
 import vorgath from './vorgath.js';
+import { ORIGIN_ARENAS } from './origin.js';
 
-export const ARENAS = { rookie, minor, metro, major, carnival, continental, world, storm, legends, grandprix, dream, underground, nightmare, zero, ...NIGHT_GYM, pantheon1, pantheon2, ...HEROES_HALL, pantheon4, pantheon5, ...MIRROR_SANCTUM, pantheon7, halcyon, underworld1, underworld2, ...CHAIN_PITS, underworld4, underworld5, ...ABYSS_GATE, vorgath, ...VOID_ARENAS };
+export const ARENAS = { rookie, minor, metro, major, carnival, continental, world, storm, legends, grandprix, dream, underground, nightmare, zero, ...NIGHT_GYM, pantheon1, pantheon2, ...HEROES_HALL, pantheon4, pantheon5, ...MIRROR_SANCTUM, pantheon7, halcyon, underworld1, underworld2, ...CHAIN_PITS, underworld4, underworld5, ...ABYSS_GATE, vorgath, ...VOID_ARENAS, ...ORIGIN_ARENAS };

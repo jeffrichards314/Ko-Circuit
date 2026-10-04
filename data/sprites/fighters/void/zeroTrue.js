@@ -6,6 +6,7 @@
 // His signature poses are the first ZERO's (`champion:pose`); palettes `zero.<champion>` tint him in a champion's colour for the echoes.
 import zeroLayers, { palettes as zp } from '../zero.js';
 import { swapPalette } from '../../../../src/engine/palette.js';
+import * as Kit from '../../remixKit.js';
 
 const ramp = ([r, g, b], k) => [r, g, b].map((v) => Math.max(0, Math.min(31, Math.round(k < 1 ? v * k : v + (31 - v) * (k - 1)))));
 export const NEW_ECHO_COLORS = {
@@ -41,8 +42,30 @@ const line = (cv, mask, a, b, col) => { const n = Math.max(Math.abs(b[0] - a[0])
 
 export default {
   ...zeroLayers,
+  remix: undefined,
   id: 'zeroTrue',
   palettes: { default: 'zeroTrue' },
+  // Title Defense: ZERO, MENDED IN GOLD (kintsugi). The porcelain true form is dark stone now, and every crack in it is a seam of gold: gold fists,
+  // ivory trunks and boots, spiked pauldrons, a tattered cape of nothing lined in gold, and a broken halo behind the shards.
+  remix: {
+    swap: {
+      A: { skinHi: [17, 17, 22], skin: [10, 10, 14], skinSh: [6, 6, 9], skinDk: [3, 3, 5], white: [31, 29, 15], glow: [30, 20, 3], gloveHi: [31, 29, 13], glove: [27, 18, 3], gloveDk: [14, 8, 1] },
+      B: { trunkHi: [31, 31, 28], trunk: [27, 26, 22], trunkDk: [15, 14, 12], bootHi: [31, 31, 28], boot: [26, 25, 21] },
+    },
+    ramps: { stone: ['skinHi', 'skin', 'skinSh'], ink: ['skinSh', 'skinDk', 'outline'], gold: ['gloveHi', 'glove', 'gloveDk'], ivory: ['trunkHi', 'trunk', 'trunkDk'] },
+    back(ctx) {
+      if (ctx.pose.lying) return;
+      const [hx, hy] = ctx.J.head;
+      Kit.ring(ctx, { ramp: 'gold', cx: hx, cy: hy - 6, rx: 25, ry: 25, thick: 2, half: 'back' });
+      Kit.cape(ctx, { ramp: 'ink', inner: 'gold', len: 44, flare: 10, hem: 'tatter', collar: false });
+    },
+    torso(ctx) {
+      if (ctx.pose.lying) return;
+      Kit.pauldrons(ctx, { ramp: 'gold', style: 'spiked', size: 2, tip: 'ivory' });
+    },
+    front(ctx) { Kit.bracers(ctx, { ramp: 'ivory', from: 0.2, to: 0.5, wide: 1.8 }); Kit.greaves(ctx, { ramp: 'ivory', knee: true, from: 0.25, to: 0.7 }); },
+  },
+
   // bigger than anyone: tall, the shoulders wide and the waist pinched, long arms, big fists
   body: { size: [1.2, 1.16], shoulders: 1.12, legLen: 1.04, neckLen: 1.5,
     dims: { chestW: 22.5, deltoid: 7.8, waistW: 12.5, belly: 2, upperArm: [6.6, 5], forearm: [5.6, 4.4], glove: [8.6, 10.2], thigh: [7.8, 5.4], shin: [5.2, 3.8] } },

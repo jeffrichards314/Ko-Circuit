@@ -1,8 +1,10 @@
 // The Echo Shard (#116): sprite layers on the medium build. YOU, bleached: your own outline in bone and grey, a blank face with only your
 // seam of a mouth, black wraps for trunks and gloves the way the Void copies whatever it is shown, and in the chest the hollow of a small person.
 import { hollow } from './_hollow.js';
+import { TD } from './tdLooks.js';
 
 const { layers, palettes } = hollow('echoShard', {
+  remix: TD.echoShard,
   build: 'medium',
   body: { size: [1.0, 1.0], legLen: 1.0, torsoLen: 1.0, shoulders: 1.0, neckLen: 0, dims: { belly: 2, waistW: 13, chestW: 16.5, upperArm: [5.4, 4.5], forearm: [4.8, 4.0] } },
   tint: [17, 26, 31], tintHi: [27, 31, 31], tintDk: [6, 11, 17],

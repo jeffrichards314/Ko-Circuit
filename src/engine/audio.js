@@ -481,6 +481,20 @@ const SFX = {
     [1319, 1760, 2093, 2637, 3136].forEach((f, i) => a.tone(t + 0.05 + i * 0.045, 0.12, f, f, 0.12, { duty: i & 1 ? 1 : 2, curve: 'lin' }));
   },
 };
+// The Reforging (2026-10-04): one chime for each of the twelve lights, a pentatonic climb (the order they were freed in) with a shimmer on top
+const PENTA = [0, 2, 4, 7, 9];
+Object.assign(SFX, Object.fromEntries(Array.from({ length: 12 }, (_, i) => {
+  const f = 440 * Math.pow(2, (PENTA[i % 5] + 12 * Math.floor(i / 5)) / 12);
+  return ['pillar' + i, (a, t) => { a.tone(t, 0.55, f, f, 0.12, { duty: 2, curve: 'lin' }); a.tone(t + 0.02, 0.45, f * 2, f * 2, 0.05, { duty: 1, curve: 'lin' }); a.tone(t + 0.05, 0.4, f * 3, f * 3, 0.025, { duty: 0, curve: 'lin' }); }];
+})));
+// ORIGIN (2026-10-04). The TRUE FORM switch in Practice: a rising sweep, a chord of white-gold and a burst of fire; and the quiet reverse. The Rewind's tick, the First
+// Punch's gather, the arena flicker's tear.
+Object.assign(SFX, {
+  originFlare(a, t) { [392, 523, 659, 784, 1047, 1319, 1568].forEach((f, i) => a.tone(t + i * 0.07, 0.4, f, f * 1.01, 0.09, { duty: i & 1 ? 1 : 2, curve: 'lin' })); a.tone(t, 0.7, 98, 392, 0.14, { type: 'triangle' }); a.noise(t + 0.38, 0.5, 0.2, 0.5, false, a.sfxBus, 1.8); a.tone(t + 0.4, 0.8, 2093, 2093, 0.05, { duty: 0, curve: 'lin' }); },
+  originFlareBack(a, t) { [1319, 988, 784, 659, 523].forEach((f, i) => a.tone(t + i * 0.08, 0.25, f, f * 0.98, 0.04, { duty: 2, curve: 'lin' })); a.tone(t + 0.1, 0.5, 392, 130, 0.07, { type: 'triangle' }); },
+  originGather(a, t) { a.tone(t, 1.0, 70, 560, 0.12, { type: 'triangle' }); a.tone(t, 1.0, 140, 1100, 0.04, { duty: 1 }); },
+  originTear(a, t) { a.noise(t, 0.25, 0.14, 0.4, false, a.sfxBus, 2.6); a.tone(t, 0.2, 1500, 200, 0.06, { duty: 0 }); },
+});
 // every sound effect by name (the sound test, §12)
 export const SFX_NAMES = Object.keys(SFX);
 

@@ -100,13 +100,16 @@ const hallRow = (kind, x0 = 88, step = 78) => DIVISIONS.flatMap((d, i) => {
   const board = { id: `board.${d}`, kind: 'prop', x: x + 38, prop: 'records', label: `${TD_NAMES[d]} RECORDS`, sub: td ? 'BEST DEFENSES, TIMES, MEDALS' : 'BEST STREAK, TIME, WHO ENDED EACH RUN', go: { screen: 'modeRecords', args: { back: 'map', page: `${td ? 'td' : 'g'}.${d}` } } };
   return [door, board];
 });
+// the secret door at the end of the hall and of the tower (2026-10-04): labeled only ???, with no hint anywhere. It opens for the Gauntlet's ORIGIN when all five Gauntlet
+// divisions have been cleared, and for ORIGIN TRUE FORM when ORIGIN has been beaten and all five Title Defense divisions have (records.js originGauntletOpen / originTrueOpen).
+const originDoor = (which) => ({ id: 'door.origin', kind: 'door', x: 88 + 5 * 78 + 24, prop: 'archdoor', style: 'origin', label: '???', sub: '', origin: which, lock: { kind: 'origin', which, hint: '' } });
 const TD_HALL = {
   id: 'td', name: 'TITLE DEFENSE', sub: 'THE CHAMPIONSHIP HALL', theme: 'td', parent: null, scroll: true,
-  stations: [{ id: 'exit', kind: 'exit', x: 26, label: 'OUT TO THE ROAD', prop: 'door' }, ...hallRow('td')],
+  stations: [{ id: 'exit', kind: 'exit', x: 26, label: 'OUT TO THE ROAD', prop: 'door' }, ...hallRow('td'), originDoor('t')],
 };
 const GAUNTLET_HALL = {
   id: 'gauntlet', name: 'THE GAUNTLET', sub: 'ONE LOSS ENDS IT', theme: 'gauntlet', parent: null, scroll: true,
-  stations: [{ id: 'exit', kind: 'exit', x: 26, label: 'OUT TO THE ROAD', prop: 'door' }, ...hallRow('g')],
+  stations: [{ id: 'exit', kind: 'exit', x: 26, label: 'OUT TO THE ROAD', prop: 'door' }, ...hallRow('g'), originDoor('g')],
 };
 
 // ---- a circuit's hall: a door and the podiums in ranking order

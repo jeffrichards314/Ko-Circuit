@@ -15,7 +15,7 @@ import { recordResult, nextOpponent, recordReplay, replayOpponent } from '../sav
 import { fighterFor } from './modes.js';
 import { showChar } from '../save/password.js';
 import { drawPassword, drawBlock, drawLabel, drawLabelCentered } from '../engine/textbox.js';
-import { saveRecords, syncRecords, recordTdFight, tdChampOf } from '../save/records.js';
+import { saveRecords, syncRecords, recordTdFight, tdChampOf, recordOriginFight } from '../save/records.js';
 import { recordFight } from '../save/medals.js';
 import { drawMedalRow } from './medalIcons.js';
 import { clockText } from '../save/records.js';
@@ -35,10 +35,12 @@ export class ResultsScreen {
     this.replay = !!(result.replay && game.career && game.career.replay);
     // a podium rematch changes nothing about the career: no life, no ladder, no record; only the medals and the record time count
     this.rematch = result.rematch || null;
-    this.outcome = !game.career ? null : this.rematch ? { kind: 'podium' } : this.replay ? { ...recordReplay(game.career, result), replay: true } : recordResult(game.career, result);
+    this.origin = result.origin || null; // ORIGIN (g) or his true form (t): a fight with no lives and no ladder: only his own record changes
+    this.outcome = this.origin ? { kind: 'origin' } : !game.career ? null : this.rematch ? { kind: 'podium' } : this.replay ? { ...recordReplay(game.career, result), replay: true } : recordResult(game.career, result);
     // record time and medals: every career fight counts (§15), replays and rematches too (a Title Defense champion's are his own, kept apart)
-    this.medal = !game.career ? null : this.rematch && this.rematch.td ? { ...recordTdFight(game.records, fighterFor(result.opponent, true), result), unlocked: [] } : recordFight(game.medals, result);
+    this.medal = this.origin ? { ...recordOriginFight(game.records, this.f, result, this.origin, game.career), unlocked: [] } : !game.career ? null : this.rematch && this.rematch.td ? { ...recordTdFight(game.records, fighterFor(result.opponent, true), result), unlocked: [] } : recordFight(game.medals, result);
     // unlocks (Title Defense, Gauntlet, ZERO in the Gauntlet) and Practice opponents
+    if (this.origin && game.career) game.saveCareer();
     if (game.career) saveRecords(syncRecords(game.records, game.career));
   }
   enter() {}
@@ -50,6 +52,7 @@ export class ResultsScreen {
       // a belt, Dash, or a circuit that has reset you to another one: the world map (you walk on to the next place); anything else brings you back to the podium you fought at
       if (o && (o.kind === 'title' || o.kind === 'rival' || (o.kind === 'reset' && o.to !== o.circuit))) this.g.loc = { area: 'world' };
       if (!o) this.g.go('title');
+      else if (o.kind === 'origin') this.originNext();
       // (a rematch win over ZERO's true form plays the true ending if this career has never seen it: a password can put you past the fight)
       else if (o.kind === 'podium' && this.won && this.f.id === 'zeroTrue' && this.g.career && !this.g.career.flags.trueEndingSeen) { this.g.loc = { area: 'world' }; this.g.go('trueEnding'); }
       else if (o.kind === 'podium') this.g.go('map');
@@ -63,6 +66,12 @@ export class ResultsScreen {
       else if (o.kind === 'rival') this.g.go('rival', { id: o.circuit, phase: 'post' });
       else this.g.go('map');
     }
+  }
+  // ORIGIN fell (the first time: his victory scene, in full) or did not (back to his door, to try again)
+  originNext() {
+    const g = this.g, O = g.records.origin, k = this.origin === 'g' ? 'victory' : 'victoryTrue';
+    if (this.won && !O.seen[k]) { O.seen[k] = true; saveRecords(g.records); g.go('cutscene', { id: this.origin === 'g' ? 'victory.origin' : 'victory.originTrue', params: {}, then: ['map', {}] }); return; }
+    g.go('map');
   }
   // a Hollowed freed (Phase E): the freeing cutscene, then the belt ceremony (a fragment's last) or the map
   goFreed(o) {
@@ -117,7 +126,7 @@ export class ResultsScreen {
 
   // this fight's time and medals (new ones blink)
   renderMedals(fr, M) {
-    const got = (this.rematch && this.rematch.td ? tdChampOf(this.g.records, this.f.id).got : this.g.medals.got[this.f.id]) || {};
+    const got = (this.origin ? this.g.records.origin.got[this.origin] : this.rematch && this.rematch.td ? tdChampOf(this.g.records, this.f.id).got : this.g.medals.got[this.f.id]) || {};
     const txt = M.time == null ? 'NO KO TIME' : `${M.newBest ? 'NEW BEST' : 'KO TIME'} ${clockText(M.time)}`;
     drawText(fr, txt, 96, 106, M.newBest && (this.t >> 3) & 1 ? COL.yellow : COL.cyan, { mono: false });
     drawMedalRow(fr, 207, 104, got, (this.t >> 3) & 1 ? M.earned : []);
@@ -138,6 +147,11 @@ export class ResultsScreen {
       const msg = { win: 'REPLAY: ON TO THE NEXT ONE', rival: 'LADDER DONE. ONE MORE...', done: 'TITLE RECLAIMED!', rematch: `REPLAY LIVES LEFT: ${o.lives}`, over: 'REPLAY OVER. YOUR CAREER IS UNTOUCHED.' }[o.kind];
       head(msg, o.kind === 'over' || o.kind === 'rematch' ? COL.pink : COL.yellow);
       if (nx) line2(`NEXT: ${FIGHTERS[nx].name}`, COL.white);
+      return;
+    }
+    if (o.kind === 'origin') {
+      head(this.won ? (this.origin === 'g' ? 'ORIGIN FALLS!' : 'THE FIRST AND THE LAST FALL!') : 'THE DOOR WAITS.', this.won ? ((this.t >> 3) & 1 ? COL.yellow : COL.white) : COL.pink);
+      line2(this.won ? 'NO PASSWORD. NO LIFE. ONLY THE BEGINNING.' : 'NO LIVES, NOTHING LOST. TRY WHEN READY.', COL.white);
       return;
     }
     if (o.kind === 'podium') {

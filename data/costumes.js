@@ -98,4 +98,11 @@ export const COSTUMES = [
     glove: c([3, 3, 4], [1, 1, 2], [0, 0, 1]), shoe: c([3, 3, 4], [1, 1, 2], [0, 0, 1]),
     accent: c([31, 31, 31], [24, 25, 27], [14, 15, 19]), pieces: ['hollow'],
   },
+  // ORIGIN's (2026-10-04, the last one, so no saved look moves): given by the Origin Belt, for beating his true form in Title Defense (records.origin.trueBeaten; it is in no medal threshold): white-gold, a halo over the head
+  {
+    id: 'origin', name: 'ORIGIN', from: 'THE ORIGIN BELT',
+    shirt: c([31, 31, 28], [29, 26, 14]), trunks: c([31, 30, 16], [29, 22, 5], [18, 11, 2]),
+    glove: c([31, 31, 24], [31, 24, 5], [24, 11, 1]), shoe: c([31, 31, 28], [29, 24, 8], [18, 11, 2]),
+    accent: c([31, 31, 26], [31, 26, 8], [24, 14, 2]), pieces: ['belt', 'trim', 'sheen', 'laurel', 'halo'],
+  },
 ];

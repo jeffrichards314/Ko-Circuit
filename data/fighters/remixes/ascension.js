@@ -15,7 +15,7 @@ export default {
   // -- #54 Aurora Vess: the long day
   aurora: {
     nickname: 'THE LONG DAY', quote: 'THE SUN IS ALREADY UP. IT JUST HASN\'T SET FOR YOU YET.', lines: { win: 'THE DAY IS LONG. YOU ARE NOT.', lose: 'THE LIGHT... GOES OUT...' },
-    tell: 0.85, costume: 'shift',
+    tell: 0.85,
     moves: { duskSweep: sweep(7, 'DUSK SWEEP', { sfx: { tell: 'whoosh' } }) },
     patterns: [{ id: 'longDay', weight: 3, steps: steps('i40 glowJab i16 glowHook i30 duskSweep i34 glowUpper i40') }],
     exploits: [
@@ -36,7 +36,7 @@ export default {
   // -- #58 Cirrus Crown: the long winter
   cirrus: {
     nickname: 'THE DEEP WINTER', quote: 'THE STORM NEVER LEFT. IT ONLY WAITED FOR YOU.', lines: { win: 'THE WEATHER TURNS. YOU DON\'T.', lose: 'THE SKY... CLEARS...' },
-    tell: 0.85, costume: 'shift',
+    tell: 0.85,
     moves: { crosswind: sweep(7, 'CROSSWIND') },
     patterns: [{ id: 'sideways', weight: 3, steps: steps('i36 jab i14 hook i28 crosswind i30 body i16 upper i40') }],
     exploits: [
@@ -57,7 +57,7 @@ export default {
   // -- #66 The Old Guard: the old routine
   oldguard: {
     nickname: 'THE OLD ROUTINE', quote: 'I HAVE FOUGHT YOUR GRANDFATHER. I REMEMBER HIS WEAKNESS.', lines: { win: 'SAME AS ALWAYS, KID.', lose: 'AFTER ALL THESE YEARS... SOMEONE FINALLY...' },
-    tell: 0.85, costume: 'shift',
+    tell: 0.85,
     moves: { caneSweep: sweep(6, 'CANE SWEEP') },
     exploits: [
       X.counter('caneSnaps', 'THE CANE SNAPS', 'poke', { early: 4, hits: 6, star: true, hint: ['audio', 'THE CANE CLICKS ONCE ON THE CANVAS BEFORE THE POKE.'] }),
@@ -77,7 +77,7 @@ export default {
   // -- #70 Nebula: the collapse
   nebula: {
     nickname: 'THE BLACK HOLE', quote: 'EVERY STAR I MADE, I CAN TAKE BACK.', lines: { win: 'EVERYTHING FALLS IN, EVENTUALLY.', lose: 'THE LIGHT... ESCAPES...' },
-    tell: 0.85, costume: 'shift',
+    tell: 0.85,
     moves: { blackHole: mv('haymaker', 6, { name: 'BLACK HOLE' }) },
     patterns: [{ id: 'eventHorizon', weight: 3, steps: steps('i40 flare i14 sear i16 tide i30 blackHole i44 fallout i40') }],
     exploits: [
@@ -98,7 +98,7 @@ export default {
   // -- #74 Forgemaster Hale: quenched
   hale: {
     nickname: 'QUENCHED IN BLOOD', quote: 'EVERY BLADE I MAKE, I TEST MYSELF.', lines: { win: 'TEMPERED. NOW GO HOME.', lose: 'THE FIRE... GOES OUT...' },
-    tell: 0.85, costume: 'shift',
+    tell: 0.85,
     moves: { quenchSweep: sweep(6, 'QUENCH SWEEP') },
     patterns: [{ id: 'quenching', weight: 3, steps: steps('i36 jab i14 jabR i16 quenchSweep i30 hook i16 upper i40') }],
     exploits: [
@@ -119,7 +119,7 @@ export default {
   // -- #78 Prism: all colours
   prism: {
     nickname: 'ALL THE COLOURS', quote: 'YOU SEE ONE LIGHT. I AM EVERY ONE OF THEM.', lines: { win: 'YOU SAW ONLY WHITE.', lose: 'THE COLOURS... FADE...' },
-    tell: 0.85, costume: 'shift',
+    tell: 0.85,
     moves: { refraction: sweep(5, 'REFRACTION') },
     patterns: [{ id: 'fullColour', weight: 3, steps: steps('i36 jab i12 hookL i14 refraction i28 bodyR i14 upper i40') }],
     exploits: [
@@ -140,7 +140,7 @@ export default {
   // -- #81 Radiant Rho: a light of his own
   rho: {
     nickname: 'A LIGHT OF HIS OWN', quote: 'I BORROWED SIX LIGHTS. NOW I\'M SHOWING YOU MY OWN.', lines: { win: 'SIX LIGHTS, ONE WINNER.', lose: 'MY OWN... LIGHT... WAS ENOUGH...' },
-    tell: 0.85, costume: 'shift',
+    tell: 0.85,
     moves: { radiantSweep: sweep(5, 'RADIANT SWEEP') },
     exploits: [
       X.counter('homageDropped', 'THE HOMAGE DROPPED', 'upper', { early: 3, hits: 6, hint: ['visual', 'HIS WHOLE BODY RISES ONTO ITS TOES BEFORE THE RADIANT UPPERCUT.'] }),
@@ -160,7 +160,7 @@ export default {
   // -- Barney Buckets, Ascended: the holy mess
   barney2: {
     nickname: 'THE HOLY MESS', quote: 'I CLEANED THE WHOLE HEAVENS. THEN I FOUND ONE MORE SPILL: YOU.', lines: { win: 'ALL CLEAN.', lose: 'I... MISSED A SPOT...' },
-    tell: 0.85, costume: 'shift',
+    tell: 0.85,
     moves: { bucketKick: sweep(4, 'BUCKET KICK') },
     exploits: [
       X.counter('broomRaised', 'THE BROOM IS RAISED', 'hook', { late: 3, hits: 6, star: true, hint: ['visual', 'HE RAISES THE PUSH-BROOM OVER HIS SHOULDER FIRST.'] }), // (not the mop of heaven's call: that one is a super, armored from its first move)
@@ -180,7 +180,7 @@ export default {
   // -- Halcyon, the Undefeated: the long evening
   halcyon: {
     nickname: 'THE LONG EVENING', quote: 'I HAVE NEVER LOST. I HAVE ONLY NEVER BEEN LOST TO.', lines: { win: 'THE DAY ENDS HOW IT ALWAYS DOES.', lose: 'THE DAY... ENDS... FOR ME...' },
-    tell: 0.9, costume: 'shift',
+    tell: 0.9,
     moves: { eventide: sweep(5, 'EVENTIDE') },
     exploits: [
       X.counter('solarFlare', 'SOLAR FLARE', 'nUpper', { early: 3, hits: 6, star: true, hint: ['visual', 'HIS SHADOW FLARES BEFORE THE SOLAR UPPERCUT.'] }),
@@ -202,7 +202,7 @@ export default {
   // -- #85 Moros: the burial
   moros: {
     nickname: 'THE BURIAL', quote: 'YOU HAVE WALKED BEHIND THE COFFIN. NOW I\'LL SHOW YOU THE GROUND.', lines: { win: 'REST NOW. THE LONG REST.', lose: 'THE MASK... SLIPS... AT LAST...' },
-    tell: 0.85, costume: 'shift',
+    tell: 0.85,
     moves: { lastRites: sweep(6, 'LAST RITES') },
     patterns: [{ id: 'graveside', weight: 3, steps: steps('i36 jab i12 hook i14 lastRites i30 hookL i16 upper i40') }],
     exploits: [
@@ -223,7 +223,7 @@ export default {
   // -- Queen Soot: the ash crown
   soot: {
     nickname: 'THE ASH QUEEN', quote: 'EVERYTHING IS A THRONE ONCE IT\'S BURNED.', lines: { win: 'ASH TO ASH.', lose: 'THE FIRE... IS... OUT...' },
-    tell: 0.85, costume: 'shift',
+    tell: 0.85,
     moves: { ashfall: sweep(4, 'ASHFALL') },
     patterns: [{ id: 'ashRain', weight: 3, steps: steps('i34 sear i12 cinders i14 ashfall i28 smolder i14 spark i40') }],
     exploits: [
@@ -244,7 +244,7 @@ export default {
   // -- The Jailer: time served
   jailer: {
     nickname: 'LIFE WITHOUT PAROLE', quote: 'THE CELLS ARE FULL. I\'VE SAVED ONE JUST FOR YOU.', lines: { win: 'BACK IN YOUR CELL.', lose: 'THE KEYS... THE KEYS...' },
-    tell: 0.85, costume: 'shift',
+    tell: 0.85,
     moves: { cellDrop: sweep(6, 'CELL DROP') },
     patterns: [{ id: 'lifeTerm', weight: 3, steps: steps('i36 keyJab i12 chainHookL i14 cellDrop i30 cellBlow i16 lockUp i40') }],
     exploits: [
@@ -265,7 +265,7 @@ export default {
   // -- Fallen Karver: the deposed
   fkarver: {
     nickname: 'THE DEPOSED', quote: 'A KING WHO HAS FALLEN HAS NOTHING LEFT TO LOSE.', lines: { win: 'LONG LIVE THE DEPOSED.', lose: 'THE CROWN... ROLLS AWAY...' },
-    tell: 0.85, costume: 'shift',
+    tell: 0.85,
     moves: { fallenScythe: sweep(5, 'THE FALLEN SCYTHE') },
     patterns: [{ id: 'exile', weight: 3, steps: steps('i30 crown i12 carveL i14 fallenScythe i26 burden i14 tithe i40') }],
     exploits: [
@@ -286,7 +286,7 @@ export default {
   // -- Crucible: the second casting
   crucible: {
     nickname: 'THE SECOND CASTING', quote: 'THE FIRST MOLD CRACKED. THIS ONE WON\'T.', lines: { win: 'CAST AND SET.', lose: 'THE MOLD... BREAKS...' },
-    tell: 0.85, costume: 'shift',
+    tell: 0.85,
     moves: { quench: sweep(5, 'THE QUENCH') },
     patterns: [{ id: 'recast', weight: 3, steps: steps('i32 ingot i12 cast i14 quench i28 pourBlow i14 forge i40') }],
     exploits: [
@@ -307,7 +307,7 @@ export default {
   // -- The Herald: the last proclamation
   herald: {
     nickname: 'THE LAST PROCLAMATION', quote: 'I CARRIED THE KING\'S WORD. NOW I CARRY MY OWN.', lines: { win: 'SO IT IS DECREED.', lose: 'THE WORD... IS... UNSPOKEN...' },
-    tell: 0.9, costume: 'shift',
+    tell: 0.9,
     moves: { proclaim: sweep(3, 'PROCLAIM') },
     exploits: [
       X.counter('voiceCracks', 'THE VOICE CRACKS', 'bellow', { early: 3, hits: 6, hint: ['audio', 'HE TAKES A LONG, LOUD BREATH BEFORE THE BELLOW.'] }),
@@ -327,7 +327,7 @@ export default {
   // -- Vorgath, King Below: the tithe of bones
   vorgath: {
     nickname: 'THE TITHE OF BONES', quote: 'I HAVE COLLECTED EVERYTHING ELSE. NOW, YOUR BONES.', lines: { win: 'THE TITHE IS PAID.', lose: 'THE THRONE... EMPTY AT LAST...' },
-    tell: 0.9, costume: 'shift',
+    tell: 0.9,
     moves: { boneThrone: sweep(3, 'THE BONE THRONE') },
     exploits: [
       X.counter('footingLost', 'FOOTING LOST', 'crush', { early: 4, hits: 7, star: true, hint: ['audio', 'THE FLOOR GROANS BEFORE THE FLOOR BREAKER.'] }),
@@ -349,7 +349,7 @@ export default {
   // -- Dash Maddox, unbound: the final cut
   dash9: {
     nickname: 'THE FINAL CUT', quote: 'NO MORE SHOWBOATING. NO MORE TAPE. JUST ME, AND THE BELL.', lines: { win: 'THAT\'S A WRAP.', lose: 'CUT... PRINT IT...' },
-    tell: 0.9, costume: 'shift',
+    tell: 0.9,
     moves: { selfieStick: sweep(3, 'SELFIE STICK') },
     stateTriggers: [], // (the gloating is gone: this Dash doesn't stop to talk)
     exploits: [
@@ -382,7 +382,7 @@ export default {
   // -- ZERO, true form: the whole of nothing, again
   zeroTrue: {
     nickname: 'NOTHING, AGAIN', quote: 'YOU FREED TWELVE. I KEPT THE ONE THAT MATTERS.', lines: { win: 'BACK TO ZERO. AGAIN.', lose: 'I WAS ONLY... A DIRECTION...' },
-    tell: 0.95, costume: 'shift',
+    tell: 0.95,
     moves: { voidSweep: sweep(3, 'THE VOID SWEEP') },
     exploits: [
       X.counter('holdTheBulwark', 'THE BULWARK BREAKS', 'block_bulwark', { early: 4, hits: 7, star: true, hint: ['visual', 'HE PLANTS BOTH FEET BEFORE THE BULWARK.'] }),
@@ -414,7 +414,7 @@ export default {
   // -- ZERO, the first form (Combined only): the same nothing, louder
   zero: {
     nickname: 'NOTHING, LOUDER', quote: 'YOU REMEMBER THEM ALL. LET ME REMIND YOU HOW THEY LOST.', lines: { win: 'NOTHING, AS EVER.', lose: 'NOTHING... LEAVES...' },
-    tell: 0.9, costume: 'shift',
+    tell: 0.9,
     moves: { noFloor: sweep(4, 'NO FLOOR') },
     exploits: [
       X.slip('deadWeightEcho', 'DEAD WEIGHT ECHOED', 'sig_brody', { hits: 6, star: 26, hint: ['audio', 'THE BRICKLAYER\'S TROWEL CLINKS BEFORE HIS ECHO OF THE MIXER.'] }),

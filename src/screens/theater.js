@@ -15,7 +15,11 @@ export class TheaterScreen {
     this.g = game; this.t = 0;
     game.leaveSandbox && game.leaveSandbox(); // (coming back from a scene: the real career is the game's again)
     this.rows = [];
-    for (const z of theaterList()) {
+    // ORIGIN's scenes are listed only once he has been beaten (his true form's once ORIGIN TRUE FORM has): nothing about him is in the Theater before that
+    const O = game.records && game.records.origin, shown = (s) => !/origin/i.test(s.id) || (O && (/True$/.test(s.id) ? O.trueBeaten : O.beaten));
+    for (const z0 of theaterList()) {
+      const z = { ...z0, scenes: z0.scenes.filter(shown) };
+      if (!z.scenes.length) continue;
       const seen = z.scenes.filter((s) => seenCount(game.seen, s.id) > 0).length;
       this.rows.push({ header: z.name, count: `${seen}/${z.scenes.length}` });
       for (const s of z.scenes) this.rows.push({ id: s.id, title: s.title });

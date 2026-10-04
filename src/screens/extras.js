@@ -50,7 +50,11 @@ function byCircuit(ids = EVERYONE) {
   }
   return out;
 }
-const metOf = (g) => new Set(g.records.met);
+const metOf = (g) => new Set([...g.records.met, ...(g.records.origin.beaten ? ['origin'] : []), ...(g.records.origin.trueBeaten ? ['originTrue'] : [])]);
+// ORIGIN's own best time and medals (records.origin), for the lists that read the career's
+const ORI = { origin: 'g', originTrue: 't' };
+const bestOf = (g, id) => (ORI[id] ? g.records.origin.best[ORI[id]] : g.medals.best[id]);
+const gotOf = (g, id) => (ORI[id] ? g.records.origin.got[ORI[id]] : g.medals.got[id]) || {};
 
 // ---------------------------------------------------------------------------
 // A scrolling list of rows (headers are skipped by the cursor).
@@ -97,11 +101,11 @@ export class RecordsScreen extends ListScreen {
       const d = FIGHTERS[r.id], known = met.has(r.id), on = i === this.sel;
       if (on) f.rect(10, y - 2, 236, 10, COL.panelHi);
       drawText(f, known ? nameOf(d) : '???', 20, y, known ? (on ? COL.white : COL.off) : COL.grey, { mono: false });
-      const b = M.best[r.id];
+      const b = bestOf(this.g, r.id);
       drawText(f, b == null ? '--:--' : clockText(b), 160, y, b == null ? COL.grey : COL.yellow, { mono: false });
-      drawMedalRow(f, 206, y - 3, M.got[r.id] || {});
+      drawMedalRow(f, 206, y - 3, gotOf(this.g, r.id));
     });
-    const all = this.ids.filter((id) => M.best[id] != null).length;
+    const all = this.ids.filter((id) => bestOf(this.g, id) != null).length;
     drawTextCentered(f, `${all}/${this.ids.length} FIGHTERS WITH A KO TIME`, 128, 202, COL.grey, { mono: false });
     drawTextCentered(f, 'A: MEDAL GRID   B: BACK', 128, 212, COL.dark, { mono: false });
   }
@@ -239,9 +243,9 @@ export class GalleryScreen {
       // his circuit, shortened until it fits beside the portrait
       const cs = SHORT[d.circuit] || '', tries = [cs, cs.replace('UNDERGROUND', 'UNDERGR.').replace('DREAM FIGHT', 'DREAM').replace('CONTINENTAL', 'CONTIN.').replace('GRAND PRIX', 'G. PRIX').replace('UNDERWORLD', 'UNDERW.').replace('PANTHEON', 'PANTH.').replace('THE VOID', 'VOID'), cs.replace('UNDERWORLD', 'UNDER.').replace('PANTHEON', 'PAN.').replace('THE VOID', 'VOID')];
       drawLabel(f, tries.find((x) => textWidth(x, false) <= 74) || tries[2], 176, 10, 74, COL.cyan, { mono: false, where: 'gallery circuit' });
-      const b = M.best[d.id];
+      const b = bestOf(this.g, d.id);
       drawText(f, `BEST ${b == null ? '--:--' : clockText(b)}`, 176, 22, COL.yellow, { mono: false });
-      drawMedalRow(f, 176, 33, M.got[d.id] || {});
+      drawMedalRow(f, 176, 33, gotOf(this.g, d.id));
       const c = CIRCUITS[d.circuit];
       drawText(f, `HP ${d.stats.health}`, 176, 48, COL.off, { mono: false });
       drawLabel(f, textWidth(`TELLS ${c.tellWindow}F`, false) <= 74 ? `TELLS ${c.tellWindow}F` : `TELL ${c.tellWindow}F`, 176, 58, 74, COL.off, { mono: false, where: 'gallery tells' });
@@ -313,7 +317,9 @@ export class SoundTestScreen {
   constructor(game) {
     this.g = game; this.t = 0; this.tab = 0; this.sel = [0, 0]; this.top = [0, 0]; this.playing = null; this.hits = new Hits();
     // every song and effect, the Ascension's zones once you've reached them (Phase F): their names would spoil the way ahead
-    this.lists = [Object.keys(game.songs).filter((n) => !SONG_ZONE[n] || zoneSeen(game, SONG_ZONE[n])), SFX_NAMES];
+    // (ORIGIN's songs and sounds appear only after he has been beaten: his true form's after his true form)
+    const O = game.records.origin, hide = (n) => /^origin/i.test(n) && !(/True|Flare|Back|Credits/.test(n) ? O.trueBeaten : O.beaten);
+    this.lists = [Object.keys(game.songs).filter((n) => (!SONG_ZONE[n] || zoneSeen(game, SONG_ZONE[n])) && !hide(n)), SFX_NAMES.filter((n) => !hide(n))];
   }
   enter() { this.g.audio.stop(); }
   update() {

@@ -9,7 +9,7 @@ import { X, A, S } from './kit.js';
 
 // (their tells are already at the Void's: a remix only quickens them a little, and not at all where the tell is the fight: the Counter Shard's
 // flashes, the Rhythm Shard's beat, the Memory Shard's tick)
-const base = { boss: true, supersPerRound: [2, 3], costume: 'shift' };
+const base = { boss: true, supersPerRound: [2, 3] };
 
 export default {
   // -- #108 The Dodge Shard: the second wind

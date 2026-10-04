@@ -59,6 +59,8 @@ import { palettes as dashPalettes } from './sprites/fighters/dash.js';
 import { PANTHEON_PALETTES } from './sprites/fighters/pantheon/index.js';
 import { UNDERWORLD_PALETTES } from './sprites/fighters/underworld/index.js';
 import { VOID_PALETTES } from './sprites/fighters/void/index.js';
+import { ORIGIN_PALETTES } from './sprites/fighters/origin/index.js';
+import { ALT_PALETTES } from './altPalettes.js';
 export { rgb15, makePalette, swapPalette, spritePalette, bgPalette, c32 } from '../src/engine/palette.js';
 
 // ---------------------------------------------------------------------------
@@ -273,6 +275,7 @@ export const PALETTES = {
   ...PANTHEON_PALETTES,
   ...UNDERWORLD_PALETTES,
   ...VOID_PALETTES,
+  ...ORIGIN_PALETTES,
 };
 
 export const UI = ui;
@@ -283,6 +286,7 @@ export const UI = ui;
 // colours (palette B, and the glove/costume keys of palette A) turned round the
 // colour wheel, while skin, hair, eyes and the outline stay his own. The turn is
 // fixed per fighter (a hash of the name), so his alt colours never change.
+const ALT_BASE_KEEP = /^(outline|skin|hair|white|mouth|eye|teeth|beard|brow|stubble|lash|flesh|tooth|lip)/i;
 const KEEP = /^(outline|skin|hair|white|mouth|eye|teeth|beard|brow|stubble|lash|flesh|tooth|lip)/i;
 function turn([r, g, b], deg) {
   const R = r / 31, G = g / 31, B = b / 31, mx = Math.max(R, G, B), mn = Math.min(R, G, B), d = mx - mn;
@@ -296,11 +300,25 @@ function turn([r, g, b], deg) {
 export function ensureAltPalette(name) {
   const alt = `${name}.alt`;
   if (PALETTES[alt] || !PALETTES[name]) return alt;
+  const base = PALETTES[name];
+  // Barney's is the Night Shift costume made by hand (slate shirt, brown work trousers, orange cap and gloves)
+  if (name === 'barney') { PALETTES[alt] = PALETTES.barneyNight; return alt; }
+  // a designed costume (data/altPalettes.js, made by tools/make-alts.mjs); a Title Defense remix wears its classic fighter's, its new pieces turned to match
+  const plainName = name.replace(/\.td$/, ''), D = ALT_PALETTES[plainName];
+  if (D) {
+    const plain = PALETTES[plainName];
+    // (colours a remix adds that the classic costume does not have are turned half way round, so they stay apart from the rest)
+    const mk = (P, o, P0) => P && swapPalette(`${P.name}.alt`, P, {
+      ...Object.fromEntries(P.keys.filter((k) => plainName !== name && !(P0 && k in P0.index) && !ALT_BASE_KEEP.test(k)).map((k) => [k, turn(P.spec[k], 150)])),
+      ...Object.fromEntries(Object.entries(o || {}).filter(([k]) => k in P.index)),
+    });
+    PALETTES[alt] = { A: mk(base.A, D.A, plain.A), B: base.B && mk(base.B, D.B, plain.B) };
+    return alt;
+  }
   let hsh = 0;
   for (const ch of name) hsh = (hsh * 31 + ch.charCodeAt(0)) >>> 0;
   const deg = 100 + (hsh % 7) * 26; // 100..256 degrees
   const shift = (P, all) => P && swapPalette(`${P.name}.alt`, P, Object.fromEntries(P.keys.filter((k) => all || !KEEP.test(k)).map((k) => [k, turn(P.spec[k], deg)])));
-  const base = PALETTES[name];
   PALETTES[alt] = { A: shift(base.A, false), B: base.B && shift(base.B, false) };
   return alt;
 }

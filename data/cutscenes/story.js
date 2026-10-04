@@ -19,7 +19,7 @@ const RZONE = (n) => (n <= 4 ? 'road' : n <= 6 ? 'pantheon' : n <= 8 ? 'underwor
 export const RIVAL_SCENES_LIST = [];
 for (let n = 1; n <= 9; n++) for (const phase of ['pre', 'post']) RIVAL_SCENES_LIST.push({ id: `rival.${n}.${phase}`, title: `DASH ${ROMAN[n]}: ${phase === 'pre' ? 'BEFORE THE FIGHT' : 'AFTER THE FIGHT'}`, zone: RZONE(n), template: 'rival', circuit: `rival${n}`, params: { n, phase, variant: 'first' } });
 
-const H = (id, title, zone, screen, legacyArgs = {}) => ({ id, title, zone, fadeIn: false, circuit: undefined, legacy: screen, layers: [{ p: 'legacy', screen }], script: [{ do: 'legacy', screen }], params: { legacyArgs } });
+const H = (id, title, zone, screen, legacyArgs = {}, extra = {}) => ({ id, title, zone, fadeIn: false, circuit: undefined, legacy: screen, layers: [{ p: 'legacy', screen }], script: [{ do: 'legacy', screen }], params: { legacyArgs }, ...extra });
 export const STORY = [
   H('story.ascend', 'THE SKY OPENS', 'pantheon', 'ascend'),
   H('story.fall', 'THE FALL', 'pantheon', 'fall'),
@@ -27,9 +27,16 @@ export const STORY = [
   H('story.deal', 'THE DEAL BREAKS', 'underworld', 'deal'),
   H('story.voidDoor', 'THE DOOR BELOW THE THRONE', 'void', 'voidDoor'),
   H('story.free', 'A HOLLOWED IS FREED', 'void', 'free', { id: 'dodgeShard', first: true, then: ['theater', {}] }),
-  H('story.reforge', 'THE REFORGING', 'void', 'reforge'),
+  H('story.reforge', 'THE REFORGING', 'void', 'reforge', {}, { noSkipFirst: true }), // (plays in full the first time: nothing skips it until it has been seen)
   H('story.trueEnding', 'THE TRUE ENDING', 'void', 'trueEnding'),
   H('story.ending.interim', 'THE SHATTER (INTERIM ENDING)', 'secret', 'ending', { kind: 'interim' }),
   H('story.ending.main', 'UNDISPUTED (THE CREDITS)', 'road', 'ending', { kind: 'main' }),
 ];
-export const STORY_SCENES = [...JOGS, ...FERRIES, ...RIVAL_SCENES_LIST, ...STORY];
+// ORIGIN's four scenes (2026-10-04): each plays in full the first time and is in the Theater once he has been beaten (the zone `origin` is hidden until then, theater.js)
+export const ORIGIN_SCENES = [
+  H('boss.origin', 'ORIGIN: THE DOOR OPENS', 'origin', 'originIntro', { which: 'g' }, { noSkipFirst: true }),
+  H('victory.origin', 'ORIGIN: THERE IS ONE MORE', 'origin', 'originVictory', {}, { noSkipFirst: true }),
+  H('boss.originTrue', 'ORIGIN TRUE FORM: THE LAST DOOR', 'origin', 'originIntro', { which: 't' }, { noSkipFirst: true }),
+  H('victory.originTrue', 'ORIGIN TRUE FORM: THE ORIGIN BELT', 'origin', 'originTrueVictory', {}, { noSkipFirst: true }),
+];
+export const STORY_SCENES = [...JOGS, ...FERRIES, ...RIVAL_SCENES_LIST, ...STORY, ...ORIGIN_SCENES];

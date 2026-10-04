@@ -9,6 +9,7 @@
 
 import { makePalette, swapPalette } from '../../../../src/engine/palette.js';
 import { eyes, brows, mouth, ears, skull, nose } from '../_face.js';
+import * as K from '../../remixKit.js';
 
 const A = makePalette('aurora.A', {
   outline: [3, 2, 5],
@@ -55,6 +56,47 @@ export default {
   palettes: { default: 'aurora' },
   torsoMaterial: 'skin',
   poses,
+  // Title Defense: AURORA AT DUSK. The sun is down: indigo hair under a silver crescent, a veil, a cape of night with a scalloped hem, a violet
+  // bodice with a silver star, and tassets for the trunks.
+  remix: {
+    skip: ['back', 'torso'],
+    swap: {
+      A: { hairHi: [19, 17, 29], hair: [9, 7, 21], hairDk: [3, 2, 10], gloveHi: [28, 28, 31], glove: [17, 18, 27], gloveDk: [7, 8, 17] },
+      B: {
+        goldHi: [31, 31, 31], gold: [21, 23, 29], goldSh: [10, 11, 19],
+        topHi: [15, 9, 24], top: [8, 4, 16], topSh: [4, 2, 9],
+        roseHi: [28, 14, 24], rose: [20, 5, 16], roseDk: [9, 2, 8],
+        rayHi: [31, 31, 28], ray: [26, 27, 28], rayDk: [14, 15, 22],
+      },
+    },
+    ramps: { night: ['topHi', 'top', 'topSh'], silver: ['goldHi', 'gold', 'goldSh'], moon: ['rayHi', 'ray', 'rayDk'], dusk: ['roseHi', 'rose', 'roseDk'] },
+    back(ctx) {
+      const { J, ramps, cv } = ctx;
+      if (ctx.pose.lying) return;
+      const [hx, hy] = J.head, sh = [J.shL, J.shR];
+      cv.part(ctx.mask().poly([[hx - 12, hy], [hx + 12, hy], [sh[1][0] + 4, sh[1][1] + 16], [sh[0][0] - 4, sh[0][1] + 16]]), { ramp: ramps.hair, bevel: 5, inner: 'line' });
+      K.cape(ctx, { ramp: 'night', inner: 'dusk', len: 38, flare: 9, hem: 'scallop' });
+      // stars on the cape
+      for (const [dx, dy] of [[-16, 18], [-8, 28], [14, 22], [8, 36], [-20, 36], [20, 38]]) { cv.px(J.hip[0] + dx, J.hip[1] + dy, ctx.c('rayHi')); cv.px(J.hip[0] + dx + 1, J.hip[1] + dy, ctx.c('ray')); }
+    },
+    head(ctx, H) {
+      K.crescent(ctx, H, { ramp: 'moon', dy: 12, r: 10 });
+      K.mask(ctx, H, { ramp: 'dusk', y: 4 });
+    },
+    torso(ctx) {
+      const { cv, J, D, ramps } = ctx;
+      if (ctx.pose.lying) return;
+      const n = J.neck, w = J.waist, ch = J.chest, tm = ctx.torsoMask;
+      cv.part(ctx.mask().poly([[n[0] - 10, n[1] + 2], [n[0] + 10, n[1] + 2], [ch[0] + D.chestW - 1, ch[1] + 6], [w[0] + D.waistW - 2, w[1] - 1], [w[0] - D.waistW + 2, w[1] - 1], [ch[0] - D.chestW + 1, ch[1] + 6]]).clip(tm), { ramp: ramps.night, bevel: 4, inner: 'line' });
+      cv.line(n[0] - 10, n[1] + 2, ch[0] - D.chestW + 1, ch[1] + 6, (X, Y) => cv.px(X, Y, ctx.c('gold')));
+      cv.line(n[0] + 10, n[1] + 2, ch[0] + D.chestW - 1, ch[1] + 6, (X, Y) => cv.px(X, Y, ctx.c('gold')));
+      K.emblem(ctx, Math.round(ch[0]), Math.round(ch[1] + 2), 'star', 'silver', 0.8);
+      K.belt(ctx, { ramp: 'dusk', buckle: 'silver', wide: 3, shape: 'round' });
+      K.skirt(ctx, { ramp: 'dusk', kind: 'strips', len: 15, n: 6 });
+    },
+    front(ctx) { K.bracers(ctx, { ramp: 'silver', from: 0.25, to: 0.62 }); },
+  },
+
   ramps: {
     skin: ['skinHi', 'skin', 'skinSh', 'skinDk'],
     glove: ['gloveHi', 'glove', 'gloveDk'],

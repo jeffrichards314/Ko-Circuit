@@ -5,6 +5,7 @@
 // `nebula.cold` (blue: body), `nebula.gold` (white-gold: her super), `nebula.green` (a slip-only
 // sweep). She is drawn see-through (dithered) by the `gas` modifier.
 import { rig } from './_rig.js';
+import * as K from '../../remixKit.js';
 
 const { layers, palettes } = rig('nebula', {
   build: 'giant',
@@ -37,6 +38,32 @@ const { layers, palettes } = rig('nebula', {
     },
   },
   belt: { buckle: 'round' },
+  // Title Defense: THE BLACK HOLE. The violet gas collapses into a dark star: a body the colour of deep space with the stars still in it, white hair
+  // like a jet, and an accretion disc of magenta fire round her middle (half behind her, half in front).
+  remix: {
+    swap: {
+      A: { skinHi: [11, 8, 23], skin: [6, 4, 15], skinSh: [3, 2, 9], skinDk: [1, 1, 4], hairHi: [31, 31, 31], hair: [27, 24, 31], hairDk: [15, 12, 26], gloveHi: [31, 26, 31], glove: [23, 12, 29], gloveDk: [10, 4, 19] },
+      B: { topHi: [10, 6, 21], top: [5, 3, 14], topSh: [2, 1, 8], topDk: [1, 0, 4], trimHi: [31, 24, 31], trim: [29, 11, 25], trimSh: [15, 4, 15], bootHi: [11, 7, 23], boot: [5, 3, 14], bootDk: [2, 1, 7], shHi: [10, 6, 21], sh: [5, 3, 14], shDk: [2, 1, 7] },
+    },
+    ramps: { disc: ['trimHi', 'trim', 'trimSh'], jet: ['hairHi', 'hair', 'hairDk'], void: ['topHi', 'top', 'topSh'] },
+    back(ctx) {
+      if (ctx.pose.lying) return;
+      K.cape(ctx, { ramp: 'void', inner: 'disc', len: 46, flare: 13, hem: 'tatter' });
+      K.ring(ctx, { ramp: 'disc', rx: 46, ry: 11, thick: 5, cy: ctx.J.chest[1] + 12, half: 'back' });
+      K.speckle(ctx, { color: 'star', n: 60, region: 'all', seed: 11, only: 'filled' });
+    },
+    head(ctx, H) { K.flames(ctx, H, { ramp: 'jet', n: 5, h: 14 }); },
+    torso(ctx) {
+      if (ctx.pose.lying) return;
+      K.pauldrons(ctx, { ramp: 'jet', style: 'fur', size: 3 });
+      K.speckle(ctx, { color: 'star', n: 70, region: 'torso', seed: 3 });
+      K.speckle(ctx, { color: 'star', n: 40, region: 'legs', seed: 5 });
+    },
+    front(ctx) {
+      if (!ctx.pose.lying) K.ring(ctx, { ramp: 'disc', rx: 46, ry: 11, thick: 5, cy: ctx.J.chest[1] + 12, half: 'front' });
+      K.rings(ctx, { ramp: 'disc', where: 0.4 });
+    },
+  },
   swaps: {
     'nebula.hot': { A: { skinHi: [31, 26, 20], skin: [30, 16, 8], skinSh: [22, 8, 5], skinDk: [12, 3, 3], gloveHi: [31, 28, 20], glove: [31, 16, 6], gloveDk: [20, 6, 3], hairHi: [31, 28, 20], hair: [31, 16, 6], hairDk: [20, 6, 3] }, B: { topHi: [31, 26, 18], top: [30, 14, 6], topSh: [21, 7, 4], topDk: [11, 3, 2], trimHi: [31, 31, 24], trim: [31, 24, 8], trimSh: [22, 12, 3], shHi: [30, 18, 8], sh: [24, 9, 4], shDk: [12, 4, 2], bootHi: [31, 24, 14], boot: [28, 12, 5], bootDk: [14, 4, 2] } },
     'nebula.cold': { A: { skinHi: [22, 30, 31], skin: [8, 20, 31], skinSh: [4, 10, 24], skinDk: [2, 4, 14], gloveHi: [24, 31, 31], glove: [8, 22, 31], gloveDk: [3, 10, 22], hairHi: [24, 31, 31], hair: [8, 22, 31], hairDk: [3, 10, 22] }, B: { topHi: [22, 30, 31], top: [6, 18, 30], topSh: [3, 9, 22], topDk: [1, 4, 12], trimHi: [31, 31, 31], trim: [16, 28, 31], trimSh: [6, 16, 28], shHi: [14, 26, 31], sh: [4, 14, 27], shDk: [2, 6, 16], bootHi: [20, 28, 31], boot: [6, 16, 28], bootDk: [2, 6, 16] } },

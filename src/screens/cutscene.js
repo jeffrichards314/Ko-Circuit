@@ -49,11 +49,13 @@ export class CutsceneScreen {
     if (this.leaving) { this.leaving++; this.scene.fade.level = Math.min(1, this.scene.fade.level + 1 / 12); if (this.leaving > 14) this.go(); return; }
     // START: tap = advance (first time) or skip (seen); hold = skip
     let advance = I.pressed('a') || I.pressed('star');
-    if (I.held('start')) {
+    // (a scene marked `noSkipFirst` plays in full the first time: START only turns its text until it has been seen)
+    const skippable = !this.def.noSkipFirst || this.seenBefore;
+    if (I.held('start') && skippable) {
       this.hold++;
       if (this.hold >= HOLD) return this.skip();
     } else {
-      if (this.hold > 0 && this.hold < TAP) advance = true;
+      if ((this.hold > 0 && this.hold < TAP) || (I.pressed('start') && !skippable)) advance = true;
       this.hold = 0;
     }
     this.scene.update(advance);
@@ -80,6 +82,8 @@ export class CutsceneScreen {
       f.rect(170, 212, 80, 9, COL.black); f.rect(171, 213, 78, 7, COL.dark);
       f.rect(171, 213, Math.round(78 * u), 7, COL.yellow);
       drawText(f, 'SKIPPING', 178, 213, u > 0.5 ? COL.black : COL.white, { mono: false });
+    } else if (this.def.noSkipFirst && !this.seenBefore) {
+      /* (no skip bar the first time) */
     } else if ((this.seenBefore && this.t > 20 && this.t < 260) || (!this.seenBefore && this.t > 20 && this.t < 150)) {
       // bottom right; up in the top corner when the bottom is taken (a speech box, the road's label), and not at all when
       // both are (it never sits on other words)

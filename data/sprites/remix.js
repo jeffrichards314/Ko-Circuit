@@ -17,6 +17,7 @@ const chain = (a, b) => (a || b ? (ctx, ...r) => { if (a) a(ctx, ...r); if (b) b
 
 export function remixLayers(L) {
   const R = L.remix;
+  const has = (k) => !(R.skip || []).includes(k);
   const body = L.body || R.body ? { ...(L.body || {}), ...(R.body || {}), dims: { ...((L.body || {}).dims || {}), ...((R.body || {}).dims || {}) } } : undefined;
   return {
     ...L,
@@ -25,9 +26,9 @@ export function remixLayers(L) {
     body,
     palettes: { ...L.palettes, default: L.palettes.default + '.td' },
     ramps: { ...L.ramps, ...(R.ramps || {}) },
-    back: chain(chain(R.backUnder, L.back), R.back),
-    torso: chain(L.torso, R.torso),
-    front: chain(L.front, R.front),
+    back: chain(chain(R.backUnder, has('back') ? L.back : undefined), R.back),
+    torso: chain(has('torso') ? L.torso : undefined, R.torso),
+    front: chain(has('front') ? L.front : undefined, R.front),
     head: L.head || R.head ? chain(L.head, R.head) : undefined,
   };
 }

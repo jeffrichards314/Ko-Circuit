@@ -22,8 +22,10 @@ import { DRILL_IDS, DRILL_MEDALS } from '../../data/drills.js';
 
 const ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const FLAGS = ['carnivalUnlocked', 'carnivalCleared', 'undergroundUnlocked', 'undergroundCleared', 'jaxBeaten', 'nightmareCleared', 'zeroBeaten',
-  'pantheonOpen']; // (V4: the sky has been opened: the medal gate was passed and the Pantheon entered)
+  'pantheonOpen', // (V4: the sky has been opened: the medal gate was passed and the Pantheon entered)
+  'originBeaten', 'originTrueBeaten']; // (V5, 2026-10-04: the secret final boss beaten in the Gauntlet, and his true form beaten in Title Defense: Practice, the costume and the title)
 const LEGACY_FLAGS = 7; // V1-V3 only had the first seven
+const V4_FLAGS = 8;     // V4 had eight
 
 // Field order is part of the format: only ever append (in a new format).
 const V1_FIELDS = [
@@ -70,11 +72,14 @@ export const ASC_STAGES = 19; // p1-p7, halcyon, u1-u6, vorgath, v1-v3, zeroTrue
 const V4_ORDER = [...V3_ORDER, ...ASC_RESERVED_CIRCUITS];
 const V4_FIELDS = [
   ['active', V4_ORDER.length], ['main', MAIN_PATH.length + 1], ['beaten', 7],
-  ...V2_FIELDS.slice(3, 5), ['flags', 1 << FLAGS.length], ...V2_FIELDS.slice(6),
+  ...V2_FIELDS.slice(3, 5), ['flags', 1 << V4_FLAGS], ...V2_FIELDS.slice(6),
   ['rival', 1 << RIVALS.length], ['ascRival', 6], ['asc', ASC_STAGES + 1],
 ];
 const V4 = format(15, V4_FIELDS, [7, 29, 13, 3, 31, 19, 11, 23, 5, 17, 2, 27, 14, 9, 21]);
-const orderOf = (F) => (F === V4 ? V4_ORDER : F === V3 ? V3_ORDER : CIRCUIT_ORDER);
+// V5 (2026-10-04): sixteen characters. The same fields with two more flags (ORIGIN beaten, his true form beaten); every older code still works.
+const V5_FIELDS = V4_FIELDS.map(([k, n]) => (k === 'flags' ? [k, 1 << FLAGS.length] : [k, n]));
+const V5 = format(16, V5_FIELDS, [7, 29, 13, 3, 31, 19, 11, 23, 5, 17, 2, 27, 14, 9, 21, 25]);
+const orderOf = (F) => (F === V4 || F === V5 ? V4_ORDER : F === V3 ? V3_ORDER : CIRCUIT_ORDER);
 
 function checksum(payload, F) {
   let h = (payload * 2654435761n + 97n) % 1000003n;
@@ -113,7 +118,7 @@ function ascRivalCount(mask) {
 
 const medalOf = (g, score) => DRILL_MEDALS[g].reduce((m, v, i) => (score >= v ? i + 1 : m), 0);
 
-export function encode(career, F = V4) {
+export function encode(career, F = V5) {
   const f = toFields(career);
   let payload = 0n;
   for (const [k, n] of F.fields) {
@@ -134,7 +139,7 @@ export function encode(career, F = V4) {
 // old 10-character code.
 export function decode(code) {
   code = String(code).toUpperCase().replace(/[^0-9A-Z]/g, '');
-  const F = [V4, V3, V2, V1].find((x) => x.digits === code.length) || null;
+  const F = [V5, V4, V3, V2, V1].find((x) => x.digits === code.length) || null;
   if (!F) return null;
   const e = [...code].reverse().map((ch) => ALPHABET.indexOf(ch));
   if (e.some((x) => x < 0)) return null;
@@ -153,7 +158,7 @@ export function decode(code) {
     rest /= BigInt(n);
   }
   if (f.active >= orderOf(F).length || f.main > MAIN_PATH.length) return null;
-  if (F === V4 && f.asc > ASC_STAGES) return null;
+  if ((F === V4 || F === V5) && f.asc > ASC_STAGES) return null;
   const flags = {};
   FLAGS.forEach((name, i) => { flags[name] = !!(f.flags & (1 << i)); });
   let training = null;
@@ -189,7 +194,8 @@ export const cleanPassword = (t) => String(t).toUpperCase().replace(/[^0-9A-Z]/g
 export const showChar = (ch) => (ch === '0' ? 'Ø' : ch);
 // (shown in groups of four, XXXX-XXXX-XXXX-XXX: the screens draw it through src/engine/textbox.js drawPassword, which breaks the line between groups
 // when the box is narrow)
-export const PASSWORD_ODDS = V4.check; // 1 in PASSWORD_ODDS random codes pass the checksum
+export const PASSWORD_ODDS = V5.check; // 1 in PASSWORD_ODDS random codes pass the checksum
 export const __testEncodeV2 = (career) => encode(career, V2); // (tools/career-test.mjs: old codes)
-export const PASSWORD_LENGTH = V4.digits;
-export const OLD_PASSWORD_LENGTHS = [V3.digits, V2.digits, V1.digits];
+export const PASSWORD_LENGTH = V5.digits;
+export const OLD_PASSWORD_LENGTHS = [V4.digits, V3.digits, V2.digits, V1.digits];
+export const __testEncodeV4 = (career) => encode(career, V4); // (tools/career-test.mjs, save-test.mjs: the 15-letter codes of before ORIGIN)

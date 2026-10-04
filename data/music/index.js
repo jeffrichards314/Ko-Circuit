@@ -25,6 +25,7 @@ import * as SUMMIT_SONGS from './summit.js';
 import * as UNDERWORLD_SONGS from './underworld.js';
 import * as ABYSS_SONGS from './abyss.js';
 import * as VOID_SONGS from './void.js';
+import * as ORIGIN_SONGS from './origin.js';
 import { SCENE_SONGS } from './scenes.js';
 import { MODE_SONGS } from './modeThemes.js';
 import { champMap, zeroMap, roadTrip } from './worldmaps.js';
@@ -50,6 +51,8 @@ export const SONGS = {
   ...Object.fromEntries(Object.values(UNDERWORLD_SONGS).flatMap((v) => (Array.isArray(v) ? v : v && v.id ? [v] : [])).map((s) => [s.id, s])),
   // Phase E: the Void (void.js)
   ...Object.fromEntries(Object.values(VOID_SONGS).flatMap((v) => (Array.isArray(v) ? v : v && v.id ? [v] : [])).map((s) => [s.id, s])),
+  // ORIGIN (origin.js)
+  ...Object.fromEntries(Object.values(ORIGIN_SONGS).flatMap((v) => (Array.isArray(v) ? v : v && v.id ? [v] : [])).map((s) => [s.id, s])),
   // the presentation pass (scenes.js): boss intro themes and the invitation
   ...Object.fromEntries(SCENE_SONGS.map((s) => [s.id, s])),
   // the post-game modes (modeThemes.js): Title Defense's anthems and the Gauntlet's five intensities, per division

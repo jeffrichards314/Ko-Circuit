@@ -20,6 +20,7 @@
 
 import { makePalette, swapPalette } from '../../../src/engine/palette.js';
 import { eyes, brows, mouth, ears, skull, nose } from './_face.js';
+import * as K from '../remixKit.js';
 
 // signature teal (never changes between stages)
 const TEAL = { tealHi: [12, 29, 27], teal: [3, 21, 20], tealDk: [1, 11, 12] };
@@ -365,4 +366,34 @@ function layers(stage) {
   };
 }
 
-export const dashLayers = { dash1: layers(1), dash2: layers(2), dash3: layers(3), dash4: layers(4), dash5: layers(5), dash6: layers(6), dash7: layers(7), dash8: layers(8) };
+// Dash Unbound (the Void's) wears Dash VIII's layers on the `dash9` palette. His Title Defense look: the chains are gone, so everything they held
+// is loose: a headband with long tails, a long black coat with a cyan lining, feathered ankles, a spiked-feather fan at each shoulder, and the broken
+// links still hanging from both wrists. Electric cyan on black instead of the Void's white.
+const dash9 = {
+  ...layers(8),
+  id: 'dash9',
+  palettes: { default: 'dash9' },
+  remix: {
+    skip: ['front'],
+    swap: {
+      A: { hairHi: [31, 31, 31], hair: [20, 27, 31], hairDk: [9, 15, 25], gloveHi: [18, 31, 31], glove: [4, 24, 28], gloveDk: [2, 12, 18] },
+      B: {
+        tealHi: [11, 11, 17], teal: [4, 4, 9], tealDk: [1, 1, 4], trim: [20, 31, 31], trimSh: [6, 20, 26],
+        gold: [28, 30, 31], goldDk: [14, 16, 23], sockHi: [24, 28, 31], sock: [14, 18, 26],
+        bootHi: [12, 12, 18], boot: [5, 5, 10], bootDk: [2, 2, 5], patch: [20, 31, 31], patchDk: [6, 20, 26], halo: [26, 31, 31],
+      },
+    },
+    ramps: { coat: ['tealHi', 'teal', 'tealDk'], lining: ['trim', 'trim', 'trimSh'], chrome: ['gold', 'gold', 'goldDk'] },
+    back(ctx) { if (!ctx.pose.lying) K.cape(ctx, { ramp: 'coat', inner: 'lining', len: 42, flare: 9, hem: 'tatter' }); },
+    head(ctx, H) { K.band(ctx, H, { ramp: 'lining', y: -5, tails: 7, h: 2.6 }); },
+    torso(ctx) { if (!ctx.pose.lying) K.pauldrons(ctx, { ramp: 'lining', style: 'fan', size: 1 }); },
+    front(ctx) {
+      if (ctx.pose.lying) return;
+      K.chains(ctx, { ramp: 'chrome', len: 5 });
+      K.bracers(ctx, { ramp: 'chrome', from: 0.25, to: 0.55, wide: 1.4 });
+      K.ankleWings(ctx, { ramp: 'lining', n: 3, len: 10 });
+      if (ctx.pose.glint) { const [x, y] = ctx.J.fiR; const g = ctx.pose.glint === 1 ? [x - 4, y - 8] : [x + 2, y - 12]; for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1], [-2, 0], [2, 0], [0, -2], [0, 2]]) ctx.cv.px(g[0] + dx, g[1] + dy, ctx.c(Math.abs(dx) + Math.abs(dy) > 1 ? 'glint' : 'white')); }
+    },
+  },
+};
+export const dashLayers = { dash1: layers(1), dash2: layers(2), dash3: layers(3), dash4: layers(4), dash5: layers(5), dash6: layers(6), dash7: layers(7), dash8: layers(8), dash9 };

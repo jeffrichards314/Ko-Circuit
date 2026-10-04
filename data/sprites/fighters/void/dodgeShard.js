@@ -3,8 +3,10 @@
 // thin slit where the eyes were, black tatters of a running vest crossed on the chest, and in the middle of it the hollow: two chevrons
 // (<< >>), the last thing the runner remembers, its rim burning ice blue. Speed lines trail off the wrists.
 import { hollow } from './_hollow.js';
+import { TD } from './tdLooks.js';
 
 const { layers, palettes } = hollow('dodgeShard', {
+  remix: TD.dodgeShard,
   build: 'lean',
   body: { size: [0.98, 1.06], legLen: 1.12, torsoLen: 0.96, shoulders: 0.86, neckLen: 1, dims: { belly: 0.5, waistW: 10.5, chestW: 13.5, upperArm: [4.4, 3.6], forearm: [3.9, 3.3] } },
   tint: [10, 24, 31], tintHi: [24, 30, 31], tintDk: [3, 9, 16],

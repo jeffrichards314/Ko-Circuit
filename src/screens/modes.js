@@ -47,7 +47,8 @@ const GAUNTLET_HEAL = 50;
 
 // The fighter data a mode fights: the remix in Title Defense (and the Practice
 // "title defense version"), the regular fighter otherwise.
-export const fighterFor = (id, remix) => (remix ? remixed(id) : FIGHTERS[id]);
+// (ORIGIN has no Title Defense remix: his TRUE FORM is a fighter of his own, which Practice's switch picks)
+export const fighterFor = (id, remix) => (remix ? (id === 'origin' ? FIGHTERS.originTrue : remixed(id)) : FIGHTERS[id]);
 
 function portraitOf(d) {
   const p = paletteFor(d.palette);
@@ -328,14 +329,15 @@ export class RunScreen {
 const PRACTICE_ROWS = ['circuit', 'fighter', 'tell', 'hearts', 'health', 'slow', 'version', 'alt', 'xview', 'fight', 'back'];
 // ('TD CLASSIC' where it fits the row or the picture's corner, else the division shortened)
 const TD_TAG = { underworld: 'U.WORLD' };
-const versionName = (v, room = 1e9) => { if (v === 'normal') return 'NORMAL'; const full = `TD ${TD_NAMES[v]}`; return textWidth(full, false) <= room ? full : `TD ${TD_TAG[v] || TD_NAMES[v]}`; };
+const versionName = (v, room = 1e9) => { if (v === 'normal') return 'NORMAL'; if (v === 'true') return 'TRUE FORM'; const full = `TD ${TD_NAMES[v]}`; return textWidth(full, false) <= room ? full : `TD ${TD_TAG[v] || TD_NAMES[v]}`; };
 
 export class PracticeScreen {
   constructor(game, { result, last } = {}) {
     this.g = game;
     this.t = 0;
     const R = game.records;
-    this.met = R.met;
+    // (ORIGIN is in Practice only once he has been beaten in the Gauntlet: before that he is not a silhouette or a ??? slot, he is not there at all)
+    this.met = R.origin.beaten ? [...R.met, 'origin'] : R.met;
     this.circuits = [...new Set(this.met.map((id) => FIGHTERS[id].circuit))];
     const P = game.practice || (game.practice = { circuit: 0, fighter: 0, tell: true, hearts: false, health: true, slow: false, version: 'normal' });
     if (!P.version) P.version = 'normal';
@@ -349,7 +351,7 @@ export class PracticeScreen {
     // it opens on the grid of everyone (as the opponent index does); a fighter you have met opens his practice options. Back from a
     // practice fight it opens on his options again.
     const metSet = new Set(this.met);
-    this.grid = new FighterGrid(EVERYONE, (id) => metSet.has(id), 0, game, (id) => (tdVersions(game.records, id).length ? 'TD' : null));
+    this.grid = new FighterGrid(R.origin.beaten ? [...EVERYONE, 'origin'] : EVERYONE, (id) => metSet.has(id), 0, game, (id) => (id === 'origin' ? (R.origin.trueBeaten ? 'TRUE' : null) : tdVersions(game.records, id).length ? 'TD' : null));
     this.mode = result ? 'options' : 'grid';
     this.refresh();
     if (this.met.length) this.grid.select(this.id());
@@ -367,7 +369,11 @@ export class PracticeScreen {
   list() { const c = this.circuits[this.P.circuit]; return this.met.filter((id) => FIGHTERS[id].circuit === c); }
   id() { const L = this.list(); this.P.fighter = Math.min(this.P.fighter, L.length - 1); return L[this.P.fighter]; }
   // the versions of him to fight: his own, and his Title Defense version in every division you have reached him in (he has one if he defends in any)
-  versions() { const id = this.id(), d = FIGHTERS[id]; return d && d.titleDefense ? ['normal', ...tdVersions(this.g.records, id)] : ['normal']; }
+  versions() {
+    const id = this.id(), d = FIGHTERS[id];
+    if (id === 'origin') return this.g.records.origin.trueBeaten ? ['normal', 'true'] : ['normal']; // (his switch is TRUE FORM, open once ORIGIN TRUE FORM has been beaten in Title Defense)
+    return d && d.titleDefense ? ['normal', ...tdVersions(this.g.records, id)] : ['normal'];
+  }
   canRemix() { return this.versions().length > 1; }
   version() { const v = this.versions(); return v.includes(this.P.version) ? this.P.version : v.includes('normal') ? 'normal' : v[0]; }
   isRemix() { return this.version() !== 'normal'; }
@@ -384,6 +390,7 @@ export class PracticeScreen {
   enter() { this.g.audio.play(this.g.songs.modes); }
   update() {
     this.t++;
+    if (this.flare && ++this.flare.t > (this.flare.up ? 80 : 56)) this.flare = null;
     const I = this.g.input, A = this.g.audio, P = this.P;
     if (I.pressed('pause')) { A.sfx('menu'); this.g.go('map'); return; }
     if (!this.met.length) { if (I.confirm() || I.back()) this.g.go('map'); return; }
@@ -406,12 +413,35 @@ export class PracticeScreen {
     if (d || ok) {
       if (row === 'circuit' && (d || ok)) { P.circuit = (P.circuit + (d || 1) + this.circuits.length) % this.circuits.length; P.fighter = 0; this.result = null; A.sfx('menu'); }
       else if (row === 'fighter') { const n = this.list().length; P.fighter = (P.fighter + (d || 1) + n) % n; this.result = null; A.sfx('menu'); }
-      else if (row === 'version') { const v = this.versions(), n = v.length; P.version = v[(v.indexOf(this.version()) + (d || 1) + n) % n]; A.sfx('menu'); }
+      else if (row === 'version') {
+        const v = this.versions(), n = v.length, was = this.version();
+        P.version = v[(v.indexOf(was) + (d || 1) + n) % n];
+        // ORIGIN's switch is a moment of its own: the portrait flares white-gold, the belt halo ignites into a ring of fire, the screen flashes, and a sting; back again is a quieter reverse
+        if (this.id() === 'origin' && P.version !== was) { const up = P.version === 'true'; this.flare = { up, t: 0 }; A.sfx(up ? 'originFlare' : 'originFlareBack'); } else A.sfx('menu');
+      }
       else if (['tell', 'hearts', 'health', 'slow', 'alt', 'xview'].includes(row)) { P[row] = !P[row]; A.sfx('menu'); }
       else if (row === 'fight' && ok) { A.sfx('confirm'); this.g.go('fight', { fighter: this.id(), practice: { ...P, remix: this.isRemix(), tier: this.version(), alt: P.alt && this.canAlt(), xview: P.xview && this.canXview() } }); return; }
       else if (row === 'back' && ok) { A.sfx('confirm'); this.mode = 'grid'; this.grid.select(this.id()); return; }
       this.refresh();
     }
+  }
+  // ORIGIN's TRUE FORM switch (2026-10-04): up, his portrait flares white-gold, the halo of belts round it ignites into a ring of fire and the screen flashes; down, the same
+  // run backwards and quiet (no flash, the fire gutters out, the gold cools). Drawn over the portrait box (15, 35, 70 x 66).
+  renderFlare(f) {
+    const F = this.flare, T = F.t, cx = 50, cy = 68, len = F.up ? 80 : 56, k = F.up ? Math.min(1, T / 30) * (T > 56 ? Math.max(0, 1 - (T - 56) / 24) : 1) : Math.max(0, 1 - T / len);
+    const W = c32(31, 31, 31), G = c32(31, 28, 10), O = c32(31, 17, 3), R = c32(26, 8, 1);
+    const B4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+    // the portrait goes white-gold (a dither of light over it, thicker toward the peak)
+    for (let y = 37; y < 99; y++) for (let x = 17; x < 83; x++) if (B4[(y & 3) * 4 + (x & 3)] / 16 < k * 0.9) f.px(x, y, ((x + y) & 3) === 0 ? G : W);
+    // the halo: belts round the box, becoming a ring of flame
+    const n = 28;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + T * 0.04, x = Math.round(cx + Math.cos(a) * 44), y = Math.round(cy + Math.sin(a) * 40);
+      f.rect(x - 2, y, 5, 2, i % 2 ? c32(30, 24, 6) : c32(31, 29, 14));
+      if (k > 0.2) for (let q = 0; q < Math.ceil(k * 5); q++) { const fy = y - 1 - q * 2 - ((T + i * 3) % 3), fl = q < 2 ? W : q < 3 ? G : q < 4 ? O : R; if (((q + i + (T >> 1)) & 1) === 0) f.px(x + (q & 1 ? 1 : 0), fy, fl); }
+    }
+    // the flash (up only), and the reverse's soft glow
+    if (F.up && T >= 24 && T < 30) for (let y = 0; y < 224; y++) for (let x = 0; x < 256; x++) if (B4[(y & 3) * 4 + (x & 3)] / 16 < 1 - (T - 24) / 6) f.px(x, y, W);
   }
   render(f) {
     if (this.met.length && this.mode === 'grid') return this.grid.render(f, this.t, 'PRACTICE', COL.green, 'A: PRACTICE   B: BACK');
@@ -432,7 +462,8 @@ export class PracticeScreen {
     drawText(f, `TELLS ${c.tellWindow}F`, 11, 158, COL.cyan, { mono: false });
     drawText(f, `${c.hearts} HEARTS`, 11, 168, COL.cyan, { mono: false });
     // (his Title Defense version wears its division on the corner of his picture)
-    if (d.remix) { const tg = versionName(this.version(), 62); f.rect(18, 90, textWidth(tg, false) + 4, 9, COL.black); drawText(f, tg, 20, 91, (this.t >> 3) & 1 ? GOLD : COL.yellow, { mono: false }); }
+    if (this.flare) this.renderFlare(f);
+    if (d.remix || (this.id() === 'origin' && this.isRemix())) { const tg = versionName(this.version(), 62); f.rect(18, 90, textWidth(tg, false) + 4, 9, COL.black); drawText(f, tg, 20, 91, (this.t >> 3) & 1 ? GOLD : COL.yellow, { mono: false }); }
     // the options
     panel(f, 98, 30, 152, 150);
     const on = (b) => (b ? 'ON' : 'OFF');

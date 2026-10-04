@@ -8,6 +8,7 @@ import { drawTextBig, drawText, textWidth, callout } from '../../engine/font.js'
 import { c32 } from '../../engine/palette.js';
 import { badge, box, IN_RING, bayer, nextMoveId } from '../ascension.js';
 import { panel } from '../hud.js';
+import { isBroken } from './crystals.js';
 
 const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 export const REG = {}; // filled below; `gate` needs the registry of the modifiers it wraps
@@ -384,6 +385,7 @@ Object.assign(VOID_MODIFIERS, {
   zeroSeg: {
     init(ai) { ai.mods.seg = null; ai.mods.segI = -1; ai.mods.segShow = 0; },
     fightStart(ai, cfg) { ai.mods.segI = -1; ai.mods.seg = null; zeroSetSeg(ai, cfg, 0); },
+    // (a segment can be lost to a cracked crystal: `segsOf`)
     roundStart(ai) { ai.fight.minimalHud = zph(ai.fight) >= 4; ai.fight.formOverride = null; ai.mods.seg = null; ai.mods.segI = -1; },
     phaseStart(ai, cfg, n) {
       ai.fight.minimalHud = n >= 4; ai.fight.formOverride = null; ai.mods.seg = null; ai.mods.segI = -1;
@@ -395,8 +397,8 @@ Object.assign(VOID_MODIFIERS, {
       const f = ai.fight, M = ai.mods;
       if (M.segShow > 0) M.segShow--;
       if (f.phase !== 'fight') return;
-      const R = cfg.rounds[Math.min(zph(f), 4)], i = Math.min(R.segs.length - 1, Math.floor(f.realSeconds() / (f.roundReal() / R.segs.length)));
-      if (i !== M.segI) zeroSetSeg(ai, cfg, i);
+      const R = cfg.rounds[Math.min(zph(f), 4)], L = segsOf(ai, R), i = Math.min(L.length - 1, Math.floor(f.realSeconds() / (f.roundReal() / L.length)));
+      if (L[i].seg !== M.seg) zeroSetSeg(ai, cfg, i);
       // phase 4 is at full speed: gaps shrink (never the tells)
       if (R.pace && f.phase === 'fight' && ai.state === 'idle' && ai.t === 1 && ai.wait < 200 && !ai.superTaunt) ai.wait = Math.max(6, Math.round(ai.wait / R.pace));
     },
@@ -415,8 +417,11 @@ Object.assign(VOID_MODIFIERS, {
 });
 // his phase (the fight's boss phase; the round, for a fight run without one)
 const zph = (f) => (f.bossPhases > 1 ? f.bossPhase : f.round);
+// the phase's segments that are still there: a test whose crystal has cracked is passed for good (his whole family of it is out of the fight);
+// with every one of a phase's gone he falls back to the signatures' routines
+const segsOf = (ai, R) => { const l = R.segs.filter((S) => !S.crystal || !isBroken(ai, S.crystal)); return l.length ? l : [{ seg: 'sigs', name: null }]; };
 function zeroSetSeg(ai, cfg, i) {
-  const M = ai.mods, f = ai.fight, R = cfg.rounds[Math.min(zph(f), 4)], S = R.segs[i];
+  const M = ai.mods, f = ai.fight, R = cfg.rounds[Math.min(zph(f), 4)], S = segsOf(ai, R)[i];
   M.segI = i; M.seg = S.seg; M.segName = S.name; M.segShow = S.name ? 70 : 0;
   f.formOverride = S.form || null;
   f.minimalHud = zph(f) >= 4;

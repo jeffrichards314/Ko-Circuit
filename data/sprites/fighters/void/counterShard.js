@@ -3,8 +3,10 @@
 // chest, its rim burning silver-cyan, and a fencer's glove on each hand. His palette `counterShard.flash` bleaches all of him white:
 // it shows for exactly the frames of each windup where a punch would land as a counter.
 import { hollow, glare } from './_hollow.js';
+import { TD } from './tdLooks.js';
 
 const { layers, palettes } = hollow('counterShard', {
+  remix: TD.counterShard,
   build: 'medium',
   body: { size: [0.98, 1.04], legLen: 1.04, torsoLen: 0.98, shoulders: 0.92, neckLen: 0, dims: { belly: 1.5, waistW: 12, chestW: 15.5, upperArm: [5, 4.2], forearm: [4.4, 3.8] } },
   tint: [14, 27, 31], tintHi: [27, 31, 31], tintDk: [4, 12, 17],

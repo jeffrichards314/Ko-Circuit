@@ -12,6 +12,7 @@ import voidHints from './void.js';
 import remixes from './remixes.js';
 import exclusive from './exclusive.js';
 import remixesVoid from './remixesVoid.js';
+import originHints from './origin.js';
 
 // (a remix's bank is written in pieces: its knowledge in remixes*.js, its exclusive attack's super hints in exclusive.js: they are joined key by key)
 const joinBanks = (...parts) => {
@@ -22,7 +23,7 @@ const joinBanks = (...parts) => {
   }
   return out;
 };
-export const HINTS = { ...main1, ...main2, ...main3, ...main4, ...pantheon1, ...pantheon2, ...underworld1, ...underworld2, ...voidHints, ...joinBanks(remixes, remixesVoid, exclusive) };
+export const HINTS = { ...main1, ...main2, ...main3, ...main4, ...pantheon1, ...pantheon2, ...underworld1, ...underworld2, ...voidHints, ...originHints, ...joinBanks(remixes, remixesVoid, exclusive) };
 // a topic's lines by key, with a wildcard entry ('slip_*') standing in for a family of exploits
 export function linesFor(group, key) {
   if (!group) return null;

@@ -4,6 +4,7 @@
 // his fists, and ragged crimson trunks. The three masks that tell his punches float over his shoulders
 // (drawn live by the `rhythms` modifier); on his belt hangs a fourth, cracked in half.
 import { rig } from '../pantheon/_rig.js';
+import * as K from '../../remixKit.js';
 
 const { layers, palettes } = rig('moros', {
   build: 'giant',
@@ -41,6 +42,26 @@ const { layers, palettes } = rig('moros', {
   },
   top: { style: 'harness', emblem(ctx, cx, cy) { const { cv, c } = ctx; cv.part(ctx.mask().ellipse(cx, cy + 1, 3.4, 3.4), { ramp: ctx.ramps.trim, bevel: 2, inner: 'line', shadow: false }); cv.px(cx, cy, c('thread')); } },
   belt: { buckle: 'round', ramp: 'trim' },
+  // Title Defense: THE EXECUTIONER. The burlap sack is a black pointed hood with two lit eye slits; the harness is leather over a skull-shouldered
+  // mantle, a long apron hangs from the belt and a hangman's rope is slung over one shoulder.
+  remix: {
+    swap: {
+      A: { skinHi: [20, 14, 13], skin: [14, 9, 8], skinSh: [8, 5, 5], skinDk: [4, 2, 3], sack: [7, 6, 8], sackDk: [3, 2, 4], gloveHi: [22, 20, 20], glove: [14, 12, 12], gloveDk: [6, 5, 6] },
+      B: { trimHi: [29, 28, 24], trim: [22, 21, 17], trimSh: [12, 11, 9], shHi: [13, 12, 14], sh: [7, 6, 8], shDk: [3, 2, 4], thread: [30, 6, 6], bone: [30, 29, 24], topHi: [14, 9, 8], top: [8, 5, 4], topSh: [4, 2, 2] },
+    },
+    ramps: { hood: ['sack', 'sack', 'sackDk'], bone: ['trimHi', 'trim', 'trimSh'], leather: ['topHi', 'top', 'topSh'], rope: ['gloveHi', 'glove', 'gloveDk'], iron: ['shHi', 'sh', 'shDk'] },
+    body: { size: [1.1, 1.06], shoulders: 1.12 },
+    back(ctx) { if (!ctx.pose.lying) K.cape(ctx, { ramp: 'hood', inner: 'rope', len: 36, flare: 14, hem: 'tatter' }); },
+    head(ctx, H) { K.cowl(ctx, H, { ramp: 'hood', point: 24, eye: null, drape: 14 }); const fx = Math.round(H.x + H.look[0]), fy = Math.round(H.y + H.look[1]); for (const s of [-1, 1]) ctx.cv.px(fx + s * 5 - (s < 0 ? 0 : 1), fy - 1, ctx.c('thread')); },
+    torso(ctx) {
+      if (ctx.pose.lying) return;
+      K.pauldrons(ctx, { ramp: 'bone', style: 'spiked', size: 6, tip: 'iron' });
+      K.apron(ctx, { ramp: 'leather', len: 22, top: false, taper: 6 });
+      K.bandolier(ctx, { ramp: 'rope', dir: -1, studs: null });
+      for (const s of [-1, 1]) K.emblem(ctx, Math.round(ctx.J['sh' + (s < 0 ? 'L' : 'R')][0] + s * 1.5), Math.round(ctx.J['sh' + (s < 0 ? 'L' : 'R')][1] - 1), 'skull', 'iron', 0.8);
+    },
+    front(ctx) { K.bracers(ctx, { ramp: 'iron', from: 0.25, to: 0.6, wide: 2 }); },
+  },
   front(ctx) {
     const { cv, J, pose, ramps, c } = ctx;
     if (pose.lying) return;

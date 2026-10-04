@@ -4,6 +4,7 @@
 // chest with a lock in the middle of it, spiked iron gauntlets, a belt hung with keys and a cell-door
 // lock as a buckle. His face is never seen.
 import { rig } from '../pantheon/_rig.js';
+import * as K from '../../remixKit.js';
 
 const { layers, palettes } = rig('jailer', {
   build: 'giant',
@@ -48,6 +49,26 @@ const { layers, palettes } = rig('jailer', {
     },
   },
   belt: { buckle: 'square', ramp: 'trim' },
+  // Title Defense: THE KEYMASTER. The black iron has weathered to verdigris; a pair of heavy horns have been bolted to the helm, a long coat of
+  // chain falls from the shoulders, spiked plate sits on the pauldrons and a great ring of brass keys hangs from the belt.
+  remix: {
+    swap: {
+      A: { skinHi: [10, 14, 14], skin: [5, 8, 9], skinSh: [2, 4, 5], gloveHi: [22, 20, 12], glove: [14, 12, 6], gloveDk: [6, 5, 2] },
+      B: { topHi: [13, 22, 20], top: [7, 15, 14], topSh: [3, 8, 8], topDk: [1, 3, 4], trimHi: [31, 28, 14], trim: [27, 21, 7], trimSh: [14, 10, 3], shHi: [8, 12, 12], sh: [4, 7, 8], shDk: [2, 3, 4], bootHi: [10, 13, 13], boot: [5, 7, 8], bootDk: [2, 3, 3] },
+    },
+    ramps: { verd: ['topHi', 'top', 'topSh'], brass: ['trimHi', 'trim', 'trimSh'], dark: ['shHi', 'sh', 'shDk'] },
+    back(ctx) { if (!ctx.pose.lying) K.cape(ctx, { ramp: 'dark', inner: 'verd', len: 34, flare: 10, hem: 'scallop' }); },
+    head(ctx, H) { K.horns(ctx, H, { ramp: 'brass', len: 14, out: 7, thick: 3.4 }); },
+    torso(ctx) {
+      if (ctx.pose.lying) return;
+      K.pauldrons(ctx, { ramp: 'brass', style: 'spiked', size: 3, tip: 'verd' });
+      K.bandolier(ctx, { ramp: 'brass', dir: 1, studs: 'brass', n: 6 });
+    },
+    front(ctx) {
+      K.bracers(ctx, { ramp: 'brass', from: 0.2, to: 0.5, wide: 2 });
+      const w = ctx.J.waist; for (const dx of [-20, -16, 18, 22]) ctx.cv.part(ctx.mask().ellipse(w[0] + dx, w[1] + 4, 2.6, 2.6).cut(ctx.mask().ellipse(w[0] + dx, w[1] + 4, 1.1, 1.1)), { ramp: ctx.ramps.brass, bevel: 1, shadow: false });
+    },
+  },
   front(ctx) {
     const { cv, J, pose, c } = ctx;
     if (pose.lying) return;

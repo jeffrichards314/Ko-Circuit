@@ -25,7 +25,7 @@ import { paintHall, TOP, BACK } from '../world/themes.js';
 import { drawProp } from '../world/props.js';
 import { drawImg } from '../world/img.js';
 import { isFreed, HOLLOWED_SET, podiumState, circuitStatus, selectableCircuits, enterCircuit, nextOpponent, hasFighters, replayable, noLives, rankLabel, LIVES } from '../save/career.js';
-import { TD_LIVES, saveRecords, tdUnlocked, gauntletUnlocked, tdChampOf, clockText, rosterNumber, gauntletList, fighterName } from '../save/records.js';
+import { TD_LIVES, saveRecords, tdUnlocked, gauntletUnlocked, tdChampOf, clockText, rosterNumber, gauntletList, fighterName, originGauntletOpen, originTrueOpen, originName } from '../save/records.js';
 import { medalsOf } from '../save/medals.js';
 import { isUnlocked, unlockedList } from '../save/unlocks.js';
 import { scoutProgress } from '../save/scouting.js';
@@ -141,6 +141,7 @@ export class InteriorScreen {
       case 'met': return !(g.records.met.length > 0);
       case 'tdTier': return !tdUnlocked(g.records, L.tier);
       case 'gauntlet': return !gauntletUnlocked(g.records, L.zone);
+      case 'origin': return L.which === 'g' ? !originGauntletOpen(g.records) : !originTrueOpen(g.records); // (the secret door: shut until its exact conditions are met)
       case 'replay': return !replayable(this.c).length;
       case 'medals': return false;
       default: return false;
@@ -205,7 +206,8 @@ export class InteriorScreen {
   use(st) {
     const g = this.g, A = g.audio;
     if (st.kind === 'exit') return this.leave();
-    if (this.lockedOf(st)) { A.sfx('tired'); this.say(st.lock.hint || 'LOCKED.'); return; }
+    if (this.lockedOf(st)) { A.sfx('tired'); this.say(st.lock.hint || (st.origin === 't' && this.g.records.origin.beaten ? 'LOCKED. CLEAR EVERY TITLE DEFENSE.' : 'LOCKED.')); return; }
+    if (st.origin) return this.useOrigin(st);
     if (st.kind === 'decor') return;
     if (st.kind === 'podium') return this.usePodium(st);
     if (st.kind === 'door') {
@@ -262,6 +264,12 @@ export class InteriorScreen {
   giveUp() {
     const g = this.g;
     g.go('run', { giveUp: true, back: 'map' });
+  }
+  // ORIGIN's doors (2026-10-04): his cinematic the first time, then his intro card, then a fight with no lives and nothing to lose (src/screens/routers.js OriginRoute)
+  useOrigin(st) {
+    const g = this.g;
+    g.audio.sfx('confirm'); this.remember(st);
+    g.go('originEnter', { which: st.origin });
   }
   useGauntlet(st) {
     const g = this.g, R = g.records, A = g.audio, zone = st.run;
@@ -418,6 +426,10 @@ export class InteriorScreen {
         const Gr = g.records.gauntlet[s.run], n = gauntletList(s.run).length, last = Gr.runs[0];
         l1 = `A: ${s.label}`;
         l2 = `BEST ${Gr.bestStreak}/${n}${Gr.bestTime != null ? `  CLEAR ${clockText(Gr.bestTime)}` : ''}${last && last.by ? `  LAST: ${fighterName(last.by)}` : ''}`; col = COL.white;
+      } else if (s.origin) {
+        // (the secret door: LOCKED. and nothing else; opened, it still says only ??? until his name has been shown)
+        // (once ORIGIN has been beaten, the true form's door says what it wants: the scene told you there is one more of him)
+        l1 = locked ? (s.origin === 't' && g.records.origin.beaten ? 'LOCKED. CLEAR EVERY TITLE DEFENSE.' : 'LOCKED.') : `A: ${originName(g.records, s.origin)}`; l2 = ''; col = locked ? COL.pink : COL.white;
       } else { l1 = locked ? `LOCKED: ${s.lock.hint}` : `A: ${s.label}`; l2 = locked ? '' : (s.sub || ''); col = locked ? COL.pink : COL.white; }
     }
     // (the prompt is drawn on the screen, never in the room: words that need more than a line wrap, and the bar grows upward to hold them)

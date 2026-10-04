@@ -776,23 +776,24 @@ export default {
     gold: { hit: 'Rhead' },
   }),
 
-  // -- ZERO's true form: the whole of nothing. The twelve tests, one blow each, in the order he gave them: slip, block, duck, counter, sight, sound...
-  zeroTrue: ({ hit, fin }) => ({
-    name: 'ALL TWELVE TESTS', sfx: 'glitch', taunt: 52,
-    steps: [
-      hit('dodge_hook', 'THE FIRST TEST', { rec: 10 }),
-      hit('block_jab', 'THE SECOND TEST', { rec: 14 }),
-      hit('duck_sweep', 'THE THIRD TEST', { rec: 26 }),
-      hit('counter_hookL', 'THE FOURTH TEST', { rec: 12 }),
-      hit('sight_body', 'THE FIFTH TEST', { rec: 10 }),
-      hit('sound_hook', 'THE SIXTH TEST', { rec: 10 }),
-      hit('rhythm_upper', 'THE SEVENTH TEST', { rec: 12 }),
-      hit('memory_bodyR', 'THE EIGHTH TEST', { rec: 10 }),
-      hit('block_body', 'THE NINTH TEST', { rec: 12 }),
-      hit('dodge_hookL', 'THE TENTH TEST', { rec: 10 }),
-      fin('dodge_haymaker', 'THE LAST TEST'),
-    ],
-    gold: { hit: 'head' },
-  }),
+  // -- ZERO's true form (the crystals' rework, 2026-10-04): THE CONVERGENCE. Several crystals glow at once and he runs their attacks into one another,
+  // ending in ONE golden blow that cracks every crystal in it. The blows are chosen as he throws it, from the first four crystals that are still whole
+  // (src/fight/asc/crystals.js `derive`: two blows of each); the steps below are the full set (the first four crystals) and give it its call, its last
+  // blow and its golden moment.
+  zeroTrue: ({ d, hit, fin, call }) => {
+    const rec = (id) => d.moves[id].recoveryFrames;
+    return {
+      name: 'THE CONVERGENCE', sfx: 'glitch', taunt: 52,
+      steps: [
+        call('pair_go'),
+        hit('cx_dodge_1', 'CYAN BLOW', { rec: rec('cx_dodge_1') }), hit('cx_dodge_2', 'CYAN BLOW (2)', { rec: rec('cx_dodge_2') }),
+        hit('cx_block_1', 'ORANGE BLOW', { rec: rec('cx_block_1') }), hit('cx_block_2', 'ORANGE BLOW (2)', { rec: rec('cx_block_2') }),
+        hit('cx_duck_1', 'VIOLET BLOW', { rec: rec('cx_duck_1') }), hit('cx_duck_2', 'VIOLET BLOW (2)', { rec: rec('cx_duck_2') }),
+        hit('cx_counter_1', 'AZURE BLOW', { rec: rec('cx_counter_1') }), hit('cx_counter_2', 'AZURE BLOW (2)', { rec: 20 }),
+        fin('pair_fin', 'ALL AT ONCE'),
+      ],
+      gold: { hit: 'head' },
+    };
+  },
 
 };

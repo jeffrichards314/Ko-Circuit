@@ -3,8 +3,10 @@
 // of a metronome (a tall triangle with a stroke in it) in the chest, its rim burning pink. The `beatgrid` modifier flashes a lamp over his
 // heart on every beat.
 import { hollow } from './_hollow.js';
+import { TD } from './tdLooks.js';
 
 const { layers, palettes } = hollow('rhythmShard', {
+  remix: TD.rhythmShard,
   build: 'medium',
   body: { size: [0.99, 1.02], legLen: 1.02, torsoLen: 1.0, shoulders: 0.98, neckLen: 0, dims: { belly: 2, waistW: 12.5, chestW: 16, upperArm: [5.2, 4.3], forearm: [4.6, 3.9] } },
   tint: [31, 13, 21], tintHi: [31, 24, 28], tintDk: [15, 4, 9],

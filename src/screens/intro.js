@@ -41,7 +41,7 @@ export class IntroScreen {
     this.g = game;
     this.mode = mode;
     this.replay = replay && game.career && game.career.replay;
-    this.run = mode && game.records.run;
+    this.run = mode === 'td' || mode === 'gauntlet' ? game.records.run : null; // (ORIGIN's fights, mode 'origin', are no part of a run)
     this.f = fighterFor(fighter, mode === 'td');
     if (mode === 'td' && this.run && this.run.tier && noteTdMet(game.records, this.run.tier, fighter)) saveRecords(game.records); // (Practice offers his Title Defense version from now on)
     // the career has met him now (Practice lists everyone you've faced)
@@ -83,7 +83,8 @@ export class IntroScreen {
       this.g.go('fight', { fighter: this.f.id, mode: this.mode, replay: !!this.replay });
     }
     if (this.t > 30 && this.g.input.pressed('pause')) {
-      if (this.mode) this.g.go('run');
+      if (this.mode === 'origin') this.g.go('map');
+      else if (this.mode) this.g.go('run');
       else if (this.g.career) this.g.go('map');
     }
   }
@@ -101,6 +102,7 @@ export class IntroScreen {
     const tag = run ? (run.mode === 'td' ? `DEFENSE ${run.idx + 1}/${run.list.length}` : `FIGHT ${run.idx + 1}/${run.list.length}`) : null;
     let tw;
     if (tag) tw = drawLabel(fr, tag, 128, 10, 120, COL.green, { mono: false, align: 'right', where: 'intro tag' });
+    else if (this.mode === 'origin') tw = drawLabel(fr, 'THE FIRST', 128, 10, 120, (this.t >> 3) & 1 ? COL.yellow : COL.green, { align: 'right' });
     else if (f.isChampion) tw = drawLabel(fr, 'CHAMPION', 128, 10, 120, (this.t >> 3) & 1 ? COL.yellow : COL.green, { align: 'right' });
     else if (f.rival) tw = drawLabel(fr, 'RIVAL', 128, 10, 120, (this.t >> 3) & 1 ? COL.cyan : COL.green, { align: 'right' });
     else tw = drawLabel(fr, `RANKED: #${f.rank}`, 128, 10, 120, COL.green, { align: 'right' }); // (right-aligned: clears CONTINENTAL CIRCUIT)
@@ -153,10 +155,11 @@ export class IntroScreen {
     fr.rect(9, 109, 70, 66, COL.white);
     fr.rect(11, 111, 66, 62, BG_PLAYER);
     fr.blit(this.plPortrait, 12, 113, this.plPal);
-    drawLabel(fr, run ? (run.mode === 'td' ? 'THE CHAMPION' : `STREAK: ${run.idx}`) : car ? rankLabel(car) : 'UNRANKED', 12, 180, 132, COL.green, { mono: false, where: 'intro rank' });
-    drawLabel(fr, p.name, 12, 191, 132, COL.white, { where: 'intro player' });
+    drawLabel(fr, this.mode === 'origin' ? 'NO LIVES. NOTHING TO LOSE.' : run ? (run.mode === 'td' ? 'THE CHAMPION' : `STREAK: ${run.idx}`) : car ? rankLabel(car) : 'UNRANKED', 12, 180, 132, COL.green, { mono: false, where: 'intro rank' });
+    const ttl = this.g.records.origin && this.g.records.origin.trueBeaten ? 'ORIGIN' : null; // (the title the Origin Belt gives)
+    drawLabel(fr, ttl ? `${ttl} ${p.name}` : p.name, 12, 191, 132, ttl ? COL.yellow : COL.white, { where: 'intro player' });
     drawLabel(fr, `"${nicknameOf(p)}"`, 12, 202, 132, COL.yellow, { mono: false, where: 'intro player nickname' });
-    const lives = run ? (run.mode === 'td' ? run.lives : null) : noLives(this.f.circuit) ? null : this.replay ? this.replay.lives : car ? car.lives : null; // (the Void has no lives)
+    const lives = this.mode === 'origin' ? null : run ? (run.mode === 'td' ? run.lives : null) : noLives(this.f.circuit) ? null : this.replay ? this.replay.lives : car ? car.lives : null; // (the Void has no lives, and neither does ORIGIN)
     if (lives != null) {
       drawText(fr, 'LIVES', 100, 130, COL.cyan, { mono: false });
       for (let i = 0; i < (run ? 2 : livesOf(this.f.circuit)); i++) fr.rect(102 + i * 12, 140, 8, 8, i < lives ? COL.red : COL.dark);
@@ -165,7 +168,11 @@ export class IntroScreen {
     if ((this.t >> 4) & 1) { drawText(fr, 'PUSH', 104, 162, COL.orange); drawText(fr, 'START!', 96, 174, COL.orange); }
     // his record time and medals (§15)
     const M = this.g.medals, best = M.best[f.id];
-    if (!f.remix) {
+    if (this.mode === 'origin') {
+      const O = this.g.records.origin, k = f.id === 'origin' ? 'g' : 't';
+      drawText(fr, `BEST ${O.best[k] == null ? '--:--' : clockText(O.best[k])}`, 148, 201, COL.grey, { mono: false });
+      drawMedalRow(fr, 219, 199, O.got[k]);
+    } else if (!f.remix) {
       drawText(fr, `BEST ${best == null ? '--:--' : clockText(best)}`, 148, 201, COL.grey, { mono: false });
       drawMedalRow(fr, 219, 199, M.got[f.id] || {});
     }

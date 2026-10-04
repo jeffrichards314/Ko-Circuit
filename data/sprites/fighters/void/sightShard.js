@@ -2,8 +2,10 @@
 // hooded shawl, no mouth and no nose, one enormous eye where the face was (white, a gold iris, a black lid that shuts), and the hollow of an eye
 // in the chest, its rim burning gold. A halo of the fight's tell colours is drawn round his head by the `sightEye` modifier.
 import { hollow } from './_hollow.js';
+import { TD } from './tdLooks.js';
 
 const { layers, palettes } = hollow('sightShard', {
+  remix: TD.sightShard,
   build: 'medium',
   body: { size: [1.0, 1.05], legLen: 1.0, torsoLen: 1.02, shoulders: 0.9, neckLen: 1, dims: { belly: 1.2, waistW: 12, chestW: 15, upperArm: [5, 4.2], forearm: [4.4, 3.8] } },
   tint: [31, 25, 6], tintHi: [31, 30, 16], tintDk: [14, 9, 1],

@@ -57,7 +57,9 @@ import zeroLayers from './fighters/zero.js';
 import { dashLayers } from './fighters/dash.js';
 import { PANTHEON_LAYERS } from './fighters/pantheon/index.js';
 import { UNDERWORLD_LAYERS } from './fighters/underworld/index.js';
+import fkarverLayers from './fighters/underworld/fkarverLayers.js';
 import { VOID_LAYERS } from './fighters/void/index.js';
+import { ORIGIN_LAYERS } from './fighters/origin/index.js';
 import referee from './referee.js';
 import { remixLayers } from './remix.js';
 import { playerBuild, playerLayers, playerLayersFor, PLAYER_ANIMS } from './player/player.js';
@@ -66,7 +68,7 @@ export const BUILDS = { medium, lean, heavy, giant };
 export const FIGHTER_LAYERS = { referee, barney, kid, mort, gus, rocco, gambini, knox, brody, ray, pidge, sam, mcbride, djdrop, anchor, gemini, midnight, strongman, pockets, tess, jinx, rex,
   rusty, tia, sutures, baron, lars, hank, glacier, maestro, bolt, downpour, cole, avalanche,
   rourke, ignatius, duchess, mirror, nova, goliath, quinn, monk, karver, jax,
-  static: staticLayers, zero: zeroLayers, eclipse: eclipseLayers, frenzy: frenzyLayers, hollow: hollowLayers, warden: wardenLayers, null: nullFLayers, cade: cadeLayers, ...dashLayers, ...PANTHEON_LAYERS, ...UNDERWORLD_LAYERS, ...VOID_LAYERS };
+  static: staticLayers, zero: zeroLayers, eclipse: eclipseLayers, frenzy: frenzyLayers, hollow: hollowLayers, warden: wardenLayers, null: nullFLayers, cade: cadeLayers, ...dashLayers, fkarver: fkarverLayers, ...PANTHEON_LAYERS, ...UNDERWORLD_LAYERS, ...VOID_LAYERS, ...ORIGIN_LAYERS };
 // Title Defense costumes: `<id>.td` layers for every champion with a `remix` block (remix.js)
 for (const [id, L] of Object.entries(FIGHTER_LAYERS)) if (L.remix) FIGHTER_LAYERS[id + '.td'] = remixLayers(L);
 export const PLAYER = { build: playerBuild, layers: playerLayers, layersFor: playerLayersFor, anims: PLAYER_ANIMS };

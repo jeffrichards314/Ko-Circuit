@@ -7,6 +7,7 @@ import { CIRCUITS, zoneOf } from '../../data/circuits.js';
 import { isSecret } from '../save/career.js';
 import { RIVAL_SCENES } from '../../data/fighters/rival/scenes.js';
 import { introThen } from './introFlow.js';
+import { saveRecords } from '../save/records.js';
 
 class Route {
   constructor(game, args = {}) { this.g = game; this.args = args; }
@@ -58,5 +59,18 @@ export class RivalRoute extends Route {
     else then = ['map', {}];
     void RIVAL_SCENES; void SIGN_OFF;
     g.go('cutscene', { id: `rival.${n}.${phase}`, params: { variant }, then });
+  }
+}
+
+// ORIGIN's doors (2026-10-04): the first time through a door his cinematic plays in full (and nothing skips it: `noSkipFirst`), the name is shown from then on, then the
+// intro card and the fight. No lives, nothing at stake: a loss returns you to the door.
+export class OriginEnterRoute extends Route {
+  enter() {
+    const g = this.g, which = this.args.which, R = g.records, O = R.origin;
+    const id = which === 'g' ? 'origin' : 'originTrue', key = which === 'g' ? 'intro' : 'introTrue', scene = which === 'g' ? 'boss.origin' : 'boss.originTrue';
+    if (!O.seen[key]) {
+      O.seen[key] = true; saveRecords(R);
+      g.go('cutscene', { id: scene, params: {}, then: ['intro', { fighter: id, mode: 'origin', keepMusic: true }] });
+    } else g.go('intro', { fighter: id, mode: 'origin' });
   }
 }

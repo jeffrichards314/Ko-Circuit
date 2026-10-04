@@ -2,9 +2,11 @@
 // wild crest of white spikes, a lightning crack down one side of a blank face, and in the chest the hollow of a jagged bolt. His colours turn
 // with every re-roll (palettes chaosShard, .a, .b, .c).
 import { hollow } from './_hollow.js';
+import { TD } from './tdLooks.js';
 
 const sw = (hi, mid, dk) => ({ A: { gloveHi: hi, glove: mid, gloveDk: dk }, B: { trimHi: hi, trim: mid, trimSh: dk, bootHi: hi, boot: mid, bootDk: dk } });
 const { layers, palettes } = hollow('chaosShard', {
+  remix: TD.chaosShard,
   build: 'medium',
   body: { size: [1.0, 1.02], legLen: 1.0, torsoLen: 0.98, shoulders: 1.05, neckLen: 0, dims: { belly: 1.5, waistW: 12, chestW: 16, upperArm: [6.4, 4.0], forearm: [5.6, 3.6] } },
   tint: [31, 10, 26], tintHi: [31, 24, 30], tintDk: [15, 3, 12],

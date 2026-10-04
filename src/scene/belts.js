@@ -41,12 +41,14 @@ export const BELTS = {
   v3: { strap: [[31, 31, 31], [22, 22, 26], [10, 10, 15]], plate: [[31, 31, 31], [29, 29, 31], [20, 20, 26], [10, 10, 15]] },
   zeroTrue: { strap: [[31, 31, 31], [26, 26, 30], [14, 14, 19]], plate: [[31, 31, 31], [31, 31, 31], [24, 24, 29], [12, 12, 18]] },
 };
+// (the Origin Belt is not a belt of the halo: ORIGIN's halo is every belt of the game, and this one is what he gives to whoever beats his true form: white-gold, a sun on the plate)
+export const ORIGIN_BELT = { strap: [[31, 31, 26], [31, 26, 8], [24, 14, 2]], plate: [[31, 31, 31], [31, 29, 14], [29, 20, 4], [18, 10, 1]] };
 // short names that fit on the belt plate
-export const PLATE = { grandprix: 'G.P.', dream: 'WORLD', underground: 'CAGE', nightmare: 'VOID', p1: 'DAWN', p2: 'CLOUD', p3: 'HEROES', p4: 'STARS', p5: 'FORGE', p6: 'MIRROR', p7: 'SUMMIT', halcyon: 'SUN', u1: 'SHORE', u2: 'ASH', u3: 'CHAINS', u4: 'FALLEN', u5: 'FURNACE', u6: 'ABYSS', vorgath: 'KING', v1: 'BASICS', v2: 'SENSES', v3: 'MIND', zeroTrue: 'ZERO' };
+export const PLATE = { grandprix: 'G.P.', dream: 'WORLD', underground: 'CAGE', nightmare: 'VOID', p1: 'DAWN', p2: 'CLOUD', p3: 'HEROES', p4: 'STARS', p5: 'FORGE', p6: 'MIRROR', p7: 'SUMMIT', halcyon: 'SUN', u1: 'SHORE', u2: 'ASH', u3: 'CHAINS', u4: 'FALLEN', u5: 'FURNACE', u6: 'ABYSS', vorgath: 'KING', v1: 'BASICS', v2: 'SENSES', v3: 'MIND', zeroTrue: 'ZERO', origin: 'ORIGIN' };
 const BELT_DEFAULT = { strap: [[9, 9, 12], [4, 4, 7], [2, 2, 3]], plate: [[31, 30, 14], [29, 22, 4], [20, 13, 2], [11, 6, 1]] };
 
 export function beltSprite(id) {
-  const B = BELTS[id] || BELT_DEFAULT;
+  const B = id === 'origin' ? ORIGIN_BELT : BELTS[id] || BELT_DEFAULT;
   const pal = spritePalette(makePalette('belt.' + id, {
     outline: [2, 1, 2], strapHi: B.strap[0], strap: B.strap[1], strapDk: B.strap[2],
     plateHi: B.plate[0], plate: B.plate[1], plateSh: B.plate[2], plateDk: B.plate[3],

@@ -4,6 +4,7 @@
 // of the Pantheon: `rho.<champion>` tints him their colour for their signature (rose for Aurora,
 // sky blue for Cirrus, sepia for the Old Guard, violet for Nebula, ember for Hale, white-cyan for Prism).
 import { rig } from './_rig.js';
+import * as K from '../../remixKit.js';
 
 const tintA = (h, m, s, d) => ({ skinHi: h, skin: m, skinSh: s, gloveHi: h, glove: m, gloveDk: d, hairHi: h, hair: m, hairDk: s });
 const tintB = (h, m, s, d) => ({ topHi: h, top: m, topSh: s, topDk: d, trimHi: h, trim: m, trimSh: s, bootHi: h, boot: m, bootDk: s });
@@ -36,6 +37,23 @@ const { layers, palettes } = rig('rho', {
     emblem(ctx, cx, cy) { const { cv, c } = ctx; cv.part(ctx.mask().ellipse(cx, cy, 4, 4), { ramp: ['ray', 'sun', 'trimSh'].map(c), bevel: 2, inner: 'line', shadow: false }); for (let k = 0; k < 12; k++) { const a = (k / 12) * Math.PI * 2, r = k & 1 ? 8 : 6.6; cv.px(cx + Math.cos(a) * r, cy + Math.sin(a) * r * 0.9, c('trimHi')); } },
   },
   belt: { buckle: 'round' }, stripe: true,
+  // Title Defense: THE ECLIPSE. The white-gold knight goes black: a dark disc behind his head ringed with rays, black plate, a black cape lined with
+  // gold. The sun is still there. It is just behind him.
+  remix: {
+    swap: {
+      A: { hairHi: [14, 12, 8], hair: [7, 6, 5], hairDk: [3, 3, 3], gloveHi: [22, 18, 12], glove: [10, 8, 6], gloveDk: [4, 3, 3] },
+      B: { topHi: [14, 14, 20], top: [7, 7, 12], topSh: [3, 3, 7], topDk: [1, 1, 3], shHi: [14, 14, 20], sh: [7, 7, 12], shDk: [3, 3, 7], bootHi: [14, 14, 20], boot: [7, 7, 12], bootDk: [3, 3, 7] },
+    },
+    ramps: { night: ['topHi', 'top', 'topSh'], gold: ['trimHi', 'trim', 'trimSh'] },
+    back(ctx) {
+      if (ctx.pose.lying) return;
+      const [hx, hy] = ctx.J.head;
+      K.aura(ctx, { ramp: 'gold', cx: hx, cy: hy - 1, n: 15, len: 31, r0: 13, arc: Math.PI * 2, spin: -Math.PI / 2 });
+      ctx.cv.part(ctx.mask().ellipse(hx, hy - 1, 15, 15.5), { ramp: ctx.ramps.night, bevel: 6, inner: 'line', shadow: false });
+      K.cape(ctx, { ramp: 'night', inner: 'gold', len: 36, flare: 8, hem: 'straight' });
+    },
+    front(ctx) { K.bracers(ctx, { ramp: 'night', from: 0.2, to: 0.6, wide: 2 }); K.greaves(ctx, { ramp: 'night', knee: false }); },
+  },
   swaps: {
     'rho.aurora': T([31, 26, 27], [30, 14, 20], [21, 6, 12], [11, 2, 6]),
     'rho.cirrus': T([28, 31, 31], [10, 24, 31], [4, 13, 25], [2, 6, 13]),

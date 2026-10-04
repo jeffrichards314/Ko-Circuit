@@ -80,6 +80,7 @@ export class Fight {
     this.formOverride = null;
     this.silence = !!fighter.silent; // no sound at all while the fight runs (the Sight Shard; ZERO's true form switches it on for a while)
     this.minimalHud = false; // ZERO's last phase: a pure white screen with only the hearts and the health bars
+    this.timeScale = 1; // a modifier may slow the whole screen (ORIGIN's First Punch): the fight screen reads it
     this.player = new Player(this);
     this.player.hearts = this.maxHearts;
     if (opts.startHealth != null) this.player.health = Math.max(1, Math.min(this.player.maxHealth, Math.round(opts.startHealth)));
@@ -352,6 +353,12 @@ export class Fight {
     const P = this.player;
     const was = P.state;
     const r = P.defend(move);
+    // ORIGIN's Rewind: a blow that would land is undone (time runs back); the hit is shown, nothing is taken (src/fight/asc/origin.js)
+    if (r === 'hit' && this.opp.rewindHit(move)) {
+      P.takeHit(); this.shake = 6; this.sfx('playerHit');
+      if (this.opp.armor) { const k = superKey(this.opp.armor.S); this.roundLog.superHits[k] = (this.roundLog.superHits[k] || 0) + 1; }
+      return 'hit';
+    }
     // defense rules (knowledge spec K3): a valid defense can still cost you (defenseCost:
     // blocking the anchor breaks your guard), and the wrong one can cost extra (wrongDefensePenalty)
     const cost = move.defenseCost && move.defenseCost[{ dodged: 'dodge', blocked: 'block', ducked: 'duck' }[r]];
@@ -727,6 +734,7 @@ export class Fight {
     if (!ov.hidden) {
       const lift = ov.lift || 0; // backed off for his super: shadow goes with him, a little smaller
       ellipse(frame, OPP_X + ov.dx, OPP_Y + 1 - lift, oppDown ? 44 : 26 - (lift >> 2), oppDown ? 6 : 4, this.shadowCol);
+      for (const m of O.modifiers) if (m.def.renderBehind) m.def.renderBehind(O, m.cfg, frame, this); // (what is drawn behind him: ZERO's crystals' far side)
       const flash = this.opts.tellHighlight && O.state === 'windup' && (O.moveT >> 2) % 2 === 0;
       const palName = O.paletteOverride() || 'default';
       const pal = palName === 'highlight' ? this.oppPal.highlight : this.oppPalette(palName, flash);
@@ -842,7 +850,7 @@ export class Fight {
     const c = this.d.card || {};
     const lines = this.pt < 110
       ? ['INTRODUCING...', c.hometown ? `FROM ${c.hometown},` : '', `"${this.d.nickname}"`, this.d.name + '!']
-      : ['AND IN THIS CORNER...', `${this.profile.name}`, `"${nicknameOf(this.profile)}"!`, ''];
+      : ['AND IN THIS CORNER...', `${this.opts.title ? this.opts.title + ' ' : ''}${this.profile.name}`, `"${nicknameOf(this.profile)}"!`, ''];
     // each line in the mono face when it fits the card, else the narrow one, wrapped (a long hometown takes two lines);
     // the card grows upward to hold them
     const L = [], ls = lines.filter(Boolean);

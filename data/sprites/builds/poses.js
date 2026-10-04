@@ -151,19 +151,113 @@ export const POSES = {
     knL: [-17, -18], knR: [17, -18], ftL: [-18, 0], ftR: [18, 0],
     gloveL: { angle: -40 }, gloveR: { angle: 40 },
   },
-  // flat on his back, feet toward you and foreshortened: legs splayed out flat,
-  // arms flung wide at shoulder height (not propping him up, which read as sitting)
-  down: {
-    lying: true,
-    hip: [0, -13], waist: [0, -22], chest: [0, -32], neck: [0, -41],
-    head: { at: [0, -50], face: 'ko', tilt: 'up', look: [0, -1] },
-    shL: [-20, -36], shR: [20, -36],
-    elL: [-35, -40], elR: [35, -40],
-    fiL: [-48, -46], fiR: [48, -46],
-    knL: [-17, -8], knR: [17, -8], ftL: [-23, 0], ftR: [23, 0],
+  // the old default knockdown, laid out flat (every fighter now has a fall of his own: data/fighters/knockdowns.js)
+  down: { extends: 'lieA' },
+  kd3: { extends: 'lieA3' },
+
+  // --- knockdown styles (data/fighters/knockdowns.js gives each fighter one). A `rot` pose is composed standing and then laid on the floor
+  //     (figure.js turnSprite: 'T' head to the left, 'TF' head to the right), so its x is the width of the body and its y the length.
+  // flat out, arms at his sides, legs together
+  lieA: {
+    rot: 'T',
+    hip: [0, -43], waist: [0, -54], chest: [0, -72], neck: [0, -87],
+    head: { at: [0, -100], face: 'ko', look: [0, -1] },
+    shL: [-20, -80], shR: [20, -80], elL: [-26, -60], elR: [26, -60], fiL: [-27, -40], fiR: [27, -40],
+    knL: [-8, -22], knR: [8, -22], ftL: [-9, 0], ftR: [9, 0],
+    gloveL: { angle: 175 }, gloveR: { angle: -175 },
+  },
+  lieA2: { extends: 'lieA', elL: [-27, -61], fiL: [-31, -43], fiR: [28, -38], knR: [10, -22], ftR: [13, 0] },
+  lieA3: { extends: 'lieA', shift: [0, 0], elL: [-30, -66], elR: [30, -66], fiL: [-36, -48], fiR: [36, -48], knL: [-10, -22], knR: [10, -22], ftL: [-13, 0], ftR: [13, 0] },
+  // flung out, one arm thrown up over his head, the other across his belly, one leg bent
+  lieB: {
+    rot: 'TF',
+    hip: [0, -43], waist: [0, -54], chest: [0, -72], neck: [0, -87],
+    head: { at: [2, -100], face: 'ko', look: [0, -1] },
+    shL: [-20, -81], shR: [20, -81], elL: [-30, -97], elR: [14, -62], fiL: [-26, -115], fiR: [-4, -54],
+    knL: [-14, -22], knR: [10, -20], ftL: [-12, 0], ftR: [22, -4],
+    gloveL: { angle: -8 }, gloveR: { angle: 110 },
+  },
+  lieB2: { extends: 'lieB', elL: [-31, -96], fiL: [-29, -114], fiR: [-3, -52] },
+  lieB3: { extends: 'lieB', elL: [-34, -88], fiL: [-38, -106], elR: [20, -66], fiR: [8, -56], ftR: [20, -2] },
+  // sprawled, both arms flung back past his head, legs apart
+  lieC: {
+    rot: 'T',
+    hip: [0, -43], waist: [0, -54], chest: [0, -72], neck: [0, -87],
+    head: { at: [-2, -100], face: 'ko', look: [0, -1] },
+    shL: [-20, -81], shR: [20, -81], elL: [-31, -96], elR: [31, -96], fiL: [-36, -113], fiR: [36, -113],
+    knL: [-20, -22], knR: [20, -22], ftL: [-24, 0], ftR: [24, 0],
+    gloveL: { angle: -20 }, gloveR: { angle: 20 },
+  },
+  lieC2: { extends: 'lieC', elL: [-33, -95], fiL: [-40, -110], elR: [30, -98], fiR: [33, -114] },
+  lieC3: { extends: 'lieC', elL: [-27, -86], elR: [27, -86], fiL: [-37, -92], fiR: [37, -92], knL: [-16, -22], knR: [16, -22], ftL: [-18, 0], ftR: [18, 0] },
+  // timber: fell as he stood, guard still up
+  lieT: {
+    rot: 'TF',
+    extends: 'idle1', ...FEET,
+    head: { at: [0, -100], face: 'ko', look: [0, -1] },
+    elL: [-27, -62], elR: [27, -62], fiL: [-14, -76], fiR: [14, -76],
+  },
+  lieT2: { extends: 'lieT', elL: [-28, -60], elR: [28, -60], fiL: [-16, -72], fiR: [16, -72], knL: [-14, -22], knR: [14, -22] },
+  lieT3: { extends: 'lieT', elL: [-30, -66], elR: [30, -66], fiL: [-22, -82], fiR: [22, -82], knL: [-14, -21], knR: [14, -21] },
+  // sat down hard, legs out toward you, gloves on the canvas, head lolling
+  sitA: {
+    extends: 'idle1', shift: [0, 30],
+    knL: [-23, -17], knR: [23, -17], ftL: [-31, 0], ftR: [31, 0],
+    head: { at: [-3, -68], face: 'ko', tilt: 'up', look: [0, -1] },
+    shL: [-21, -51], shR: [21, -51], elL: [-33, -30], fiL: [-39, -8], elR: [33, -30], fiR: [39, -8],
     gloveL: { angle: -70 }, gloveR: { angle: 70 },
   },
-  kd3: { extends: 'down', shift: [0, -4] },
+  sitA2: { extends: 'sitA', head: { at: [3, -68], face: 'ko', tilt: 'up', look: [0, -1] } },
+  sitA3: { extends: 'sitA', shift: [0, -3], head: { at: [-3, -71], face: 'ko', tilt: 'up', look: [0, -1] } },
+  // sat down with his chin on his chest, gloves in his lap
+  sitB: {
+    extends: 'idle1', shift: [0, 30],
+    knL: [-20, -20], knR: [20, -20], ftL: [-26, 0], ftR: [26, 0],
+    head: { at: [0, -62], face: 'ko', tilt: 'down', look: [0, 2] },
+    chest: [0, -41], neck: [0, -53],
+    shL: [-21, -49], shR: [21, -49], elL: [-30, -32], fiL: [-16, -22], elR: [30, -32], fiR: [16, -22],
+    gloveL: { angle: 150 }, gloveR: { angle: -150 },
+  },
+  sitB2: { extends: 'sitB', head: { at: [0, -61], face: 'ko', tilt: 'down', look: [0, 2] } },
+  sitB3: { extends: 'sitB', shift: [0, -3] },
+  // propped back on his gloves, legs apart, head rolled to one side
+  sitC: {
+    extends: 'idle1', shift: [0, 28],
+    waist: [0, -26], chest: [-1, -42], neck: [-2, -56],
+    knL: [-25, -18], knR: [25, -18], ftL: [-35, 0], ftR: [35, 0],
+    head: { at: [-8, -67], face: 'ko', tilt: 'up', look: [-1, -1] },
+    shL: [-22, -50], shR: [19, -50], elL: [-35, -32], fiL: [-45, -10], elR: [30, -30], fiR: [32, -7],
+    gloveL: { angle: -80 }, gloveR: { angle: 80 },
+  },
+  sitC2: { extends: 'sitC', head: { at: [-9, -66], face: 'ko', tilt: 'up', look: [-1, -1] } },
+  sitC3: { extends: 'sitC', shift: [0, -3] },
+  // down on both knees, folded over, head hanging, gloves flat on the canvas
+  kneelA: {
+    extends: 'idle1', shift: [0, 31],
+    knL: [-16, -3], knR: [16, -3], ftL: [-20, 0], ftR: [20, 0],
+    waist: [0, -23], chest: [0, -39], neck: [0, -49],
+    head: { at: [0, -46], face: 'ko', tilt: 'down', look: [0, 3] },
+    shL: [-21, -41], shR: [21, -41], elL: [-31, -24], fiL: [-26, -6], elR: [31, -24], fiR: [26, -6],
+    gloveL: { angle: 180 }, gloveR: { angle: 180 },
+  },
+  kneelA2: { extends: 'kneelA', head: { at: [0, -45], face: 'ko', tilt: 'down', look: [0, 3] } },
+  kneelA3: { extends: 'kneelA', shift: [0, -4] },
+  // one knee down, one glove on the canvas holding him up, the other arm hanging
+  kneelB: {
+    extends: 'idle1', shift: [-4, 22],
+    knL: [-17, -2], ftL: [-26, 0], knR: [12, -25], ftR: [14, 0],
+    head: { at: [-5, -70], face: 'ko', tilt: 'down', look: [-1, 2] },
+    waist: [-2, -33], chest: [-3, -52], neck: [-4, -64],
+    shL: [-24, -60], shR: [14, -58], elL: [-32, -34], fiL: [-31, -9], elR: [20, -40], fiR: [19, -22],
+    gloveL: { angle: 180 }, gloveR: { angle: 175 },
+  },
+  kneelB2: { extends: 'kneelB', head: { at: [-5, -69], face: 'ko', tilt: 'down', look: [-1, 2] } },
+  kneelB3: { extends: 'kneelB', shift: [0, -3] },
+  // the stage between the lie and standing: up on one glove
+  propUp: {
+    extends: 'sitC', shift: [0, 4], head: { at: [-4, -70], face: 'hurt', tilt: 'down', look: [0, 1] },
+    elL: [-33, -34], fiL: [-38, -12], fiR: [28, -22], elR: [34, -34],
+  },
   getup: {
     hip: [0, -28], waist: [0, -38], chest: [0, -56], neck: [0, -71],
     head: { at: [1, -84], face: 'hurt', tilt: 'down', look: [0, 1] },

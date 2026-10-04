@@ -34,7 +34,7 @@ export function openSave(game, n) {
   game.loc = { area: 'world' };
   game.timeScale = 1;
   // a costume only shows if its medals are here (medals live in localStorage, not the password)
-  if (game.career && !costumeUnlocked(game.medals, costumeIdOf(game.career.profile))) { game.career.profile.costume = 0; saveCareer(game.career); }
+  if (game.career && !costumeUnlocked(game.medals, costumeIdOf(game.career.profile), game.records)) { game.career.profile.costume = 0; saveCareer(game.career); }
   saveRecords(syncRecords(game.records, game.career));
   return game;
 }

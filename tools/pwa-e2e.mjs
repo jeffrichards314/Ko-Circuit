@@ -3,7 +3,7 @@
 //   PW_CORE=.../playwright-core/index.mjs node tools/pwa-e2e.mjs
 import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
-import { readFileSync, existsSync, statSync, writeFileSync } from 'node:fs';
+import { readFileSync, existsSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,7 +16,8 @@ let fails = 0, checks = 0;
 const ok = (c, m) => { checks++; if (!c) { fails++; console.log('  FAIL', m); } else console.log('  ok  ', m); };
 
 const OUT = 'deploy-test';
-const build = () => execFileSync('node', [join(ROOT, 'tools/build.mjs'), join(ROOT, OUT)], { encoding: 'utf8' }).split('\n')[0];
+let salt = '';
+const build = () => execFileSync('node', [join(ROOT, 'tools/build.mjs'), join(ROOT, OUT)], { encoding: 'utf8', env: { ...process.env, KO_BUILD_SALT: salt } }).split('\n')[0];
 console.log(build());
 // like GitHub Pages: a subfolder, ten minutes of HTTP caching
 const BASE = '/some/sub/ko-circuit/';
@@ -35,7 +36,7 @@ const ctx = await browser.newContext({ ...devices['iPhone 13 landscape'] });
 const p = await ctx.newPage();
 const errs = []; p.on('pageerror', (e) => errs.push(String(e)));
 const notFound = []; p.on('response', (r) => { if (r.status() >= 400) notFound.push(`${r.status()} ${r.url()}`); });
-await p.goto(URL_);
+await p.goto(URL_ + '?dev');
 await p.waitForFunction(() => navigator.serviceWorker && navigator.serviceWorker.controller === null ? false : true, null, { timeout: 5000 }).catch(() => {});
 await p.waitForTimeout(6000);
 const st = await p.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); const k = await caches.keys(); return { scope: r && r.scope, active: !!(r && r.active), keys: k, n: k.length ? (await (await caches.open(k[0])).keys()).length : 0, ver: document.querySelector('meta[name=ko-deploy]').content }; });
@@ -58,9 +59,8 @@ const drawn = await p.evaluate(() => { const c = document.getElementById('screen
 ok(drawn > 0, 'offline: the title screen is on the canvas');
 await ctx.setOffline(false);
 // update: change one game file, build again; the player still has the first build open
-const target = join(ROOT, 'data/palette.js'), orig = readFileSync(target, 'utf8');
-try {
-  writeFileSync(target, orig + '\n// update-test\n');
+{
+  salt = 'one';
   console.log(build());
   const v2 = readFileSync(join(ROOT, OUT, 'version.txt'), 'utf8').trim();
   ok(v2 !== st.ver, `a changed file gives a new version (${st.ver} -> ${v2})`);
@@ -76,8 +76,26 @@ try {
   const ver2 = await p.evaluate(() => document.querySelector('meta[name=ko-deploy]').content);
   ok(ver2 === v2, `the page reloaded into the new version (${ver2})`);
   void card;
-} finally {
-  writeFileSync(target, orig);
+}
+// the same, with the player in the middle of something (not the title screen): the update waits behind a card, the game is not reloaded under them,
+// and a tap on the card applies it
+{
+  const verNow = await p.evaluate(() => document.querySelector('meta[name=ko-deploy]').content);
+  await p.evaluate(() => KO.go('options')); await p.waitForTimeout(500);
+  salt = 'two';
+  try {
+    console.log(build());
+    const v3 = readFileSync(join(ROOT, OUT, 'version.txt'), 'utf8').trim();
+    await p.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); await r.update(); });
+    await p.waitForTimeout(5000);
+    const mid = await p.evaluate(() => ({ card: !!document.getElementById('update-card'), screen: KO.screen.constructor.name, ver: document.querySelector('meta[name=ko-deploy]').content }));
+    ok(mid.card && mid.screen === 'OptionsScreen' && mid.ver === verNow, `mid-game: the update waits behind a card and the player stays where they are (${JSON.stringify(mid)})`);
+    const box = await p.evaluate(() => { const r = document.getElementById('update-card').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+    await p.touchscreen.tap(box.x, box.y);
+    await p.waitForTimeout(4000);
+    const end = await p.evaluate(async () => ({ ver: document.querySelector('meta[name=ko-deploy]').content, keys: await caches.keys() }));
+    ok(end.ver === v3 && end.keys.length === 1 && end.keys[0] === `kocircuit-${v3}`, `tapping the card installs the new version and drops the old cache (${end.ver}, ${end.keys})`);
+  } finally { /* (nothing of the game was edited) */ }
 }
 function info2(m) { console.log('  ' + m); }
 ok(errs.length === 0, `no page errors ${errs.join(' | ')}`);

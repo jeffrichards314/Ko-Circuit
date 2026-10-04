@@ -204,6 +204,8 @@ export const playerLayers = {
       cv.part(ctx.mask().rect(x - H.rx, y - 3, H.rx * 2, 2).clip(hm), { ramp: ramps.accent, bevel: 1, inner: 'line', shadow: false });
       for (const s of [-1, 1]) cv.px(x + s * (H.rx - 1), y - 4, ctx.c('accentHi'));
     }
+    // ORIGIN's costume: a halo of light over the head (a ring of gold, with a white point at each side)
+    if (P.includes('halo')) { for (let a = 0; a < 40; a++) { const q = (a / 40) * Math.PI * 2, X = Math.round(x + Math.cos(q) * (H.rx + 3)), Y = Math.round(y - H.ry + 3 + Math.sin(q) * 3); cv.px(X, Y, ctx.c(a % 10 === 0 ? 'accentHi' : 'accent')); } }
     // a hood, down, bunched behind the neck
     if (P.includes('hood')) cv.part(ctx.mask().ellipse(x, y + H.ry - 0.5, H.rx + 1, 3), { ramp: ramps.shirt, bevel: 2, inner: 'line' });
   },
@@ -238,7 +240,7 @@ export const playerLayers = {
 const COSTUME_PIECES = {
   nightgym: ['headgear'], roadwork: ['hood', 'stripes'], contender: ['piping', 'patch'], bigtop: ['striped'],
   worldbeater: ['trim', 'sheen'], stormchaser: ['bolt'], showdown: ['crest', 'trim'], voidwalker: ['piping', 'sheen'], undisputed: ['belt', 'trim'],
-  ascendant: ['trim', 'sheen', 'laurel'], sunborn: ['crest', 'trim', 'laurel'], ashen: ['piping', 'patch'], emberforged: ['embers', 'piping'], hollow: ['hollow'],
+  ascendant: ['trim', 'sheen', 'laurel'], sunborn: ['crest', 'trim', 'laurel'], ashen: ['piping', 'patch'], emberforged: ['embers', 'piping'], hollow: ['hollow'], origin: ['belt', 'trim', 'sheen', 'laurel', 'halo'],
 };
 function costumePieces(ctx, P) {
   if (!P.length) return;

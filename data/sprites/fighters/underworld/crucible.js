@@ -4,6 +4,7 @@
 // climbs the brighter the `overheat` modifier makes them), pipes venting from the shoulders, red-hot iron mitts and
 // a belt of ingot moulds. He is always the hottest thing in the room.
 import { rig } from '../pantheon/_rig.js';
+import * as K from '../../remixKit.js';
 import { swapPalette } from '../../../../src/engine/palette.js';
 
 const { layers, palettes: base } = rig('crucible', {
@@ -45,6 +46,28 @@ const { layers, palettes: base } = rig('crucible', {
     },
   },
   belt: { buckle: 'square', ramp: 'trim' },
+  // Title Defense: CRUCIBLE, QUENCHED. Plunged in the water: pale blue-steel instead of black iron, a pair of bull horns cast into the pot, steam
+  // puffing off both shoulders, a strap harness and a heavy apron. The heat is a thing that happens to him (the overheat palette takes him orange).
+  remix: {
+    swap: {
+      A: { skinHi: [20, 22, 25], skin: [13, 15, 19], skinSh: [7, 8, 11], skinDk: [3, 4, 6], gloveHi: [26, 28, 31], glove: [16, 20, 27], gloveDk: [8, 10, 17] },
+      B: { topHi: [24, 28, 31], top: [14, 20, 27], topSh: [8, 11, 17], topDk: [4, 5, 9], trimHi: [31, 31, 31], trim: [24, 27, 31], trimSh: [13, 16, 23], shHi: [14, 18, 24], sh: [8, 10, 15], shDk: [4, 5, 8], bootHi: [20, 24, 29], boot: [11, 14, 20], bootDk: [5, 6, 10], pipe: [20, 22, 26], pipeDk: [9, 10, 14] },
+    },
+    ramps: { steel: ['topHi', 'top', 'topSh'], steam: ['trimHi', 'trim', 'trimSh'], dark: ['shHi', 'sh', 'shDk'] },
+    body: { size: [1.1, 1.06], shoulders: 1.1 },
+    back(ctx) { if (!ctx.pose.lying) { K.pipes(ctx, { ramp: 'dark', smoke: 'steam', h: 34, w: 7, spread: 12 }); K.pack(ctx, { ramp: 'steel', w: 30, h: 36, top: 6 }); } },
+    head(ctx, H) { K.horns(ctx, H, { ramp: 'steel', len: 22, out: 15, thick: 5, y: 5 }); },
+    torso(ctx) {
+      if (ctx.pose.lying) return;
+      K.apron(ctx, { ramp: 'dark', len: 20, top: false, taper: 7 });
+      K.straps(ctx, { ramp: 'dark', buckle: 'steam' });
+    },
+    front(ctx) {
+      if (ctx.pose.lying) return;
+      for (const [k, s] of [['L', -1], ['R', 1]]) { const sh = ctx.J['sh' + k]; for (let i = 0; i < 3; i++) ctx.cv.part(ctx.mask().ellipse(sh[0] + s * (3 + (i & 1) * 2), sh[1] - 14 - i * 4, 3.4 - i * 0.5, 3), { ramp: ctx.ramps.steam, bevel: 2, shadow: false }); }
+      K.bracers(ctx, { ramp: 'steel', from: 0.2, to: 0.55, wide: 2 });
+    },
+  },
   front(ctx) {
     const { cv, J, pose, c } = ctx;
     if (pose.lying) return;

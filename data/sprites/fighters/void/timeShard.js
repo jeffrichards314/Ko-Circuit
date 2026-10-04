@@ -2,8 +2,10 @@
 // with a monocle's thin gold ring round nothing, a black waistcoat and a chain of tiny gold links across it, an hourglass for a belt buckle and,
 // hollowed out of the chest, a clock face with its two hands, its rim burning gold.
 import { hollow } from './_hollow.js';
+import { TD } from './tdLooks.js';
 
 const { layers, palettes } = hollow('timeShard', {
+  remix: TD.timeShard,
   build: 'lean',
   body: { size: [0.98, 1.08], legLen: 1.04, torsoLen: 1.02, shoulders: 0.84, neckLen: 2, dims: { belly: 0.8, waistW: 10.5, chestW: 13.6, upperArm: [4.4, 3.6], forearm: [3.9, 3.3] } },
   tint: [31, 24, 5], tintHi: [31, 30, 16], tintDk: [15, 9, 1],

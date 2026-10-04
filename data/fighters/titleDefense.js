@@ -140,7 +140,7 @@ export function remixed(id) {
   if (T.costume === 'shift') palette = ensureRemixPalette(d.palette, T.costumeDeg ?? null); // (a fighter with no costume of his own: his colours turned)
   else if (T.costume || L) {
     palette = `${d.palette}.td`;
-    const base = PALETTES[d.palette], C = T.costume || {};
+    const base = PALETTES[d.palette], C = (typeof T.costume === 'object' && T.costume) || (L && L.remix.swap) || {};
     const pal = (p, sw, ex, name) => {
       const s = sw ? swapPalette(name, p, sw) : p;
       return ex ? makePalette(name, { ...s.spec, ...ex }) : s;

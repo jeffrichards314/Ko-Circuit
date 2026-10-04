@@ -10,8 +10,8 @@ import { BOSSES } from './bosses.js';
 import { INVITATIONS } from './invitations.js';
 import { STORY_SCENES } from './story.js';
 
-export const ZONES = ['road', 'secret', 'pantheon', 'underworld', 'void', 'story'];
-export const ZONE_NAMES = { road: 'THE ROAD', secret: 'SECRET CIRCUITS', pantheon: 'THE PANTHEON', underworld: 'THE UNDERWORLD', void: 'THE VOID', story: 'STORY' };
+export const ZONES = ['road', 'secret', 'pantheon', 'underworld', 'void', 'story', 'origin'];
+export const ZONE_NAMES = { road: 'THE ROAD', secret: 'SECRET CIRCUITS', pantheon: 'THE PANTHEON', underworld: 'THE UNDERWORLD', void: 'THE VOID', story: 'STORY', origin: 'THE BEGINNING' };
 
 export const SCENES = {};
 for (const list of [ARRIVALS, VICTORIES, ENTRANCES, BOSSES, INVITATIONS, STORY_SCENES]) for (const s of list) SCENES[s.id] = s;
@@ -30,6 +30,7 @@ export function getScene(id, params = {}) {
 import { CIRCUITS, ALL_ORDER } from '../circuits.js';
 import { FIGHTERS } from '../fighters/index.js';
 const KIND = { invite: 0, arrive: 1, boss: 2, entrance: 2, victory: 3, jog: 3.5, ferry: 3.5, rival: 3.6, story: 4 };
+const ORIGIN_ORDER = ['boss.origin', 'victory.origin', 'boss.originTrue', 'victory.originTrue'];
 function circuitOf(id, raw) {
   const kind = id.split('.')[0], rest = id.slice(kind.length + 1);
   if (raw.params && raw.params.circuit) return raw.params.circuit;
@@ -42,7 +43,7 @@ function circuitOf(id, raw) {
 export function theaterList() {
   const rows = Object.values(SCENES).map((raw, i) => {
     const kind = raw.id.split('.')[0], c = circuitOf(raw.id, raw);
-    const idx = kind === 'story' ? 999 : kind === 'jog' || kind === 'ferry' ? Math.max(0, ALL_ORDER.indexOf(c) - 0.5) : Math.max(0, ALL_ORDER.indexOf(CIRCUITS[c] && CIRCUITS[c].rival ? CIRCUITS[c].after || c : c));
+    const idx = ORIGIN_ORDER.includes(raw.id) ? 1000 + ORIGIN_ORDER.indexOf(raw.id) : kind === 'story' ? 999 : kind === 'jog' || kind === 'ferry' ? Math.max(0, ALL_ORDER.indexOf(c) - 0.5) : Math.max(0, ALL_ORDER.indexOf(CIRCUITS[c] && CIRCUITS[c].rival ? CIRCUITS[c].after || c : c));
     return { id: raw.id, title: raw.title, zone: raw.zone || 'road', key: idx * 10 + (KIND[kind] ?? 4) + i / 1000 };
   });
   return ZONES.map((z) => ({ zone: z, name: ZONE_NAMES[z], scenes: rows.filter((r) => r.zone === z).sort((a, b) => a.key - b.key) })).filter((z) => z.scenes.length);

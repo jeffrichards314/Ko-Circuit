@@ -40,7 +40,7 @@ export const SPEED = {
   // Phase F recalibration (tools/medal-sim.mjs, 60 fights each): ZERO's true form is four rounds, so 12:00 at most (the old 18:00 was longer than the fight:
   // any knockout of the last phase earns the Bronze; the bot needs 10:36); the Block Shard (5:49, up to 8:23), the Duck Shard (5:04, up to 8:21), the
   // Will Shard and Fallen Brody (6:05 against U4's 6:15) have their own targets in their data files
-  v1: 420, v2: 435, v3: 450, rival9: 600, zeroTrue: 720, // (Dash Unbound: the bot's 90th percentile is 8:50 now that the bout's clock is 90 s rounds)
+  v1: 420, v2: 435, v3: 450, rival9: 600, zeroTrue: 1000, origin: 1200, originTrue: 1500, // (Dash Unbound: the bot's 90th percentile is 8:50 now that the bout's clock is 90 s rounds)
 };
 
 export const MEDALS = ['speed', 'flawless', 'signature'];

@@ -9,6 +9,10 @@
 //   PHASE 4  a pure white screen with a minimal HUD, and everything at full speed: the gaps shrink, the tells never do.
 // Knowledge (K6): every signature can be undone once per fight, and he adapts to your two most-used behaviours (the answers a Dash would have, live).
 // Dash is in your corner and tells you exactly what comes.
+// THE CRYSTALS (2026-10-04, data/fighters/void/crystals.js, src/fight/asc/crystals.js): twelve crystals, one in each Hollowed fighter's colour, orbit him for the
+// whole fight. A crystal glows before an attack of its family; each has one crystal attack (a super, four blows and a golden finisher) and cracking it
+// (the golden moment) takes that whole family out of his pool. Phase 1 is the twelve tests (a cracked crystal's test is skipped), phase 2 and 3 mix crystal
+// interludes and crystal attacks in with the signatures and the borrowed forms, and phase 4 throws every whole crystal's blows, alone or in pairs.
 import { vm, only, longSteps } from './void/_void.js';
 import { stats } from './pantheon/_kit.js';
 import { ALL_SIGNATURES, echoMove, sigMove, plainZero } from './zero.js';
@@ -36,7 +40,8 @@ import moros from './underworld/moros.js';
 import soot from './underworld/soot.js';
 import jailer from './underworld/jailer.js';
 import crucible from './underworld/crucible.js';
-import { NEW_ECHO_COLORS } from '../sprites/fighters/void/zeroTrue.js';
+import { signatureMoves } from './void/signatures.js';
+import { CRYSTALS, crystalMoves, crystalSupers, PAIR_MOVES, CRYSTAL_OF_MOVE } from './void/crystals.js';
 
 const ALL4 = ['dodgeL', 'dodgeR', 'block', 'duck'], D2 = ['dodgeL', 'dodgeR'];
 const moves = {}, patterns = [];
@@ -69,31 +74,9 @@ Object.assign(moves, {
   // (a slow one: the answer to a swinger, a spammer, a repeater: a 3-frame reply would come before a jab was over)
   zSlow: { ...plain('NOBODY', 'hookTell', 'hook', ['dodgeL', 'duck'], false, 34), windupFrames: 14, counterWindow: [4, 12], starWindow: [4, 7], damage: 18, noFake: true },
 });
-const sigs = [];
-for (const s of ALL_SIGNATURES) {
-  const e = echoMove(s), g = { ...sigMove(s), windupFrames: 3 };
-  moves['echo_' + s.champ.id] = e; moves['sig_' + s.champ.id] = g;
-  sigs.push({ id: s.champ.id, name: s.champ.name });
-}
-const NEW = [
-  ['aurora', aurora, 'firstLight'], ['cirrus', cirrus, 'stormFist'], ['oldguard', oldguard, 'firstChampion'], ['nebula', nebula, 'supernova'], ['hale', hale, 'forgeFall'], ['prism', prism, 'spectrum'],
-  ['moros', moros, 'requiem'], ['soot', soot, 'fireStorm'], ['jailer', jailer, 'lifeSentence'], ['crucible', crucible, 'meltdown'],
-];
-for (const [id, champ, mid] of NEW) {
-  const m = champ.moves[mid];
-  moves['echo_' + id] = {
-    name: champ.name, echo: id, echoName: champ.name, echoColor: NEW_ECHO_COLORS[id], feint: true, call: true, noFake: true,
-    windupFrames: 22, activeFrames: 0, recoveryFrames: 1, damage: 0, avoidBy: ALL4, counterWindow: [3, 19], starWindow: [3, 7], kdWindow: [16, 17], cancels: 1,
-    animation: { windup: ['overheadTell1'], active: ['overheadTell2'], recovery: ['overheadTell2'] },
-  };
-  moves['sig_' + id] = {
-    name: m.name, echoOf: id, knockdown: true, noFake: true, windupFrames: 3, activeFrames: m.activeFrames || 10, recoveryFrames: m.recoveryFrames || 46, damage: m.damage || 30,
-    avoidBy: m.avoidBy && m.avoidBy.length ? m.avoidBy.slice() : D2, counterWindow: null, starWindow: null, punishStar: ['dodged'],
-    sfx: { tell: 'voidTell', swing: (m.sfx && m.sfx.swing) || 'swingHeavy' },
-    animation: { windup: ['overheadTell2'], active: ['overhead1', 'overhead2'], recovery: ['overheadRecover', 'idle1'] },
-  };
-  sigs.push({ id, name: champ.name });
-}
+const SIG = signatureMoves(); // (the echoes and the signatures of the twenty-two champions: data/fighters/void/signatures.js)
+Object.assign(moves, SIG.moves);
+const sigs = SIG.sigs;
 const ROUTINES = [
   (e, g) => [{ idle: 30 }, { move: 'zJab' }, { idle: 22 }, { move: e }, { move: g }, { idle: 26 }, { move: 'zBody' }, { idle: 28 }],
   (e, g) => [{ idle: 28 }, { move: 'zHookL' }, { idle: 22 }, { move: e }, { move: g }, { idle: 24 }, { move: 'zJab' }, { idle: 20 }, { move: 'zHook' }, { idle: 28 }],
@@ -108,13 +91,55 @@ Object.assign(moves, withPrefix('h_', halcyon.moves), withPrefix('v_', vorgath.m
 const SETS = [['dawn', 'h1', 'h_', halcyon], ['noon', 'h2', 'h_', halcyon], ['dusk', 'h3', 'h_', halcyon], ['p1', 'v1', 'v_', vorgath], ['p2', 'v2', 'v_', vorgath], ['p3', 'v3', 'v_', vorgath]];
 for (const [set, seg, pre, F] of SETS) for (const p of F.patterns.filter((q) => q.set === set)) patterns.push({ id: `${seg}_${p.id}`, seg, weight: 1, fixed: !!p.fixed, steps: rename(p.steps, pre) });
 
+// ----------------------------------------------------------------------------------------- the crystals' own moves
+// (the twelve crystal attacks' blows and the pair's two moves: data/fighters/void/crystals.js)
+Object.assign(moves, crystalMoves(), PAIR_MOVES);
+// the blows of every family that go into his routines (plain punches of the shards' own: every one is slipped, blocked or ducked as its tell shows)
+const FAMILY = {
+  dodgeShard: ['dodge_jab', 'dodge_cross', 'dodge_hook', 'dodge_hookL', 'dodge_body', 'dodge_bodyR', 'dodge_upper'],
+  blockShard: ['block_jab', 'block_hook', 'block_body'],
+  duckShard: ['duck_flick', 'duck_sweep'],
+  counterShard: ['counter_jab', 'counter_hook', 'counter_bodyR', 'counter_upper'],
+  sightShard: ['sight_jab', 'sight_hookL', 'sight_upper', 'sight_sweep'],
+  soundShard: ['sound_jab', 'sound_hook', 'sound_upper', 'sound_body'],
+  rhythmShard: ['rhythm_jab', 'rhythm_hookL', 'rhythm_body', 'rhythm_upper'],
+  memoryShard: ['memory_jab', 'memory_hook', 'memory_bodyR', 'memory_upper'],
+  echoShard: ['eJab', 'eBodyR', 'eJabR'],
+  chaosShard: ['chaos_jab', 'chaos_hookL', 'chaos_upper', 'chaos_sweep'],
+  timeShard: ['time_jab', 'time_hook', 'time_body', 'time_upper'],
+  willShard: ['will_jab', 'will_hook', 'will_bodyR', 'will_sweep'],
+};
+for (const [id, list] of Object.entries(FAMILY)) for (const m of list) if (!moves[m] || CRYSTAL_OF_MOVE[m] !== id) throw new Error(`zeroTrue: ${m} is not a move of ${id}`);
+// the moves that need room after them (a block-only or duck-only blow: you are not back in your stance at once)
+const SLOW = (m) => (moves[m] && moves[m].recoveryFrames >= 26 ? 10 : 0);
+
+// ----------------------------------------------------------------------------------------- crystal interludes (phases 2 and 3)
+// A short routine of one or two crystals' blows (fixed order, the same every time): the crystal glows, the blows come, and the signature routines or the
+// borrowed forms go on. A crystal that has cracked is out of them (the executor drops its moves: src/fight/asc/crystals.js).
+const CRY_SEEDS = [[1, 'dodgeShard', 'blockShard'], [2, 'duckShard', 'counterShard'], [3, 'sightShard', 'soundShard'], [4, 'rhythmShard', 'memoryShard'], [5, 'echoShard', 'chaosShard'], [6, 'timeShard', 'willShard']];
+const interlude = (seed, a, b) => longSteps({ seed, moves: [...FAMILY[a].map((m) => [m, 2]), ...FAMILY[b].map((m) => [m, 2])], count: 6, gaps: [24, 30], first: 28, last: 34, after: SLOW });
+const FORM_SEGS = ['h1', 'h2', 'h3', 'v1', 'v2', 'v3'];
+CRY_SEEDS.forEach(([n, a, b]) => {
+  patterns.push({ id: `crystals${n}`, seg: 'sigs', weight: 1, fixed: true, steps: interlude(6100 + n, a, b) });
+  patterns.push({ id: `${FORM_SEGS[n - 1]}_crystals`, seg: FORM_SEGS[n - 1], weight: 1, fixed: true, steps: interlude(6200 + n, a, b) });
+});
+
 // ----------------------------------------------------------------------------------------- phase 4: full speed
 // (64 moves a sequence plus two echoes: the longest patterns in the game, past the Memory Shard's 60; data/difficulty.js)
-const F4 = ['dodge_jab', 'dodge_cross', 'dodge_hook', 'dodge_hookL', 'dodge_body', 'dodge_bodyR', 'dodge_upper', 'duck_flick', 'duck_sweep', 'block_jab', 'block_hook', 'block_body'];
-const LOCKED = ['duck_flick', 'duck_sweep', 'duck_drag', 'block_jab', 'block_hook', 'block_body'];
+// Every crystal's family is in them (the whole ones: a cracked crystal's moves are dropped as each sequence is picked), and every ninth blow is a DUET: the
+// next blow of another family follows on a short gap, so two crystals glow together.
+const ALLF = Object.values(FAMILY).flat();
 const ECH = [['echo_gus', 'sig_gus'], ['echo_avalanche', 'sig_avalanche'], ['echo_hale', 'sig_hale'], ['echo_moros', 'sig_moros']];
 [[1, 4041], [2, 4057], [3, 4079]].forEach(([n, seed], k) => {
-  const base = longSteps({ seed, moves: F4.map((m, i) => [m, i < 7 ? 3 : 2]), count: 64, gaps: [8, 16], first: 24, last: 40, after: (a) => (LOCKED.includes(a) ? 12 : 0), rest: { every: 6, steps: [{ idle: 22 }, { open: 46, anim: 'undone', star: [2, 14], comboLimit: 5, id: 'undone4' }] } });
+  const base = longSteps({ seed, moves: ALLF.map((m) => [m, CRYSTAL_OF_MOVE[m] === 'dodgeShard' ? 3 : 2]), count: 64, gaps: [8, 16], first: 24, last: 40, after: SLOW, rest: { every: 6, steps: [{ idle: 22 }, { open: 46, anim: 'undone', star: [2, 14], comboLimit: 5, id: 'undone4' }] } });
+  // the duets: a short gap before every ninth blow when the two are of different families and the first leaves room
+  let mi = 0, prevM = null;
+  base.forEach((st, i) => {
+    if (!st.move) return;
+    mi++;
+    if (mi % 9 === 0 && prevM && base[i - 1] && base[i - 1].idle !== undefined && CRYSTAL_OF_MOVE[prevM] !== CRYSTAL_OF_MOVE[st.move] && !SLOW(prevM)) base[i - 1] = { idle: 6 };
+    prevM = st.move;
+  });
   // an echo and its signature go in at the middle and at the end
   const at = base.map((s, i) => (s.move ? i : -1)).filter((i) => i >= 0);
   const out = base.slice(0, at[31]), tailS = base.slice(at[31]);
@@ -124,7 +149,7 @@ const ECH = [['echo_gus', 'sig_gus'], ['echo_avalanche', 'sig_avalanche'], ['ech
 // ----------------------------------------------------------------------------------------- the segments
 const seg = (s, name, form) => ({ seg: s, name, form });
 const ROUNDS = {
-  1: { segs: TESTS.map(([s, n]) => seg(s, `TEST: ${n}`)) },
+  1: { segs: TESTS.map(([s, n]) => ({ ...seg(s, `TEST: ${n}`), crystal: CRYSTALS.find((c) => c.key === s).id })) },
   2: { segs: [seg('sigs', 'EVERY CHAMPION')] },
   3: { segs: [seg('h1', 'HALCYON: DAWN', 1), seg('h2', 'HALCYON: NOON', 2), seg('h3', 'HALCYON: DUSK', 3), seg('v1', 'VORGATH: THE TITHE', 1), seg('v2', 'VORGATH: THE CRUMBLING', 2), seg('v3', 'VORGATH: THE THRONE', 3)] },
   4: { segs: [seg('final', null)], pace: 1.25 },
@@ -216,7 +241,7 @@ export default {
   roundMusic: ['zeroTrueI', 'zeroTrueII', 'zeroTrueIII', 'zeroTrueIV'],
 
   // full health every phase (the fight heals him between rounds); no idle animation: one frame, perfectly still
-  stats: stats({ health: 420, damageMult: 2.4, stunResistance: 8, starLossChance: 0.7, stunFrames: 84, hitstun: 12, comboLimit: 3, betweenRoundHeal: 0.2, idleGuard: 'high' }),
+  stats: stats({ health: 560, damageMult: 2.4, stunResistance: 8, starLossChance: 0.7, stunFrames: 84, hitstun: 12, comboLimit: 3, betweenRoundHeal: 0.2, idleGuard: 'high' }),
   anims: {
     idle: ['idle1'], block: ['block'], hitHigh: ['hitHigh'], hitLow: ['hitLow'], stunned: { frames: ['stunned1', 'stunned2'], rate: 14 },
     knockdown: ['kd1', 'kd2', 'kd3'], down: ['down'], getup: ['getup'], taunt: ['nought'], victory: ['victory'], undone: { frames: ['undone1', 'undone2'], rate: 6 },
@@ -228,12 +253,17 @@ export default {
 
   // his four phases (spec §4 "Boss phases"): each lasts until its health bar is emptied, not a round
   phases: [
-    { name: 'THE TWELVE TESTS', scout: 'THE SHARDS\' TESTS, ONE AFTER ANOTHER: EVERY DEFENSE, EVERY SENSE, EVERY HABIT YOU HAVE.' },
-    { name: 'EVERY CHAMPION', scout: 'EVERY CHAMPION YOU EVER BEAT, THEIR SIGNATURES ECHOED ONE AFTER ANOTHER.' },
-    { name: 'BORROWED FORMS', scout: 'HALCYON\'S LIGHT AND VORGATH\'S CRUMBLING FLOOR, WORN IN TURN.' },
-    { name: 'THE WHOLE OF NOTHING', scout: 'A WHITE SCREEN, ONLY THE HEARTS AND THE BARS. FULL SPEED, A THIN HEALTH BAR. ONLY NOW CAN HE BE KNOCKED OUT.' },
+    { name: 'THE TWELVE TESTS', scout: 'THE SHARDS\' TESTS, ONE AFTER ANOTHER: EVERY DEFENSE, EVERY SENSE, EVERY HABIT YOU HAVE. THE CRYSTAL OF EACH TEST GLOWS FIRST.' },
+    { name: 'EVERY CHAMPION', scout: 'EVERY CHAMPION YOU EVER BEAT, THEIR SIGNATURES ECHOED ONE AFTER ANOTHER, WITH CRYSTAL ATTACKS BETWEEN THEM.' },
+    { name: 'BORROWED FORMS', scout: 'HALCYON\'S LIGHT AND VORGATH\'S CRUMBLING FLOOR, WORN IN TURN, AND THE CRYSTALS STILL ORBITING.' },
+    { name: 'THE WHOLE OF NOTHING', scout: 'A WHITE SCREEN, ONLY THE HEARTS AND THE BARS. FULL SPEED, A THIN HEALTH BAR, EVERY CRYSTAL STILL WHOLE GLOWING ALONE OR IN PAIRS. ONLY NOW CAN HE BE KNOCKED OUT.' },
   ],
   super: { hit: 'head', moves: sigs.map((s) => 'echo_' + s.id), then: Object.fromEntries(sigs.map((s) => ['echo_' + s.id, ['sig_' + s.id]])), name: 'ECHO OF AN OLD CHAMP', keep: true, golden: 'windup', taunt: 34, times: [1, 2] },
+  // the twelve crystal attacks (data/fighters/void/crystals.js), and the final phase's pair (two of them run into one: its blows are chosen as he throws it)
+  supers: [...crystalSupers(), {
+    move: 'pair_go', then: ['pair_fin'], on: 'pair_fin', golden: 'windup', window: [13, 16], hit: 'head', pair: true, name: 'TWO CRYSTALS AS ONE', shout: 'AS ONE!', taunt: 40, times: [1, 2],
+    scout: 'IN THE LAST PHASE TWO CRYSTALS GLOW TOGETHER: HIS ATTACKS RUN INTO EACH OTHER AND END IN ONE BLOW. A HEAD SHOT ON THE GLINT IN ITS WINDUP LEAVES HIM WIDE OPEN AND CRACKS BOTH CRYSTALS.',
+  }],
 
   getUpTable: [{ upAt: [9, 9], health: 0.45 }, { upAt: [9, 9], stayDown: 0.65, health: 0.35 }, { upAt: null }],
 
@@ -249,7 +279,8 @@ export default {
     { id: 'fullSpeed', name: 'FULL SPEED', when: { left: 40, round: 4 }, say: 'FULL SPEED!', steps: [{ idle: 16 }, { move: 'zJab' }, { idle: 12 }, { move: 'zHook' }, { idle: 12 }, { move: 'zBody' }, { idle: 20 }] },
   ],
   special: [
-    { type: 'zeroSeg', rounds: ROUNDS, finalHealth: 230 },
+    { type: 'zeroSeg', rounds: ROUNDS, finalHealth: 310 },
+    { type: 'crystals' },
     { type: 'echo' },
     gate('block', { type: 'syncopate', rhythms: [[0, 0, 0, 30], [22, 0, 0, 0], [8, 8, 8, 8, 40], [40, 0]] }),
     gate('counter', { type: 'counterOnly', move: 'counter_rebuke', hittable: [], flash: 'zeroTrue.flash', lead: 4 }),
@@ -266,7 +297,7 @@ export default {
     gate(['v1', 'v2', 'v3'], { type: 'thief', take: 3, blocked: true, say: 'THE TITHE IS PAID!' }),
   ],
   titleDefense: null,
-  gallery: 'THE WHOLE OF ZERO. FOUR PHASES: THE TWELVE TESTS, EVERY SIGNATURE, HALCYON AND VORGATH, THEN ALL AT FULL SPEED.',
+  gallery: 'THE WHOLE OF ZERO. FOUR PHASES: THE TWELVE TESTS, EVERY SIGNATURE, HALCYON AND VORGATH, THEN ALL AT FULL SPEED. TWELVE CRYSTALS ORBIT HIM, ONE IN EACH FREED FIGHTER\'S COLOUR: A GLOW SHOWS WHICH KIND OF ATTACK IS COMING, AND THE GOLDEN MOMENT OF A CRYSTAL\'S BIG ATTACK CRACKS IT.',
   medals: { signature: { text: 'UNDO GUS\'S BORROWED SPATULA FLIP.', check: 'cueCount', cue: '!exploit:slip_gus', n: 1 }, speed: 1080 },
   music: 'zeroTrueEntrance',
 };

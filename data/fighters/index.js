@@ -61,6 +61,8 @@ import dash6 from './rival/dash6.js';
 import dash7 from './rival/dash7.js';
 import dash8 from './rival/dash8.js';
 import dash9 from './rival/dash9.js';
+import origin from './origin/origin.js';
+import originTrue from './origin/originTrue.js';
 
 import { PANTHEON_FIGHTERS } from './pantheon/index.js';
 import { UNDERWORLD_FIGHTERS } from './underworld/index.js';
@@ -68,6 +70,8 @@ import { VOID_FIGHTERS } from './void/index.js';
 import { withSuper } from './super.js';
 import { withKnowledge } from '../../src/fight/knowledge.js';
 import { CIRCUITS } from '../circuits.js';
+import { assignStyles, withKnockdown, KD_OWN } from './knockdowns.js';
+import { FIGHTER_LAYERS } from '../sprites/index.js';
 import { tuneFighter, damageOf } from '../difficulty.js';
 import CLASSIC_REMIX from './remixes/classic.js';
 import ASCENSION_REMIX from './remixes/ascension.js';
@@ -79,6 +83,7 @@ const RAW = { barney, kid, mort, gus, rocco, gambini, knox, brody, ray, pidge, s
   rourke, ignatius, duchess, mirror, nova, goliath, quinn, monk, karver, jax,
   static: staticFighter, cade, null: nullFighter, warden, hollow, revenant, frenzy, eclipse, zero, zeroTrue,
   dash1, dash2, dash3, dash4, dash5, dash6, dash7, dash8, dash9, // the rival (§11b): extra story fights, not in the roster
+  origin, originTrue, // the secret final boss (2026-10-04): in no circuit, no list: the Gauntlet's door and the Title Defense's door
   ...PANTHEON_FIGHTERS, ...UNDERWORLD_FIGHTERS, ...VOID_FIGHTERS }; // the Ascension (§18): the Pantheon's #51-81 and Halcyon, the Underworld's #82-94 and, as they are built, the rest
 
 // what the executor runs: supers wired up, taunts and stray perfect hits folded away (super.js),
@@ -90,7 +95,9 @@ const REMIX = Object.fromEntries([...new Set([...Object.keys(CLASSIC_REMIX), ...
 // AUTHORED: each fighter as written (his own timings and damage). FIGHTERS: the same, put on the difficulty curve
 // (data/difficulty.js: tells, damage, get-up, stars, pace, supers, anti-strategy strictness). retune() rebuilds FIGHTERS
 // in place from the knobs (the fight lab's sliders), so a fight already running picks up the new numbers.
-export const AUTHORED = Object.fromEntries(Object.entries(RAW).map(([k, d]) => [k, withKnowledge(withSuper(REMIX[k] ? { ...d, titleDefense: { ...(d.titleDefense || {}), ...REMIX[k] } } : d))]));
+// (each one goes down in a way of his own: data/fighters/knockdowns.js)
+const KD_STYLE = assignStyles(CIRCUITS, (id) => { const L = FIGHTER_LAYERS[RAW[id] && RAW[id].spriteLayers]; return L ? L.build : 'medium'; });
+export const AUTHORED = Object.fromEntries(Object.entries(RAW).map(([k, d]) => [k, withKnockdown(withKnowledge(withSuper(REMIX[k] ? { ...d, titleDefense: { ...(d.titleDefense || {}), ...REMIX[k] } } : d)), KD_STYLE[k] || KD_OWN[k])]));
 // each circuit's authored average punch (the damage curve keeps some of every fighter's weight against it)
 const CIRCUIT_DAMAGE = {};
 for (const C of Object.values(CIRCUITS)) {

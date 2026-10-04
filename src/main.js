@@ -42,7 +42,7 @@ import { RunScreen, PracticeScreen } from './screens/modes.js';
 import { ModeRecordsScreen } from './screens/modeRecords.js';
 import { OptionsScreen, DEFAULT_OPTIONS, CRT_NAMES, applyOptions } from './screens/options.js';
 import { TrainingScreen, PerksScreen } from './screens/training.js';
-import { JogRoute, FerryRoute, RivalRoute, AscendRoute, FallRoute, DescendRoute, DealRoute, VoidDoorRoute, FreeRoute, ReforgeRoute, TrueEndingRoute, EndingRoute } from './screens/routers.js';
+import { JogRoute, FerryRoute, RivalRoute, AscendRoute, FallRoute, DescendRoute, DealRoute, VoidDoorRoute, FreeRoute, ReforgeRoute, TrueEndingRoute, EndingRoute, OriginEnterRoute } from './screens/routers.js';
 import { HandbookScreen } from './screens/handbook.js';
 import { RecordsScreen, MedalsScreen, GalleryScreen, SoundTestScreen, UnlocksScreen } from './screens/extras.js';
 import { startSpriteWorker } from './engine/spriteCache.js';
@@ -55,7 +55,7 @@ const SCREENS = {
   ending: EndingRoute, modeRecords: ModeRecordsScreen, run: RunScreen, practice: PracticeScreen, options: OptionsScreen,
   training: TrainingScreen, perks: PerksScreen, rival: RivalRoute,
   ascend: AscendRoute, fall: FallRoute, descend: DescendRoute, ferry: FerryRoute, deal: DealRoute,
-  voidDoor: VoidDoorRoute, free: FreeRoute, reforge: ReforgeRoute, trueEnding: TrueEndingRoute,
+  voidDoor: VoidDoorRoute, free: FreeRoute, reforge: ReforgeRoute, trueEnding: TrueEndingRoute, originEnter: OriginEnterRoute,
   cutscene: CutsceneScreen, theater: TheaterScreen,
   records: RecordsScreen, medals: MedalsScreen, gallery: GalleryScreen, handbook: HandbookScreen, soundtest: SoundTestScreen, unlocks: UnlocksScreen,
 };
@@ -165,4 +165,4 @@ startLoop({
   timeScale: () => game.timeScale,
 });
 
-if (new URLSearchParams(location.search).has('dev')) window.KO = game; // handy in the console (?dev)
+if (new URLSearchParams(location.search).has('dev') && ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)) window.KO = game; // handy in the console (?dev), on your own machine only

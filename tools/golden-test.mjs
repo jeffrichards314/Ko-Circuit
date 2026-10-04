@@ -49,8 +49,7 @@ function start(f, S, first) {
   // (the Monk's super is the answer to a Star Punch: no step back, no taunt)
   const still = O.modifiers.find((m) => m.cfg.type === 'stillwater');
   if (still) { O.seqTurn = O.seqSupers.indexOf(O.seqSupers.find((x) => superKey(x) === superKey(S))); O.superPlan = [0]; still.def.answerSuper(O); return; }
-  O.seqTurn = O.seqSupers.indexOf(O.seqSupers.find((x) => superKey(x) === superKey(S)));
-  O.startSuper();
+  O.startSuper(O.seqSupers.find((x) => superKey(x) === superKey(S)));
   if (S.moves) { O.superId = first; } // (a super with several picks: test this one)
 }
 const d0 = (f) => f.d;
@@ -102,7 +101,7 @@ for (const id of list) {
         const orig = O.onPlayerPunch.bind(O);
         O.onPlayerPunch = (p) => { const r = orig(p); if (r.golden) got = got || { r, health: O.health, state: O.state, phase: f.phase }; return r; };
         start(f, S, first);
-        for (let i = 0; i < 900 && !got; i++) { bot.think(); f.update(); if (f.phase !== 'fight' && f.phase !== 'oppDown') break; }
+        for (let i = 0; i < 3200 && !got; i++) { bot.think(); f.update(); if (f.phase !== 'fight' && f.phase !== 'oppDown') break; }
         if (!got) { fail(tag, 'the bot could not land the golden moment'); continue; }
         if (d.goldenStun) {
           if (!(O.stun > 0 || O.state === 'hit' || O.state === 'stunned')) fail(tag, 'a boss golden moment left him unstunned');

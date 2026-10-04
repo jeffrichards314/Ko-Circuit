@@ -28,7 +28,8 @@ export class FightScreen {
     // his alternate palette (Practice, once unlocked: §16)
     if (practice && practice.alt) d = { ...d, palette: altPaletteOf(d) };
     const arena = ARENAS[CIRCUITS[d.circuit].arena];
-    const run = mode && game.records.run;
+    const run = (mode === 'td' || mode === 'gauntlet') && game.records.run; // (ORIGIN's fights, mode 'origin', are no part of a run)
+    this.origin = mode === 'origin' ? (fighter === 'origin' ? 'g' : 't') : null;
     // Title Defense (a defense in progress, or a podium rematch in a division's hall) and the Gauntlet have arenas and themes of their own
     // (data/arenas/modes.js, data/music/modeThemes.js), per division; the Gauntlet's theme climbs five steps over the run
     let modeOpts0 = null;
@@ -36,7 +37,7 @@ export class FightScreen {
       const div = (rematch && rematch.tier) || (run && run.mode === 'td' && run.tier) || 'classic';
       modeOpts0 = { arenaDef: modeArena('td', div), song: tdSongId(div) };
       if (noteTdMet(game.records, div, fighter)) saveRecords(game.records); // (reached: Practice offers this version from now on)
-    } else if (practice && practice.remix) {
+    } else if (practice && practice.remix && fighter !== 'origin') {
       // Practice's Title Defense version fights where the defense does: the division's hall and theme
       const div = practice.tier && practice.tier !== 'normal' ? practice.tier : tdDivisionOf(fighter) || 'classic';
       modeOpts0 = { arenaDef: modeArena('td', div), song: tdSongId(div) };
@@ -47,6 +48,8 @@ export class FightScreen {
     if (mode === 'gauntlet' && run) Object.assign(modeOpts, { stageLock: gauntletStage(d), startHealth: run.health, startStars: run.stars });
     if (practice) Object.assign(modeOpts, { tellHighlight: practice.tell, infiniteHearts: practice.hearts, infiniteHealth: practice.health !== false, exploitView: !!practice.xview });
     else modeOpts.forfeit = rematch ? undefined : mode ? 'always' : game.career ? 'afterBell' : undefined;
+    // ORIGIN's fights: a full bar, no lives; ORIGIN TRUE FORM's arena is the Beginning too (the fragments collide)
+    if (this.origin) modeOpts.forfeit = undefined;
     this.fight = new Fight({
       fighter: d, audio: game.audio, input: game.input,
       opts: {
@@ -59,6 +62,7 @@ export class FightScreen {
         profile: game.profile,
         gold: !!(game.career && game.career.flags.zeroBeaten),
         announce: !practice && mode !== 'gauntlet',
+        title: game.records.origin && game.records.origin.trueBeaten ? 'ORIGIN' : null, // (the title the Origin Belt gives, shown on your name)
         perks,
         scouting: game.scouting ? scoutStore(game.scouting) : null, // every mode scouts (K5)
         handbook: game.handbook ? handbookStore(game.handbook) : null, // the corner's notes on him
@@ -75,6 +79,7 @@ export class FightScreen {
     g.timeScale = 1;
     if (this.practice) { g.go('practice', { result: r }); return; }
     if (this.rematch) { if (r.method === 'QUIT') g.go('map'); else g.go('results', { ...r, rematch: this.rematch }); return; } // (a podium rematch: walking out costs nothing)
+    if (this.origin) { if (r.method === 'QUIT') g.go('map'); else g.go('results', { ...r, origin: this.origin }); return; } // (a loss, or walking out, just returns you to the door)
     if (this.mode) {
       // walking out of a run's fight counts as losing it
       if (r.method === 'QUIT') r = { ...this.fight.makeResult('opponent', 'QUIT') };
@@ -91,7 +96,11 @@ export class FightScreen {
     this.g.timeScale = this.practice && this.practice.slow ? 0.5 : 1;
     this.fight.warmSprites(); // (both fighters' poses composed in a worker: no pose is composed in the middle of a punch)
   }
-  update() { this.fight.update(); }
+  update() {
+    this.fight.update();
+    // (the whole screen slows for ORIGIN's First Punch: the fight's own time scale, on top of Practice's slow motion)
+    this.g.timeScale = (this.practice && this.practice.slow ? 0.5 : 1) * (this.fight.timeScale || 1);
+  }
   // the app lost the screen (another tab, a phone call, the lock button): where a fight can be paused it is, and its pause menu waits
   autoPause() {
     const F = this.fight;

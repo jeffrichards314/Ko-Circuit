@@ -17,6 +17,7 @@ import * as pantheonPortraits from './portraits/pantheon.js';
 import * as underworldPortraits from './portraits/underworld.js';
 import * as abyssPortraits from './portraits/abyss.js';
 import { voidPortraits } from './portraits/void.js';
+import { originPortrait, originTruePortrait } from './portraits/origin.js';
 import { hollowPortrait, frenzyPortrait, eclipsePortrait, zeroPortrait, zeroTruePortrait } from './portraits/nightmare.js';
 
 const PW = 64, PH = 60;
@@ -256,7 +257,7 @@ Object.assign(PORTRAITS, {
   jax: jaxPortrait,
   static: staticPortrait, cade: cadePortrait, null: nullPortrait, warden: wardenPortrait,
   hollow: hollowPortrait, revenant: rourkePortrait, frenzy: frenzyPortrait, eclipse: eclipsePortrait,
-  zero: zeroPortrait, zeroTrue: zeroTruePortrait,
+  zero: zeroPortrait, zeroTrue: zeroTruePortrait, origin: originPortrait, originTrue: originTruePortrait,
   ...dashPortraits,
   // the Ascension (spec §18): oro, lark, ember, aurora, ...
   oro: pantheonPortraits.oroPortrait, lark: pantheonPortraits.larkPortrait, ember: pantheonPortraits.emberPortrait, aurora: pantheonPortraits.auroraPortrait,

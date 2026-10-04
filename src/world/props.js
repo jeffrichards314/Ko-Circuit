@@ -41,6 +41,10 @@ export const DOOR_STYLES = {
     inner: (f, x, y, t) => { for (let i = 0; i < 4; i++) f.rect(x - 12 + i * 7, y - 6 - ((t >> 2) + i * 5) % 8, 3, 2, c32(31, 28, 10)); } },
   'g.void': { frame: [WH, c32(18, 18, 22)], inside: [c32(1, 1, 3), c32(2, 2, 5)], spark: WH, emblem: em.ring,
     inner: (f, x, y, t) => { for (let i = 0; i < 7; i++) f.px(x - 12 + ((i * 7) % 24), y - 60 + ((i * 13 + (t >> 4)) % 56), (t >> 3) + i & 1 ? WH : c32(14, 14, 18)); } },
+  // the secret door: nothing on it but a question mark on the plate; lit from inside by one thin seam of white-gold light once it can open (locked, it is a dark door)
+  origin: { frame: [c32(8, 8, 11), c32(3, 3, 5)], inside: [c32(1, 1, 3), c32(2, 2, 4)], spark: c32(31, 28, 12),
+    emblem: (f, x, y) => { drawText(f, '?', x - 2, y - 4, c32(26, 26, 30), { mono: false }); },
+    inner: (f, x, y, t) => { for (let j = 0; j < 62; j++) f.px(x + ((j >> 5) & 1), y - 62 + j, (t >> 3) + (j >> 2) & 1 ? c32(31, 31, 24) : c32(31, 26, 10)); f.px(x - 1, y - 40, c32(31, 31, 31)); } },
   'g.combined': { frame: [GOLD[0], c32(9, 8, 11)], inside: [0, 0], bands: [c32(6, 14, 27), c32(29, 23, 6), c32(24, 7, 2), c32(12, 4, 18), c32(2, 2, 5), c32(14, 2, 4)], spark: WH, emblem: em.star },
 };
 

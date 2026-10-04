@@ -13,6 +13,7 @@
 import { makePalette, swapPalette } from '../../../src/engine/palette.js';
 import { resolvePose } from '../../../src/engine/figure.js';
 import { ears, skull } from './_face.js';
+import * as K from '../remixKit.js';
 import { POSES } from '../builds/poses.js';
 import { ALL_SIGNATURES as SIGNATURES, posePath } from '../../fighters/zero.js';
 import gus from './gus.js';
@@ -89,7 +90,30 @@ export default {
   build: 'medium',
   palettes: { default: 'zero' },
   torsoMaterial: 'skin',
-  poses,
+  poses,  // Title Defense: ZERO, CROWNED. The black figure is dressed in what it has taken: a crown of bone, a skull-white jaw plate, bone gauntlets and boots, a
+  // ragged violet cape lined in bone, ribs over the chest and a red ring where the white one was.
+  remix: {
+    swap: {
+      A: { skinHi: [12, 10, 19], skin: [7, 5, 12], skinSh: [4, 3, 7], skinDk: [2, 1, 4], glow: [31, 10, 13], gloveHi: [31, 31, 29], glove: [26, 25, 24], gloveDk: [14, 13, 14] },
+      B: { trunkHi: [13, 8, 22], trunk: [7, 4, 14], trunkDk: [3, 2, 7], bootHi: [30, 30, 28], boot: [24, 23, 22] },
+    },
+    ramps: { bone: ['gloveHi', 'glove', 'gloveDk'], void: ['trunkHi', 'trunk', 'trunkDk'], red: ['white', 'glow', 'skinSh'] },
+    back(ctx) { if (!ctx.pose.lying) K.cape(ctx, { ramp: 'void', inner: 'bone', len: 40, flare: 9, hem: 'tatter', collar: true }); },
+    head(ctx, H) {
+      if ((H.face || 'neutral') === 'ko') { K.crown(ctx, H, { ramp: 'bone', n: 5, h: 9, band: 3, w: 0.5 }); return; }
+      K.mask(ctx, H, { ramp: 'bone', y: 4 });
+      const fx = Math.round(H.x + H.look[0]), fy = Math.round(H.y + H.look[1]);
+      for (let i = -5; i <= 5; i += 2) for (let j = 0; j < 3; j++) ctx.cv.px(fx + i, fy + 7 + j, ctx.c('outline'));
+      K.crown(ctx, H, { ramp: 'bone', n: 5, h: 10, band: 3, w: 0.5 });
+    },
+    torso(ctx) {
+      if (ctx.pose.lying) return;
+      K.ribs(ctx, { ramp: 'bone', n: 4 });
+      K.pauldrons(ctx, { ramp: 'bone', style: 'spiked', size: 1, tip: 'bone' });
+    },
+    front(ctx) { K.bracers(ctx, { ramp: 'bone', from: 0.25, to: 0.6, wide: 1.6 }); K.greaves(ctx, { ramp: 'bone', knee: false, from: 0.3, to: 0.7 }); },
+  },
+
   ramps: {
     skin: ['skinHi', 'skin', 'skinSh', 'skinDk'],
     glove: ['gloveHi', 'glove', 'gloveDk'],

@@ -275,10 +275,12 @@ export function installTouch(game, canvas, display) {
   const unlockAudio = () => { try { game.audio.unlock(); } catch { /* no audio */ } };
   const each = (e, fn) => { for (const t of e.changedTouches) fn(t); };
   const opts = { passive: false };
-  document.addEventListener('touchstart', (e) => { e.preventDefault(); each(e, start); unlockAudio(); }, opts);
-  document.addEventListener('touchmove', (e) => { e.preventDefault(); each(e, move); }, opts);
-  document.addEventListener('touchend', (e) => { e.preventDefault(); each(e, (t) => end(t, false)); unlockAudio(); }, opts);
-  document.addEventListener('touchcancel', (e) => { each(e, (t) => end(t, true)); }, opts);
+  // (a real page button, like the "new version ready" card, is left alone: it gets its click)
+  const native = (e) => !!(e.target && e.target.closest && e.target.closest('[data-native-touch]'));
+  document.addEventListener('touchstart', (e) => { if (native(e)) { unlockAudio(); return; } e.preventDefault(); each(e, start); unlockAudio(); }, opts);
+  document.addEventListener('touchmove', (e) => { if (native(e)) return; e.preventDefault(); each(e, move); }, opts);
+  document.addEventListener('touchend', (e) => { if (native(e)) return; e.preventDefault(); each(e, (t) => end(t, false)); unlockAudio(); }, opts);
+  document.addEventListener('touchcancel', (e) => { if (native(e)) return; each(e, (t) => end(t, true)); }, opts);
   // a mouse (a desktop, or a laptop with a pad on screen): a click on the picture is a tap, the wheel scrolls
   canvas.addEventListener('pointerdown', (e) => {
     if (e.pointerType !== 'mouse' || e.button !== 0) return;

@@ -6,6 +6,7 @@
 // crown show, and that is the whole of his tell. The palettes `vorgath.p2` and `vorgath.p3` are the fight's later phases:
 // the red spreads through the plates.
 import { rig } from '../pantheon/_rig.js';
+import * as K from '../../remixKit.js';
 import { swapPalette } from '../../../../src/engine/palette.js';
 
 const { layers, palettes: base } = rig('vorgath', {
@@ -53,6 +54,29 @@ const { layers, palettes: base } = rig('vorgath', {
     const { cv, J, c } = ctx;
     const a = J.shL, b = J.shR, f = Math.round(J.ftL[1]) + 2;
     cv.part(ctx.mask().poly([[a[0] - 6, a[1] - 4], [b[0] + 6, b[1] - 4], [b[0] + 14, f], [a[0] - 14, f]]), { ramp: [c('topSh'), c('topSh'), c('outline')], bevel: 4, inner: 'line', shadow: false });
+  },
+  // Title Defense: VORGATH, THE LAST KING. The crown sits between two sweeping horns of bone; the plate has gone obsidian with bronze trim; blades of black
+  // iron fan out behind the shoulders in place of a cloak, and the skull-faced pauldrons are bigger than his head.
+  remix: {
+    skip: ['back'],
+    swap: {
+      A: { skinHi: [17, 14, 20], skin: [10, 8, 13], skinSh: [5, 4, 8], skinDk: [2, 2, 4] },
+      B: { topHi: [12, 10, 20], top: [6, 5, 12], topSh: [3, 2, 7], topDk: [1, 1, 3], trimHi: [31, 26, 14], trim: [26, 17, 7], trimSh: [14, 8, 3], shHi: [8, 6, 12], sh: [4, 3, 8], shDk: [2, 1, 4] },
+    },
+    ramps: { obsidian: ['topHi', 'top', 'topSh'], bronze: ['trimHi', 'trim', 'trimSh'], black: ['shHi', 'sh', 'shDk'] },
+    back(ctx) {
+      if (ctx.pose.lying) return;
+      K.wingsBat(ctx, { ramp: 'black', bone: 'bronze', span: 56, drop: 24, rise: 12 });
+      K.spikes(ctx, { ramp: 'obsidian', n: 7, len: 30, spread: 1.15 });
+      K.cape(ctx, { ramp: 'black', inner: 'obsidian', len: 44, flare: 12, hem: 'tatter' });
+    },
+    head(ctx, H) { K.horns(ctx, H, { ramp: 'bronze', len: 34, out: 20, thick: 6, y: 6 }); },
+    torso(ctx) {
+      if (ctx.pose.lying) return;
+      K.pauldrons(ctx, { ramp: 'bronze', style: 'plate', size: 4 });
+      for (const [k, s] of [['L', -1], ['R', 1]]) K.emblem(ctx, Math.round(ctx.J['sh' + k][0] + s * 2), Math.round(ctx.J['sh' + k][1] - 1), 'skull', 'black', 1);
+    },
+    front(ctx) { K.bracers(ctx, { ramp: 'bronze', from: 0.2, to: 0.55, wide: 2.4 }); },
   },
   front(ctx) {
     const { cv, J, pose, c } = ctx;

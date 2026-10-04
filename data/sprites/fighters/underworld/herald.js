@@ -4,6 +4,7 @@
 // two red points for eyes, black gloves to the elbow. A ring of five small crowns hangs at his belt: one for every champion
 // he has spoken for.
 import { rig } from '../pantheon/_rig.js';
+import * as K from '../../remixKit.js';
 
 const { layers, palettes } = rig('herald', {
   build: 'medium',
@@ -40,6 +41,28 @@ const { layers, palettes } = rig('herald', {
     },
   },
   belt: { buckle: 'none' },
+  // Title Defense: THE MOURNING HERALD. The crimson tabard goes funeral white, trimmed in black and blood: a tricorn with a red plume, a black
+  // sash across the chest, coat tails to the knee, and a long horn of bone in his right fist to cry the King's news with.
+  remix: {
+    swap: {
+      A: { gloveHi: [12, 10, 12], glove: [6, 5, 7], gloveDk: [3, 2, 3] },
+      B: { topHi: [31, 31, 29], top: [26, 25, 22], topSh: [17, 16, 15], topDk: [8, 8, 8], trimHi: [31, 9, 8], trim: [26, 3, 5], trimSh: [14, 1, 3], shHi: [12, 11, 13], sh: [6, 5, 7], shDk: [2, 2, 3] },
+    },
+    ramps: { black: ['shHi', 'sh', 'shDk'], blood: ['trimHi', 'trim', 'trimSh'], white: ['topHi', 'top', 'topSh'], bone: ['bone', 'bone', 'boneDk'] },
+    body: { size: [1.18, 1.1], shoulders: 1.15 },
+    back(ctx) { if (!ctx.pose.lying) K.cape(ctx, { ramp: 'black', inner: 'blood', len: 44, flare: 10, hem: 'scallop', collar: true }); },
+    head(ctx, H) {
+      K.hat(ctx, H, { kind: 'bicorne', ramp: 'black', band: 'blood' });
+      K.plume(ctx, H, { ramp: 'blood', len: 13, dir: 1, from: [Math.round(H.x + H.rx), Math.round(H.y - H.ry) - 3] });
+    },
+    torso(ctx) {
+      if (ctx.pose.lying) return;
+      K.sash(ctx, { ramp: 'black', dir: 1, wide: 3.2, knot: false });
+      K.skirt(ctx, { ramp: 'white', kind: 'strips', len: 34, n: 6 });
+      K.pauldrons(ctx, { ramp: 'black', style: 'plate', size: 1 });
+    },
+    front(ctx) { K.horn(ctx, { ramp: 'bone', side: 'R', len: 20, bell: 7, lift: 0.2 }); },
+  },
   front(ctx) {
     const { cv, J, pose, c, ramps } = ctx;
     if (pose.lying) return;

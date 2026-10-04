@@ -8,6 +8,7 @@
 
 import { makePalette, swapPalette } from '../../../../src/engine/palette.js';
 import { eyes, mouth, ears, skull, nose } from '../_face.js';
+import * as K from '../../remixKit.js';
 
 const A = makePalette('cirrus.A', {
   outline: [3, 3, 8],
@@ -47,6 +48,38 @@ export default {
   palettes: { default: 'cirrus' },
   torsoMaterial: 'skin',
   poses,
+  // Title Defense: THE STORM KING. The lavender king goes slate-grey in a thundercloud: a jagged crown of lightning, shoulders of cloud, a tattered
+  // storm cape, a bolt across his bare chest and a belt of rain-silver.
+  remix: {
+    skip: ['torso'],
+    swap: {
+      A: { skinHi: [24, 25, 27], skin: [17, 18, 22], skinSh: [10, 11, 15], skinDk: [5, 5, 9], hairHi: [22, 23, 27], hair: [13, 14, 19], hairDk: [6, 6, 11], gloveHi: [31, 31, 20], glove: [30, 26, 5], gloveDk: [21, 14, 1] },
+      B: {
+        robeHi: [13, 14, 19], robe: [7, 8, 12], robeSh: [3, 4, 7],
+        silverHi: [27, 29, 31], silver: [16, 19, 25], silverDk: [8, 10, 16],
+        sunHi: [31, 31, 22], sun: [31, 29, 6], sunDk: [24, 16, 1],
+        moon: [24, 26, 29], moonDk: [12, 14, 20],
+      },
+    },
+    ramps: { cloud: ['silverHi', 'silver', 'silverDk'], storm: ['robeHi', 'robe', 'robeSh'], bolt: ['sunHi', 'sun', 'sunDk'] },
+    back(ctx) {
+      if (ctx.pose.lying) return;
+      K.cape(ctx, { ramp: 'storm', inner: 'cloud', len: 36, flare: 8, hem: 'tatter' });
+    },
+    head(ctx, H) { K.crown(ctx, H, { ramp: 'bolt', n: 5, h: 13, band: 3, w: 1 }); },
+    torso(ctx) {
+      const { J, D, cv, c } = ctx;
+      if (ctx.pose.lying) return;
+      const ch = J.chest, w = J.waist;
+      K.pauldrons(ctx, { ramp: 'cloud', style: 'fur', size: 3 });
+      K.emblem(ctx, Math.round(ch[0]), Math.round(ch[1] + 3), 'bolt', 'bolt', 1.6);
+      K.belt(ctx, { ramp: 'storm', buckle: 'bolt', wide: 4, shape: 'round' });
+      K.skirt(ctx, { ramp: 'storm', kind: 'strips', len: 12, n: 6 });
+      cv.line(w[0] - D.waistW + 2, w[1] + 4, w[0] + D.waistW - 2, w[1] + 4, (X, Y) => cv.px(X, Y, c('silver')));
+    },
+    front(ctx) { K.bracers(ctx, { ramp: 'cloud', from: 0.25, to: 0.62 }); K.greaves(ctx, { ramp: 'storm', knee: false }); },
+  },
+
   ramps: {
     skin: ['skinHi', 'skin', 'skinSh', 'skinDk'],
     glove: ['gloveHi', 'glove', 'gloveDk'],
@@ -68,7 +101,7 @@ export default {
     const fx = x + lx, fy = y + ly;
     const face = H.face || 'neutral';
     // the crown first: a silver band and a fan of tall white feathers
-    for (let k = -3; k <= 3; k++) {
+    if (!ctx.layers.remixed) for (let k = -3; k <= 3; k++) {
       const fx0 = x + k * 4.2 + lx * 0.4, len = 15 - Math.abs(k) * 2.4;
       cv.part(ctx.mask().poly([[fx0 - 2.2, y - 8], [fx0 + 2.2, y - 8], [fx0 + k * 0.9, y - 8 - len]]), { ramp: ramps.hair, bevel: 2, inner: 'line' });
     }
@@ -76,8 +109,10 @@ export default {
     const hm = skull(ctx, H, ramps.skin, 'chin');
     // long wispy hair on either side and a bald crown under the band
     for (const s of [-1, 1]) cv.part(ctx.mask().ellipse(x + s * (H.rx + 1) + lx * 0.3, y + 6, 3, 10).cut(ctx.mask().ellipse(fx, fy + 3, H.rx - 0.6, 9)), { ramp: ramps.hair, bevel: 2, inner: 'line' });
-    cv.part(ctx.mask().rect(x - H.rx - 0.5 + lx * 0.3, y - 7, H.rx * 2 + 1, 3.4), { ramp: ramps.silver, bevel: 1, inner: 'line', shadow: false });
-    cv.part(ctx.mask().ellipse(fx, y - 5.3, 2, 2), { ramp: ramps.sun, bevel: 1, shadow: false });
+    if (!ctx.layers.remixed) {
+      cv.part(ctx.mask().rect(x - H.rx - 0.5 + lx * 0.3, y - 7, H.rx * 2 + 1, 3.4), { ramp: ramps.silver, bevel: 1, inner: 'line', shadow: false });
+      cv.part(ctx.mask().ellipse(fx, y - 5.3, 2, 2), { ramp: ramps.sun, bevel: 1, shadow: false });
+    }
     // eyes lit from within, snowy brows
     eyes(ctx, fx, fy, face === 'neutral' ? 'focus' : face, 0);
     cv.part(ctx.mask().capsule(fx - 8, fy - 3.4, fx - 1.5, fy - 2.6, 1.5, 1.2).capsule(fx + 1.5, fy - 2.6, fx + 8, fy - 3.4, 1.2, 1.5), { ramp: ramps.hair, bevel: 1, inner: 'soft' });

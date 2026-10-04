@@ -51,9 +51,14 @@ export const KNOBS = {
     vorgath: { tell: null, damage: null, wall: null, supers: null, goldenStun: null },
     dash9: { tell: null, damage: 0.85, wall: null, supers: null, goldenStun: null },
     zeroTrue: { tell: null, damage: 0.93, wall: null, supers: null, goldenStun: null },
+    // the secret bosses (2026-10-04): ORIGIN (the Gauntlet's) and ORIGIN TRUE FORM (the Title Defense's), in no career and no list
+    origin: { tell: null, damage: 0.97, wall: null, supers: null, goldenStun: null },
+    originTrue: { tell: null, damage: 0.95, wall: null, supers: null, goldenStun: null },
   },
 };
 export const BOSSES = Object.keys(KNOBS.bosses);
+// the top of the curve: ZERO's true form and the two secret fights above him (each its own role, its own SUPERS, WALL and GOLDEN_STUN)
+export const TOP_ROLES = ['zeroTrue', 'origin', 'originTrue'];
 
 // The order a career meets every fight (Dash after the title he follows; the secret circuits where they open), and
 // the zone each circuit's knobs come from.
@@ -67,7 +72,7 @@ export const ZONE = {
   dream: 'championship', nightmare: 'championship', zero: 'championship',
   ...Object.fromEntries(['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'halcyon', 'rival5', 'rival6'].map((c) => [c, 'pantheon'])),
   ...Object.fromEntries(['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'vorgath', 'rival7', 'rival8'].map((c) => [c, 'underworld'])),
-  ...Object.fromEntries(['v1', 'v2', 'v3', 'rival9', 'zeroTrue'].map((c) => [c, 'void'])),
+  ...Object.fromEntries(['v1', 'v2', 'v3', 'rival9', 'zeroTrue', 'origin', 'originTrue'].map((c) => [c, 'void'])),
 };
 
 // TELLS (frames): [his circuit's first fighter, its champion]; the ones between step evenly. A one-fighter circuit
@@ -117,6 +122,9 @@ export const TELLS = {
   v3: { span: [8, 7], nominal: 8 },
   rival9: { span: [6], nominal: 6 },
   zeroTrue: { span: [5], nominal: 5 },
+  // the secret bosses: ORIGIN's tells are shorter than ZERO's true form's, his true form's the shortest in the game (never under 3 frames)
+  origin: { span: [4], nominal: 4 },
+  originTrue: { span: [3], nominal: 3 },
 };
 // heat: 0 at a 34-frame tell, 1 at 5 frames (log scale: 32 -> 28 frames matters less than 8 -> 5)
 const HEAT_EASY = 34, HEAT_HARD = 5;
@@ -134,7 +142,7 @@ export const GETUP = { base: [3, 10], step: [0.6, 2], cap: 12, champion: 0.5, bo
 export const WALL_NEED = 20;    // presses a second from the wall knockdown on: near-impossible
 export const MASH_FRAMES = 400; // the frames the needed rate is measured over (about a count of 7)
 // WALL: the knockdown from which getting up is near-impossible, by zone / circuit (null = never)
-export const WALL = { main: null, championship: 3, pantheon: 3, underworld: 3, halcyon: 2, vorgath: 2, void: 2, zeroTrue: 1 };
+export const WALL = { main: null, championship: 3, pantheon: 3, underworld: 3, halcyon: 2, vorgath: 2, void: 2, zeroTrue: 1, origin: 1, originTrue: 1 };
 export const OPENER_FLOOR = 0.67;   // no opening punch's tell under this share of his tell target
 export const STAR_WIDTH = [1, 0.5];  // star windows' width at heat 0 and 1
 export const PACE = [1, 0.8];        // idles of 24+ frames x this at heat 0 and 1
@@ -147,9 +155,9 @@ export const STRICT = [0.9, 1.2];
 export const GOLDEN = { clean: [18, 30], width: [8, 2] };
 // GOLDEN_STUN: frames a big boss stays wide open after you land his super's golden moment (a few seconds, scaled per boss:
 // the later the boss, the shorter the opening). The knob per boss (KNOBS.bosses[id].goldenStun) overrides it.
-export const GOLDEN_STUN = { jax: 240, zero: 225, halcyon: 210, vorgath: 195, dash9: 180, zeroTrue: 150 };
+export const GOLDEN_STUN = { jax: 240, zero: 225, halcyon: 210, vorgath: 195, dash9: 180, zeroTrue: 150, origin: 130, originTrue: 110 };
 // SUPERS per round: [min, max] by role; a fighter below heat `early` throws `fighterEarly`
-export const SUPERS = { early: 0.25, fighterEarly: [1, 1], fighter: [1, 2], championEarly: [1, 2], champion: [2, 2], boss: [2, 3], zeroTrue: [3, 4] };
+export const SUPERS = { early: 0.25, fighterEarly: [1, 1], fighter: [1, 2], championEarly: [1, 2], champion: [2, 2], boss: [2, 3], zeroTrue: [4, 5], origin: [5, 6], originTrue: [6, 7] };
 
 // BOUTS: the six big bosses fight in PHASES (spec §4 "Boss phases"). A phase ends when its health bar is emptied: he goes
 // down, gets back up transformed at full health. Only his last phase can be knocked out, TKO'd or counted out. A boss fights the
@@ -164,7 +172,9 @@ export const BOUTS = {
   halcyon: { phases: 3, rounds: 5, staging: 'phase' },
   vorgath: { phases: 3, rounds: 5, staging: 'phase' },
   dash9: { phases: 2, rounds: 4, staging: 'round' },
-  zeroTrue: { phases: 4, rounds: 7, staging: 'phase' },
+  zeroTrue: { phases: 4, rounds: 9, staging: 'phase' },
+  origin: { phases: 4, rounds: 10, staging: 'phase' },
+  originTrue: { phases: 6, rounds: 14, staging: 'phase' },
 };
 export const boutOf = (d) => (d && BOUTS[d.id]) || null;
 
@@ -220,7 +230,7 @@ export const HEALTH = { main: 3.0, championship: 2.3, pantheon: 2.0, underworld:
 // ---------------------------------------------------------------------------------------------------------------
 // The fighter's place: his circuit, his index on its ladder, his role.
 export function roleOf(d, C) {
-  if (d.id === 'zeroTrue') return 'zeroTrue';
+  if (TOP_ROLES.includes(d.id)) return d.id;
   if (TWEAKS[d.id] && TWEAKS[d.id].role) return TWEAKS[d.id].role;
   if (BOSSES.includes(d.id) || (C && C.boss)) return 'boss';
   if (d.rival || d.isChampion) return 'champion';
@@ -245,7 +255,7 @@ export function tellTarget(d, C) {
 export function wallOf(d, C) {
   const k = bossKnob(d.id, 'wall');
   if (k != null) return k;
-  if (d.id === 'zeroTrue') return WALL.zeroTrue;
+  if (TOP_ROLES.includes(d.id)) return WALL[d.id];
   if (C.id === 'halcyon' || C.id === 'vorgath') return WALL[C.id];
   return WALL[ZONE[C.id]] ?? null;
 }
@@ -348,7 +358,7 @@ export function tuneFighter(d, C, circuitDamage) {
   // the player's get-up
   const getUp = {
     power: GETUP.power,
-    base: lerp(GETUP.base[0], GETUP.base[1], h) + (role === 'champion' ? GETUP.champion : role === 'boss' || role === 'zeroTrue' ? GETUP.boss : 0),
+    base: lerp(GETUP.base[0], GETUP.base[1], h) + (role === 'champion' ? GETUP.champion : role === 'boss' || TOP_ROLES.includes(role) ? GETUP.boss : 0),
     step: lerp(GETUP.step[0], GETUP.step[1], h),
     cap: GETUP.cap,
     wall: wallOf(d, C),
@@ -362,7 +372,7 @@ export function tuneFighter(d, C, circuitDamage) {
   // and every super's golden moment onto the curve: GOLDEN.width frames wide, starting where it was authored (windup and
   // advance windows ride the windup's scaling in scaleMove; a taunt's, a recovery's or an opening's keep their start)
   const knob = bossKnob(d.id, 'supers');
-  const byRole = role === 'zeroTrue' ? SUPERS.zeroTrue : role === 'boss' ? SUPERS.boss
+  const byRole = TOP_ROLES.includes(role) ? SUPERS[role] : role === 'boss' ? SUPERS.boss
     : role === 'champion' ? (h < SUPERS.early ? SUPERS.championEarly : SUPERS.champion) : (h < SUPERS.early ? SUPERS.fighterEarly : SUPERS.fighter);
   const tuneSup = (S, main) => {
     const out = { ...S };

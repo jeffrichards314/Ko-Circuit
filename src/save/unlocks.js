@@ -32,7 +32,7 @@ export function altUnlocked(g, id) {
   return unlockedList(g.medals).some((u) => u.kind === 'palettes' && u.circuits.includes(d.circuit));
 }
 // costumes open by medals (index 0, your own colours, always is)
-export const costumeUnlocked = (M, id) => id === 'none' || unlockedList(M).some((u) => u.kind === 'costume' && u.id === id);
+export const costumeUnlocked = (M, id, records = null) => id === 'none' || (id === 'origin' ? !!(records && records.origin && records.origin.trueBeaten) : unlockedList(M).some((u) => u.kind === 'costume' && u.id === id)); // (the ORIGIN costume comes from ORIGIN TRUE FORM, not from a medal)
 
 // The Pantheon's gate (§5, §18 A1): beat ZERO and hold half of the base game's medals (84 of 168).
 // `open` once both are true or the sky has already been opened on this career (a password can
@@ -55,4 +55,5 @@ export const zoneOfFighter = (id) => { const d = FIGHTERS[id]; return (d && CIRC
 export const zoneSeen = (g, zone) => zone === 'base' || zone == null || g.records.met.some((id) => zoneOfFighter(id) === zone);
 export const ascensionSeen = (g) => ZONES.some((z) => zoneSeen(g, z));
 // everyone whose zone you have reached: the lists (records, medals, gallery) walk this
-export const visibleFighters = (g) => EVERYONE.filter((id) => zoneSeen(g, zoneOfFighter(id)));
+// (ORIGIN joins the lists only once he has been beaten, his true form once it has been: nothing of him is in any list before)
+export const visibleFighters = (g) => [...EVERYONE.filter((id) => zoneSeen(g, zoneOfFighter(id))), ...(g.records.origin && g.records.origin.beaten ? ['origin'] : []), ...(g.records.origin && g.records.origin.trueBeaten ? ['originTrue'] : [])];

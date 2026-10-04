@@ -41,8 +41,7 @@ function run(d, S, { attack, flip }) {
   const hits = [];
   const orig = f.opponentAttack.bind(f);
   f.opponentAttack = (m) => { const r = orig(m); if (r === 'hit') hits.push(m.id); return r; };
-  O.seqTurn = O.seqSupers.indexOf(S);
-  O.startSuper();
+  O.startSuper(S);
   let golden = false, frames = 0, started = false;
   const og = O.onPlayerPunch.bind(O);
   O.onPlayerPunch = (p) => { const r = og(p); if (r.golden) golden = r.golden === superKey(S) || r.golden === true; return r; };

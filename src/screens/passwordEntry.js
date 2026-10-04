@@ -120,7 +120,7 @@ export class PasswordScreen {
       drawText(f, showChar(k), x, y, on ? COL.white : COL.grey, { mono: false });
     });
     if (this.msgT > 0) drawLabelCentered(f, this.msg, 128, 172, 240, (this.t >> 3) & 1 ? COL.red : COL.white, { where: 'password message' });
-    drawLabelCentered(f, `OLD ${OLD_PASSWORD_LENGTHS.slice(0, -1).join(', ')} AND ${OLD_PASSWORD_LENGTHS[OLD_PASSWORD_LENGTHS.length - 1]}-LETTER CODES TOO`, 128, 184, 244, COL.dark || COL.grey, { mono: false, where: 'password help' });
+    drawLabelCentered(f, `OLD 15, 13, 12, 10 LETTER CODES OK`, 128, 184, 244, COL.dark || COL.grey, { mono: false, where: 'password help' });
     drawLabelCentered(f, 'TYPE OR PASTE. ENTER: OK', 128, 196, 244, COL.grey, { mono: false, where: 'password help' });
     drawLabelCentered(f, this.back === 'title' ? 'BKSP: DELETE  ESC: BACK TO TITLE' : 'BKSP: DELETE  ESC: BACK', 128, 208, 244, COL.grey, { mono: false, where: 'password help' });
   }

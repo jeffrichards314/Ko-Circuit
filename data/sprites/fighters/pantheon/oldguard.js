@@ -10,6 +10,7 @@
 import { makePalette, swapPalette } from '../../../../src/engine/palette.js';
 import { eyes, mouth, ears, skull, nose } from '../_face.js';
 import { ribbon } from './_kit.js';
+import * as K from '../../remixKit.js';
 
 const A = makePalette('oldguard.A', {
   outline: [2, 3, 8],
@@ -105,6 +106,35 @@ export default {
   palettes: { default: 'oldguard' },
   torsoMaterial: 'skin',
   poses,
+  // Title Defense: THE GENERAL. The old prizefighter in the uniform of the army he never joined: a peaked cap with a gold band, big gold epaulettes,
+  // a sash of rank across a row of medals, a red-and-white striped sash at the waist, and a heavy greatcoat cape of ghost blue.
+  remix: {
+    swap: {
+      A: { gloveHi: [31, 27, 26], glove: [27, 10, 10], gloveDk: [15, 3, 4] },
+      B: {
+        stripeHi: [31, 26, 26], stripe: [26, 8, 10], stripeSh: [15, 3, 5],
+        hatHi: [13, 17, 28], hat: [6, 9, 20], hatDk: [3, 4, 11],
+        goldHi: [31, 31, 20], gold: [30, 24, 6], goldSh: [19, 12, 2],
+        wisp: [14, 19, 30], bootHi: [14, 14, 18], boot: [8, 8, 11], bootDk: [3, 3, 5],
+      },
+    },
+    ramps: { navy: ['hatHi', 'hat', 'hatDk'], red: ['stripeHi', 'stripe', 'stripeSh'] },
+    skipBack: true,
+    back(ctx) {
+      if (ctx.pose.lying) return;
+      K.cape(ctx, { ramp: 'navy', inner: 'red', len: 30, flare: 7, hem: 'straight', collar: false });
+    },
+    head(ctx, H) { K.hat(ctx, H, { kind: 'peak', ramp: 'navy', band: 'gold', h: 12 }); K.crown(ctx, H, { ramp: 'gold', n: 3, h: 3, band: 1, w: -4, lift: 6 }); },
+    torso(ctx) {
+      if (ctx.pose.lying) return;
+      K.sash(ctx, { ramp: 'red', dir: 1, wide: 3.4, knot: false });
+      K.medals(ctx, { colors: ['gold', 'goldHi', 'stripe'], rows: 2, side: -1 });
+      K.pauldrons(ctx, { ramp: 'gold', style: 'plate', size: 3 });
+      K.collar(ctx, { ramp: 'navy', style: 'high', size: 0.9 });
+    },
+    front(ctx) { K.bracers(ctx, { ramp: 'gold', from: 0.22, to: 0.5 }); },
+  },
+
   ramps: {
     skin: ['skinHi', 'skin', 'skinSh', 'skinDk'],
     glove: ['gloveHi', 'glove', 'gloveDk'],
@@ -137,10 +167,12 @@ export default {
     const hm = skull(ctx, H, ramps.skin, 'square');
     // white side-whiskers and a tall top hat with a torn brim
     for (const s of [-1, 1]) cv.part(ctx.mask().rect(x + s * (H.rx - 2) - 1.5 + lx * 0.3, y - 3, 3.4, 12), { ramp: ramps.hair, bevel: 1, inner: 'line', shadow: false });
-    cv.part(ctx.mask().rect(x - H.rx + 2 + lx * 0.4, y - 23, H.rx * 2 - 4, 17), { ramp: ramps.hat, bevel: 3, inner: 'line' });
-    cv.part(ctx.mask().rect(x - H.rx + 2 + lx * 0.4, y - 11, H.rx * 2 - 4, 3), { ramp: ramps.gold, bevel: 1, inner: 'line', shadow: false });
-    cv.part(ctx.mask().ellipse(x + lx * 0.4, y - 6.4, H.rx + 3.6, 2.5).cut(ctx.mask().poly([[x + 6, y - 9], [x + 11, y - 9], [x + 9, y - 4]])), { ramp: ramps.hat, bevel: 1, inner: 'line' });
-    cv.px(x - 5 + lx * 0.4, y - 20, c('hatHi')); cv.px(x - 5 + lx * 0.4, y - 18, c('hatHi'));
+    if (!ctx.layers.remixed) {
+      cv.part(ctx.mask().rect(x - H.rx + 2 + lx * 0.4, y - 23, H.rx * 2 - 4, 17), { ramp: ramps.hat, bevel: 3, inner: 'line' });
+      cv.part(ctx.mask().rect(x - H.rx + 2 + lx * 0.4, y - 11, H.rx * 2 - 4, 3), { ramp: ramps.gold, bevel: 1, inner: 'line', shadow: false });
+      cv.part(ctx.mask().ellipse(x + lx * 0.4, y - 6.4, H.rx + 3.6, 2.5).cut(ctx.mask().poly([[x + 6, y - 9], [x + 11, y - 9], [x + 9, y - 4]])), { ramp: ramps.hat, bevel: 1, inner: 'line' });
+      cv.px(x - 5 + lx * 0.4, y - 20, c('hatHi')); cv.px(x - 5 + lx * 0.4, y - 18, c('hatHi'));
+    }
     // eyes under the brim, bushy white brows, a big nose
     eyes(ctx, fx, fy, face === 'neutral' ? 'focus' : face, 1);
     cv.part(ctx.mask().capsule(fx - 9, fy - 2.8, fx - 1, fy - 2.2, 1.8, 1.5).capsule(fx + 1, fy - 2.2, fx + 9, fy - 2.8, 1.5, 1.8), { ramp: ramps.hair, bevel: 1, inner: 'soft' });

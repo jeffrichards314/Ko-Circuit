@@ -4,6 +4,7 @@
 // glow with the forge: `hale.h1` (red), `hale.h2` (orange), `hale.h3` (white-hot) recolour the
 // gloves, the cuffs and the cracks in his plate: the heat of his hands is the heat he's fighting at.
 import { rig } from './_rig.js';
+import * as K from '../../remixKit.js';
 
 const { layers, palettes } = rig('hale', {
   build: 'giant',
@@ -21,6 +22,7 @@ const { layers, palettes } = rig('hale', {
   head: {
     jaw: 'square', ears: [2.8, 3.8], hair: 'crop', beard: 'full', eyeFace: 'focus', mouthW: 3.4,
     gear(ctx, H) {
+      if (ctx.layers.remixed) return;
       const { cv } = ctx;
       const x = Math.round(H.x + H.look[0] * 0.3), y = Math.round(H.y);
       // an iron crown: a band with four blunt spikes
@@ -34,6 +36,28 @@ const { layers, palettes } = rig('hale', {
     emblem(ctx, cx, cy) { const { cv, c } = ctx; for (let i = 0; i < 4; i++) { cv.line(cx - 12 + i * 8, cy - 6, cx - 9 + i * 8, cy + 6, (X, Y) => cv.px(X, Y, c('ember'))); } },
   },
   belt: { buckle: 'square', ramp: 'top' },
+  // Title Defense: HALE AT THE ANVIL. He puts the iron crown down for a welder's helm with a slit that glows: blue-steel plate with copper rivets, spiked
+  // pauldrons, a long leather apron and heavy bracers.
+  remix: {
+    swap: {
+      A: { skinHi: [26, 18, 15], skin: [19, 12, 9], skinSh: [12, 7, 5], skinDk: [6, 3, 3] },
+      B: { topHi: [21, 25, 30], top: [11, 16, 24], topSh: [6, 8, 15], topDk: [3, 4, 8], trimHi: [31, 24, 14], trim: [26, 14, 6], trimSh: [14, 6, 2], shHi: [14, 9, 6], sh: [8, 5, 3], shDk: [4, 2, 1] },
+    },
+    ramps: { steel: ['topHi', 'top', 'topSh'], copper: ['trimHi', 'trim', 'trimSh'], leather: ['shHi', 'sh', 'shDk'] },
+    body: { size: [1.1, 1.05], shoulders: 1.12 },
+    back(ctx) { if (!ctx.pose.lying) { K.pipes(ctx, { ramp: 'steel', smoke: 'leather', h: 30, w: 6, spread: 10 }); K.pack(ctx, { ramp: 'leather', w: 26, h: 40, top: 8 }); } },
+    head(ctx, H) {
+      K.helm(ctx, H, { ramp: 'steel', cover: 0.62, cheeks: true, rim: 'copper' });
+      K.visor(ctx, H, { ramp: 'leather', glow: 'copper', h: 4 });
+    },
+    torso(ctx) {
+      if (ctx.pose.lying) return;
+      K.apron(ctx, { ramp: 'leather', len: 16, top: false, taper: 6, pocket: 'copper' });
+      K.pauldrons(ctx, { ramp: 'steel', style: 'spiked', size: 5, tip: 'copper' });
+      K.straps(ctx, { ramp: 'leather', buckle: 'copper' });
+    },
+    front(ctx) { K.bracers(ctx, { ramp: 'steel', from: 0.2, to: 0.62, wide: 2 }); K.rings(ctx, { ramp: 'copper', where: 0.22 }); },
+  },
   swaps: {
     'hale.h1': { A: { gloveHi: [31, 22, 16], glove: [30, 8, 4], gloveDk: [18, 3, 2] }, B: { trimHi: [31, 22, 16], trim: [30, 8, 4], trimSh: [18, 3, 2], ember: [31, 10, 2] } },
     'hale.h2': { A: { gloveHi: [31, 28, 18], glove: [31, 17, 3], gloveDk: [22, 8, 1], spark: [31, 26, 8] }, B: { trimHi: [31, 28, 18], trim: [31, 17, 3], trimSh: [22, 8, 1], ember: [31, 20, 4] } },

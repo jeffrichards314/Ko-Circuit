@@ -54,16 +54,32 @@ filter on a computer; Options has it too.
 The repository builds a clean copy of the game (**only the files the game needs**) and publishes that. Screenshots, specs, tools and notes are not published.
 Everything below is typed into a terminal in this folder.
 
+### The first time
+
 1. **Make the repository on GitHub**: github.com, New repository, name it (say `ko-circuit`), **no** README or other files added. Copy its address.
-2. **Connect and push** (the repo is already initialised and committed here; use your own address):
+2. **Check what will go up**: `git status` should say nothing to commit. If it lists changes, save them first (see "Every update" below).
+3. **Connect and push** (use your own address):
    ```bash
    git remote add origin https://github.com/YOUR-NAME/ko-circuit.git
    git push -u origin main
    ```
-3. **Turn on Pages**: the repository's Settings, then Pages, then Build and deployment, **Source: GitHub Actions**.
-4. The push started the workflow in `.github/workflows/pages.yml`; watch it under the Actions tab. When it is green the game is at
-   `https://YOUR-NAME.github.io/ko-circuit/`.
-5. **To update later**: commit and push. The workflow builds and publishes again, and players get the new version the next time they are online.
+4. **Turn on Pages**: the repository's Settings, then Pages, then Build and deployment, **Source: GitHub Actions**.
+5. The push started the workflow in `.github/workflows/pages.yml`; watch it under the Actions tab. If it ran before you did step 4, open it and press Re-run.
+   When it is green the game is at `https://YOUR-NAME.github.io/ko-circuit/`.
+
+### Every update after that
+
+```bash
+node tools/build.mjs     # optional: builds deploy/ and checks it, so a mistake shows up here and not on the site
+git add -A
+git commit -m "what changed"
+git push
+```
+The push is the whole release: the workflow rebuilds `deploy/` from what you pushed (so **anything not committed is not published**), and a few minutes later the site is new.
+Players who have the game installed or open get it the next time they are online: it is downloaded in the background, applied at once from the title screen, or
+offered as a "NEW VERSION READY" card if they are in the middle of something. Saves are never touched by an update.
+
+Which version is live? `https://YOUR-NAME.github.io/ko-circuit/version.txt` shows the build's version; `node tools/build.mjs` prints the same one for your files.
 
 Without GitHub Actions: `node tools/build.mjs` writes the public copy into `deploy/`; any static host can serve that folder as it is (every path is relative, so
 it also works from a subfolder).
@@ -81,12 +97,12 @@ Open http://localhost:8000/ . The service worker (offline play, updates) only ru
 ```bash
 python3 tools/serve.py 8420     # a static server that never caches; open http://localhost:8420/
 ```
-Add `?dev` to the address to get `window.KO` (the game object) in the console. The dev tools (sprite viewer, fight lab with the difficulty sliders, audits, the
+Add `?dev` to the address to get `window.KO` (the game object) in the console (on localhost only; the published site never has it). The dev tools (sprite viewer, fight lab with the difficulty sliders, audits, the
 test scripts) are in `tools/` and open from the dev server, for example http://localhost:8420/tools/fight-lab.html . They are **not part of the public build**.
 The build notes, design history and test list are in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
-`node tools/touch-e2e.mjs` runs the touch tests (layouts at phone and tablet sizes, multi-touch, a whole flow played with fingers); it needs `playwright-core`
-(see the top of the file).
+`node tools/touch-e2e.mjs` runs the touch tests (layouts at phone and tablet sizes, multi-touch, a whole flow played with fingers) and `node tools/pwa-e2e.mjs`
+the install, offline and update tests; both need `playwright-core` (see the top of each file).
 
 ## Files
 

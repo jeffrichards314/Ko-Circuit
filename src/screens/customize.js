@@ -90,7 +90,7 @@ export class CustomizeScreen {
     let v = this.p[row.k];
     for (let i = 0; i < row.n; i++) {
       v = (v + d + row.n) % row.n;
-      if (row.k !== 'costume' || costumeUnlocked(this.g.medals, COSTUMES[v].id)) break;
+      if (row.k !== 'costume' || costumeUnlocked(this.g.medals, COSTUMES[v].id, this.g.records)) break;
     }
     this.p[row.k] = v;
   }

@@ -224,6 +224,13 @@ Object.assign(CIRCUITS, {
   zeroTrue: { ...VOID_BASE, id: 'zeroTrue', name: 'ZERO', arena: 'zeroTrue', fighters: ['zeroTrue'], belt: 'THE UNDEFEATED... UNDONE', boss: true, forms: 4,
     mash: { power: 5.5, decay: 0.96, perKnockdown: 2.4 } },
 });
+// ORIGIN (2026-10-04, the secret final boss): two circuits that are in no list. They are defined NON-ENUMERABLE so that nothing that walks the circuits
+// (the world map, the records, Practice, the gallery, the scouting books, the audits of the base game) can find them: only a lookup by id does, which is how
+// his fights find their rules. `hidden` marks them for anything that reads one by id. ORIGIN is the Gauntlet's boss, ORIGIN TRUE FORM the Title Defense's.
+for (const [id, name, tell, mash] of [['origin', 'ORIGIN', 4, { power: 5.5, decay: 0.97, perKnockdown: 2.5 }], ['originTrue', 'ORIGIN: TRUE FORM', 3, { power: 5.5, decay: 0.98, perKnockdown: 2.6 }]]) {
+  Object.defineProperty(CIRCUITS, id, { enumerable: false, configurable: true, writable: true,
+    value: { ...VOID_BASE, id, name, arena: id, tellWindow: tell, fighters: [id], belt: 'THE ORIGIN BELT', boss: true, forms: id === 'origin' ? 4 : 6, hidden: true, mash } });
+}
 // The Ascension path, in the order a career walks it (spec A1). Only the ones with
 // an entry in CIRCUITS exist in the build; the password reserves them all (password.js).
 export const ASC_PATH = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'halcyon', 'u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'vorgath', 'v1', 'v2', 'v3', 'zeroTrue'];
@@ -283,7 +290,7 @@ export const SHORT = {
   p1: 'PANTHEON I', p2: 'PANTHEON II', p3: 'PANTHEON III', p4: 'PANTHEON IV', p5: 'PANTHEON V', p6: 'PANTHEON VI', p7: 'PANTHEON VII', halcyon: 'HALCYON',
   rival5: 'RIVAL V', rival6: 'RIVAL VI', rival7: 'RIVAL VII', rival8: 'RIVAL VIII',
   u1: 'UNDERWORLD I', u2: 'UNDERWORLD II', u3: 'UNDERWORLD III', u4: 'UNDERWORLD IV', u5: 'UNDERWORLD V', u6: 'UNDERWORLD VI', vorgath: 'VORGATH',
-  v1: 'THE VOID I', v2: 'THE VOID II', v3: 'THE VOID III', zeroTrue: 'ZERO', rival9: 'RIVAL IX',
+  v1: 'THE VOID I', v2: 'THE VOID II', v3: 'THE VOID III', zeroTrue: 'ZERO', rival9: 'RIVAL IX', origin: 'ORIGIN', originTrue: 'ORIGIN TRUE FORM',
 };
 
 // Tell windows (the §9 / A3 row each screen prints) come from the difficulty curve (data/difficulty.js TELLS); each

@@ -5,6 +5,7 @@
 // `halcyon.noon` (bleached white), `halcyon.dusk` (red and violet, cold marble skin) and `halcyon.shade`
 // (a flat black silhouette: his shadow in the Noon form).
 import { rig, wing } from './_rig.js';
+import * as K from '../../remixKit.js';
 
 const flat = (c, c2) => ({ A: Object.fromEntries(['skinHi', 'skin', 'skinSh', 'skinDk', 'hairHi', 'hair', 'hairDk', 'gloveHi', 'glove', 'gloveDk', 'white', 'mouth'].map((k) => [k, c])), B: Object.fromEntries(['trimHi', 'trim', 'trimSh', 'bootHi', 'boot', 'bootDk', 'shHi', 'sh', 'shDk', 'topHi', 'top', 'topSh', 'topDk'].map((k) => [k, c2 || c])) });
 const { layers, palettes } = rig('halcyon', {
@@ -23,6 +24,7 @@ const { layers, palettes } = rig('halcyon', {
   head: {
     jaw: 'chin', ears: [2.4, 3.4], hair: 'long', eyeFace: 'focus', mouthW: 3, nose: [1.8, 1.8],
     gear(ctx, H) {
+      if (ctx.layers.remixed) return;
       const { cv, c } = ctx;
       const x = Math.round(H.x + H.look[0] * 0.3), y = Math.round(H.y);
       // a crown of sun-rays over the brow
@@ -42,6 +44,34 @@ const { layers, palettes } = rig('halcyon', {
     // a cape of light: two pale wings of it behind the shoulders
     const ch = J.chest;
     for (const dir of [-1, 1]) wing(ctx, [ch[0] + dir * 11, ch[1] - 8], dir, 22, 1.2, ctx.ramps.hair, { rise: 6 });
+  },
+  // Title Defense: THE KINGFISHER (his name is the bird). Azure wings, a plumed helm, an orange breastplate and bracers: the man made of morning goes
+  // the colours of the water he dives into.
+  remix: {
+    skip: ['back'],
+    swap: {
+      A: { hairHi: [18, 28, 31], hair: [6, 17, 29], hairDk: [3, 7, 19], gloveHi: [31, 28, 14], glove: [31, 18, 4], gloveDk: [21, 8, 1] },
+      B: {
+        topHi: [18, 29, 31], top: [5, 19, 29], topSh: [3, 10, 20], topDk: [1, 4, 10],
+        trimHi: [31, 28, 14], trim: [31, 19, 4], trimSh: [21, 9, 1],
+        bootHi: [31, 28, 14], boot: [30, 17, 3], bootDk: [17, 7, 1],
+      },
+    },
+    ramps: { azure: ['topHi', 'top', 'topSh'], orange: ['trimHi', 'trim', 'trimSh'], plume: ['hairHi', 'hair', 'hairDk'] },
+    back(ctx) {
+      if (ctx.pose.lying) return;
+      K.wingsFeather(ctx, { ramp: 'azure', span: 46, spread: 1.7, tip: 'trimHi', rise: 5, lift: 9 });
+    },
+    head(ctx, H) {
+      K.helm(ctx, H, { ramp: 'azure', cover: 0.42, crest: 'plume', crestRamp: 'plume', rim: 'orange' });
+      K.plume(ctx, H, { ramp: 'orange', len: 20, dir: -1, from: [Math.round(H.x) - 1, Math.round(H.y - H.ry) + 1] });
+    },
+    torso(ctx) {
+      if (ctx.pose.lying) return;
+      K.pauldrons(ctx, { ramp: 'azure', style: 'fan', size: 3 });
+      K.skirt(ctx, { ramp: 'orange', kind: 'strips', len: 22, n: 6 });
+    },
+    front(ctx) { K.bracers(ctx, { ramp: 'orange', from: 0.22, to: 0.6, wide: 1.8 }); K.greaves(ctx, { ramp: 'azure', knee: false }); },
   },
   swaps: {
     'halcyon.noon': { A: { skinHi: [31, 31, 31], skin: [31, 31, 30], skinSh: [30, 30, 29], hairHi: [31, 31, 31], hair: [31, 31, 30], hairDk: [29, 29, 28], gloveHi: [31, 31, 31], glove: [31, 31, 30], gloveDk: [29, 29, 28] }, B: { topHi: [31, 31, 31], top: [31, 31, 30], topSh: [30, 30, 29], trimHi: [31, 31, 31], trim: [31, 31, 30], trimSh: [29, 29, 28], bootHi: [31, 31, 31], boot: [31, 31, 30], bootDk: [29, 29, 28] } },

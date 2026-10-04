@@ -7,5 +7,6 @@ import { DescendScreen } from '../screens/descend.js';
 import { DealScreen } from '../screens/deal.js';
 import { VoidDoorScreen, FreeScreen, ReforgeScreen, TrueEndingScreen } from '../screens/void.js';
 import { EndingScreen } from '../screens/ending.js';
+import { OriginIntroScreen, OriginVictoryScreen, OriginTrueVictoryScreen } from '../screens/originScenes.js';
 
-export const LEGACY = { ascend: AscendScreen, fall: FallScreen, descend: DescendScreen, deal: DealScreen, voidDoor: VoidDoorScreen, free: FreeScreen, reforge: ReforgeScreen, trueEnding: TrueEndingScreen, ending: EndingScreen };
+export const LEGACY = { ascend: AscendScreen, fall: FallScreen, descend: DescendScreen, deal: DealScreen, voidDoor: VoidDoorScreen, free: FreeScreen, reforge: ReforgeScreen, trueEnding: TrueEndingScreen, ending: EndingScreen, originIntro: OriginIntroScreen, originVictory: OriginVictoryScreen, originTrueVictory: OriginTrueVictoryScreen };

@@ -143,7 +143,7 @@ export function hollow(id, cfg) {
     torso: cfg.torso,
     back: cfg.back,
     front: cfg.front,
-    remix: undefined,
+    remix: cfg.remix,
   });
   // the head: skull (bare), then the face the shard has instead of a face
   layers.head = (ctx, H) => {

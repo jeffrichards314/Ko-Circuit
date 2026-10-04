@@ -14,10 +14,10 @@ if (deploy && 'serviceWorker' in navigator && location.protocol.startsWith('http
     if (document.getElementById('update-card')) return;
     const b = document.createElement('button');
     b.id = 'update-card';
+    b.setAttribute('data-native-touch', ''); // (touch.js leaves it to the browser, so a tap on it is a click)
     b.textContent = 'NEW VERSION READY - TAP TO UPDATE';
     b.style.cssText = 'position:fixed;z-index:30;left:50%;transform:translateX(-50%);top:max(8px,env(safe-area-inset-top));padding:8px 14px;font:bold 12px monospace;letter-spacing:1px;color:#fff;background:#1a3a8a;border:2px solid #fff;border-radius:0;cursor:pointer;image-rendering:pixelated';
     b.addEventListener('click', () => apply(true));
-    b.addEventListener('touchend', (e) => { e.stopPropagation(); }, { passive: true });
     document.body.appendChild(b);
   }
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloading) return; reloading = true; location.reload(); });

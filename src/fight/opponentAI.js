@@ -1957,8 +1957,11 @@ export class OpponentAI {
     const nx = this.steps && this.pattern && this.stepIdx < this.steps.length ? this.steps[this.stepIdx] : null;
     return !nx || !(nx.move || (nx.idle !== undefined && nx.idle < 24));
   }
-  startSuper() {
-    const S = this.seqSupers[this.seqTurn++ % this.seqSupers.length];
+  startSuper(force = null) {
+    // (a modifier may choose which super comes: ZERO's crystals pick one of the ones still unbroken, `pickSuper`; the tools name the one to test)
+    let S = force;
+    if (!S) for (const m of this.modifiers) if (m.def.pickSuper) S = m.def.pickSuper(this, m.cfg, this.seqSupers) || S;
+    if (!S) S = this.seqSupers[this.seqTurn++ % this.seqSupers.length];
     this.cur = S;
     this.superPlan.shift();
     this.armor = { S, chain: null, i: -1 }; // armored from the step back
@@ -2012,6 +2015,11 @@ export class OpponentAI {
     return this.supList.find((S) => chainsOf(S).some((c) => c.includes(id))) || this.cur;
   }
 
+  // A blow of his that would land: a modifier may take it back instead (ORIGIN's Rewind undoes it: no damage, hearts or star; `rewindHit`)
+  rewindHit(move) {
+    for (const m of this.modifiers) if (m.def.rewindHit && m.def.rewindHit(this, m.cfg, move)) return true;
+    return false;
+  }
   hook(name, ...args) {
     if (this.fight.track) this.fight.track.hook(name, ...args); // medal telemetry
     for (const m of this.modifiers) if (m.def[name]) m.def[name](this, m.cfg, ...args);
@@ -2081,6 +2089,8 @@ export class OpponentAI {
     this.stepIdx = 0;
     const shuffle = !p.fixed && (p.shuffle || mode === 'shuffled' || mode === 'adaptive' || mode === 'all');
     this.steps = shuffle ? shuffleMoves(p.steps) : p.steps;
+    // (a modifier may rewrite the steps he is about to walk: broken crystals take their moves out, `steps`)
+    for (const m of this.modifiers) if (m.def.steps) this.steps = m.def.steps(this, m.cfg, this.steps, p) || this.steps;
   }
 
   resume(delay = 30) {
@@ -2107,7 +2117,11 @@ export class OpponentAI {
   runStep(s, depth = 0) {
     this.idleHits = 0;
     if (s.open && this.know && this.know.skipOpen(s)) { this.state = 'idle'; this.t = 0; this.wait = 20; return; }
-    if (s.move) this.beginMove(s.move);
+    if (s.move) {
+      // (a move a modifier has taken out of his pool for good, a broken crystal's: the step is skipped, `removed`)
+      if (depth < 40 && this.modifiers.some((m) => m.def.removed && m.def.removed(this, m.cfg, s.move))) return this.nextStep(depth + 1);
+      this.beginMove(s.move);
+    }
     else if (s.taunt) { this.state = 'taunt'; this.t = 0; this.wait = this.paced(s.taunt); }
     else if (s.block) { this.state = 'block'; this.t = 0; this.wait = this.paced(s.block); }
     else if (s.open) {
@@ -2304,9 +2318,10 @@ export class OpponentAI {
       r = land(true, false, 'counter');
       r.golden = G ? superKey(G) : true;
       this.lastGolden = { key: r.golden, t: this.fight.clock || 0 };
+      this.hook('golden', G); // (a modifier hears it: ZERO's crystal cracks)
       // (medals hear it: '!golden:<super>', and '!exploit:<id>' for a golden moment that used to be that exploit)
       if (this.fight.event) { this.fight.event('golden'); this.fight.event('golden:' + r.golden); if (G && G.from) this.fight.event('exploit:' + G.from); }
-      if (this.d.goldenStun) r.goldenStun = this.d.goldenStun; else r.knockdown = true;
+      if (this.d.goldenStun) r.goldenStun = (G && G.stun) || this.d.goldenStun; else r.knockdown = true; // (a super may stun for longer than the boss's usual: the First Punch's `stun`)
       // (an inline super thrown from his pattern: the rest of its chain in the pattern is skipped too)
       const A = this.armor;
       if (A && A.chain && this.steps) for (let k = A.i + 1; k < A.chain.length && this.steps[this.stepIdx] && this.steps[this.stepIdx].move === A.chain[k]; k++) this.stepIdx++;

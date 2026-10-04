@@ -178,13 +178,13 @@ for (const zone of R.GAUNTLETS) {
   const { g } = await open(['zero']);
   g.input.takeTaps = () => []; g.saveCareer = () => {};
   const T_ = new InteriorScreen(g, { id: 'td' }), door = (H, id) => H.L.stations.find((q) => q.id === id);
-  ok(T_.L.stations.filter((q) => q.kind === 'door').map((q) => q.enter).join() === DIVISIONS.map((d) => `td.${d}`).join(), 'the championship hall has five entrances');
+  ok(T_.L.stations.filter((q) => q.kind === 'door' && !q.origin).map((q) => q.enter).join() === DIVISIONS.map((d) => `td.${d}`).join(), 'the championship hall has five entrances');
   ok(DIVISIONS.every((d) => T_.L.stations.some((q) => q.id === `board.${d}` && q.go.args.page === `td.${d}`)), 'and a records board for each division');
   for (const d of ['pantheon', 'underworld', 'void', 'combined']) { g.next = null; T_.note = null; T_.use(door(T_, `door.${d}`)); ok(!g.next && /[A-Z]/.test(T_.note || '') && !g.records.run, `the ${d} entrance is locked: ${T_.note}`); }
   T_.use(door(T_, 'door.classic')); ok(g.next && g.next[0] === 'interior' && g.next[1].id === 'td.classic', 'the Classic door opens');
   g.next = null;
   const G_ = new InteriorScreen(g, { id: 'gauntlet' });
-  ok(G_.L.stations.filter((q) => q.kind === 'door').length === 5 && DIVISIONS.every((d) => G_.L.stations.some((q) => q.id === `board.${d}` && q.go.args.page === `g.${d}`)), 'the tower has five doors and a board for each');
+  ok(G_.L.stations.filter((q) => q.kind === 'door' && !q.origin).length === 5 && DIVISIONS.every((d) => G_.L.stations.some((q) => q.id === `board.${d}` && q.go.args.page === `g.${d}`)), 'the tower has five doors and a board for each');
   for (const z of ['pantheon', 'underworld', 'void', 'combined']) { g.next = null; G_.note = null; G_.use(door(G_, `gate.${z}`)); ok(!g.next && /[A-Z]/.test(G_.note || '') && !g.records.run, `the ${z} door is locked: ${G_.note}`); }
   g.next = null; G_.use(door(G_, 'gate.classic')); ok(g.next && g.next[0] === 'run' && g.next[1].start === 'gauntlet' && g.next[1].zone === 'classic', 'the Classic Gauntlet door starts the run');
   g.next = null;
@@ -232,7 +232,7 @@ for (const zone of R.GAUNTLETS) {
   ok(f1.stage === 5, 'the stage stays locked as the clock runs');
   f1.round = 3; f1.nextRound(); ok(f1.round === 4 && f1.stage === 5 && f1.esc.c === 1, 'and through the championship rounds');
   const fh = mk('halcyon').fight, fz = mk('zeroTrue').fight, fb = mk('blockShard').fight, fo = mk('barney').fight;
-  ok([fb, fo].every((x) => x.rounds === 3 && x.round === 1) && fh.rounds === 5 && fz.rounds === 7 && fh.round === 1 && !fo.stageLock, 'every Gauntlet fight starts at round 1: three regular rounds (a boss his longer bout), then the championship rounds');
+  ok([fb, fo].every((x) => x.rounds === 3 && x.round === 1) && fh.rounds === 5 && fz.rounds === 9 && fh.round === 1 && !fo.stageLock, 'every Gauntlet fight starts at round 1: three regular rounds (a boss his longer bout), then the championship rounds');
   ok(fo.roundFrames === 4320 && fb.roundFrames === 4320 && fh.roundFrames === 5400 && fz.roundFrames === 5400, 'a Gauntlet fight is on the standard clock (3:00 of 24 frames), a big boss on his slower one (30)');
   // the Void's rules inside the Gauntlet: its hearts, its 3-frame tells, its directional defenses, its circuit's rules
   const voidFighters = R.gauntletList('void').filter((id) => CIRCUITS[FIGHTERS[id].circuit].zone === 'void');

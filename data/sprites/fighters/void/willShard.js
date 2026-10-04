@@ -2,8 +2,10 @@
 // fine black fissures that glow ember-red from inside, a blank head with a crown of five short thorns, chains of black iron hanging from his
 // wrists that he has long since stopped noticing, and in the chest the hollow of a heart, its rim burning red.
 import { hollow } from './_hollow.js';
+import { TD } from './tdLooks.js';
 
 const { layers, palettes } = hollow('willShard', {
+  remix: TD.willShard,
   build: 'heavy',
   body: { size: [1.1, 1.02], legLen: 0.92, torsoLen: 1.06, shoulders: 1.24, neckLen: -2, dims: { neck: 12, chestW: 32, waistW: 26, belly: 8, deltoid: 13.5, upperArm: [9, 7.6], forearm: [7.8, 6.8] } },
   tint: [31, 8, 6], tintHi: [31, 22, 14], tintDk: [15, 2, 2],

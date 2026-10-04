@@ -26,7 +26,7 @@ export default {
   lines: { win: 'I WAS NEVER THE ONE TO STOP.', lose: 'I... THINK I... CAN FEEL MY HANDS...' },
 
   palette: 'dash9',
-  spriteLayers: 'dash8',
+  spriteLayers: 'dash9',
 
   stats: { ...dash8.stats, health: 420, damageMult: 2.3 },
 

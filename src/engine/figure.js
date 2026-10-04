@@ -120,7 +120,21 @@ export function composeFigure(build, layers, pose, pal) {
   const order = pose.frontOrder || SIDES;
   for (const s of order) if (armZ[s] !== 'back') drawArm(ctx, s);
   layers.front && layers.front(ctx);
-  return cv.toSprite(C.ax, C.ay);
+  const sp = cv.toSprite(C.ax, C.ay);
+  return pose.rot ? turnSprite(sp, pose.rot) : sp;
+}
+
+// A pose with `rot` is composed standing and then laid on the floor (a knockdown on his back or side): 'T' is the sprite transposed
+// (head to the left, light still from the upper left), 'TF' the same flipped (head to the right). The lowest pixel rests where the
+// feet of a standing sprite do.
+export function turnSprite(s, mode) {
+  const W = s.h, H = s.w, data = new Uint8Array(W * H);
+  const flip = mode === 'TF';
+  for (let y = 0; y < s.h; y++) for (let x = 0; x < s.w; x++) {
+    const v = s.data[y * s.w + x];
+    if (v) data[x * W + (flip ? W - 1 - y : y)] = v;
+  }
+  return { w: W, h: H, data, ax: W >> 1, ay: H - 1 - Math.max(0, s.h - 1 - s.ay) };
 }
 
 // --- body parts --------------------------------------------------------------

@@ -2,8 +2,10 @@
 // if it heard something, two large fin-like ears on the sides of the skull and, hollowed out of the chest, an ear (concentric arcs), its rim
 // burning mint. He is drawn almost not at all (the `unseen` modifier shows one pixel in sixteen of him) until he is hit.
 import { hollow } from './_hollow.js';
+import { TD } from './tdLooks.js';
 
 const { layers, palettes } = hollow('soundShard', {
+  remix: TD.soundShard,
   build: 'lean',
   body: { size: [0.96, 1.06], legLen: 1.08, torsoLen: 0.98, shoulders: 0.82, neckLen: 1, dims: { belly: 0.4, waistW: 10, chestW: 13, upperArm: [4.1, 3.4], forearm: [3.7, 3.1] } },
   tint: [14, 30, 22], tintHi: [26, 31, 28], tintDk: [4, 13, 9],

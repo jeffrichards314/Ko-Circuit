@@ -208,7 +208,7 @@ function clearWithRival(c, label) {
   ok(l2.kind === 'reset' && c2.circuit === 'halcyon' && c2.asc === 7, 'Halcyon: last life -> back to the start of his fight');
   const pwA = passwordOf(c), backA = careerFromPassword(pwA, c);
   ok(backA && backA.asc === 19 && backA.flags.pantheonOpen && backA.circuit === c.circuit, 'Ascension career password round trip');
-  ok(pwA.replace(/[- ]/g, '').length === 15, 'password is 15 characters');
+  ok(pwA.replace(/[- ]/g, '').length === 16, 'password is 16 characters (V5, 2026-10-04)');
 }
 
 // 2. lives: a loss costs one, the last one resets the circuit; Major with a loss: no Carnival
@@ -334,7 +334,7 @@ function clearWithRival(c, label) {
   ok(ld.circuit === 'rival4', 'old save at Jax -> the showdown first');
   // old 12-character password at Jax: same
   const pw12 = encode({ ...d, rival: 0 }, undefined);
-  ok(pw12.length === 15, 'new passwords are 15 characters');
+  ok(pw12.length === 16, 'new passwords are 16 characters');
 }
 {
   // a real Phase 7 (12-character) code still decodes
@@ -343,6 +343,8 @@ function clearWithRival(c, label) {
   const { decode: dec } = await import('../src/save/password.js');
   const mod = await import('../src/save/password.js');
   // build a V2 code through the module's own encoder with the old format
+  // (V4, the 15-letter code of before ORIGIN, still decodes; V5 carries the two ORIGIN flags)
+  { const v4 = mod.__testEncodeV4(c), d4 = mod.decode(v4); ok(v4.length === 15 && d4 && d4.asc === c.asc && d4.flags.originBeaten === false, 'a V4 (15-letter) code still decodes'); const c5 = JSON.parse(JSON.stringify(c)); c5.flags.originBeaten = true; c5.flags.originTrueBeaten = true; const d5 = mod.decode(mod.encode(c5)); ok(d5 && d5.flags.originBeaten && d5.flags.originTrueBeaten && d5.asc === c.asc, 'a V5 code carries ORIGIN beaten and his true form beaten'); }
   const v2 = mod.__testEncodeV2 ? mod.__testEncodeV2(c) : null;
   if (v2) { const d = dec(v2); ok(d && d.circuit === 'major' && d.rival === 0, '12-character code decodes (rival 0)'); }
 }

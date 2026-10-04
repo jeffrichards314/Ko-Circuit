@@ -22,6 +22,8 @@ import { Dialogue, drawFerryman, drawBoat } from './descend.js';
 import { cutShards, drawShards, drawCracks } from './shards.js';
 import { trainerPortrait } from '../../data/sprites/trainers.js';
 import { frontPalette, hairStyleOf, costumeIdOf, playerPalettes, nicknameOf, trainerOf } from '../../data/customization.js';
+import { drawRingSide } from '../fight/asc/crystals.js';
+import { HOLLOWED_COLORS, REFORGE_LINES, CRYSTAL_ORDER } from '../../data/fighters/void/crystals.js';
 import { ladder, nextOpponent, rankLabel, hasFighters, enterCircuit, ascNext, rivalDue, rivalWon, isFreed, freedCount, voidReached } from '../save/career.js';
 
 const B4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
@@ -31,7 +33,7 @@ const W = c32(31, 31, 31), BLACK = c32(0, 0, 1), BOX = c32(3, 4, 9);
 const disc = (f, x, y, r, col) => { for (let j = -r; j <= r; j++) { const w = Math.round(Math.sqrt(r * r - j * j)); f.rect(x - w, y + j, w * 2 + 1, 1, col); } };
 
 // a speaker's box (portrait left or right), the way the other cutscenes do it
-function speak(f, S, text, lineT, t, left = true, more = true) {
+export function speak(f, S, text, lineT, t, left = true, more = true) {
   panel(f, 6, 150, 244, 68);
   const px = left ? 10 : 180;
   f.rect(px, 153, 66, 62, COL.white); f.rect(px + 1, 154, 64, 60, BOX);
@@ -42,9 +44,9 @@ function speak(f, S, text, lineT, t, left = true, more = true) {
   drawTyped(f, text, tx, 168, 160, 5, n, COL.white, { lineH: 9, where: 'void talk' });
   if (lineT >= talkNeed(text, 160) && (t >> 4) & 1) drawText(f, more ? '>' : 'GO', left ? 238 - (more ? 0 : 12) : 164, 208, COL.grey, { mono: false });
 }
-const youOf = (game) => { const p = game.profile, fp = frontPalette(p); return { portrait: playerPortrait(fp, hairStyleOf(p)), pal: fp.u32, name: p.name, col: COL.green, bank: playerSprites(hairStyleOf(p), costumeIdOf(p)), sprPal: playerPalettes(p) }; };
+export const youOf = (game) => { const p = game.profile, fp = frontPalette(p); return { portrait: playerPortrait(fp, hairStyleOf(p)), pal: fp.u32, name: p.name, col: COL.green, bank: playerSprites(hairStyleOf(p), costumeIdOf(p)), sprPal: playerPalettes(p) }; };
 const ferryOf = () => { const tp = trainerPortrait('ferryman'); return { portrait: tp.sprite, pal: tp.pal, name: 'THE FERRYMAN', col: c32(10, 26, 25) }; };
-const dashOf = () => { const tp = trainerPortrait('dash'); return { portrait: tp.sprite, pal: tp.pal, name: 'DASH', col: c32(4, 24, 22) }; };
+export const dashOf = () => { const tp = trainerPortrait('dash'); return { portrait: tp.sprite, pal: tp.pal, name: 'DASH', col: c32(4, 24, 22) }; };
 
 // ============================================================================================ the door
 export class VoidDoorScreen {
@@ -176,67 +178,172 @@ export class FreeScreen {
 }
 
 // ============================================================================================ THE REFORGING
+// (reworked 2026-10-04) The twelve freed Hollowed stand in a circle in the Void. One by one each turns into a pillar of light in their own colour (a
+// close-up and a line each: data/fighters/void/crystals.js REFORGE_LINES), and every light shoots up into the sky. The twelve spiral together high above
+// and combine in a flash. ZERO's true form descends with twelve crystals orbiting him, one in each of their colours. The twelve step back and take their
+// places in the crowd. Dash steps into your corner. Plays in full the first time (nothing skips it), skippable after (hold START).
+const ease = (u) => (u < 0 ? 0 : u > 1 ? 1 : u * u * (3 - 2 * u));
+const rgbOf = ([r, g, b]) => c32(r, g, b);
+const mixC = ([r, g, b], k) => c32(Math.min(31, Math.round(r + (31 - r) * k)), Math.min(31, Math.round(g + (31 - g) * k)), Math.min(31, Math.round(b + (31 - b) * k)));
+const PILLAR_SFX = ['pillar0', 'pillar1', 'pillar2', 'pillar3', 'pillar4', 'pillar5', 'pillar6', 'pillar7', 'pillar8', 'pillar9', 'pillar10', 'pillar11'];
+const RING = { cx: 128, cy: 156, rx: 104, ry: 26 };
 export class ReforgeScreen {
   constructor(game) {
     this.g = game; this.t = 0; this.line = -1; this.lineT = 0; this.shown = 0;
     this.zero = fighterSprites('zeroTrue'); this.zeroPal = paletteFor('zeroTrue').u32;
-    this.cut = cutShards(this.zero.get('idle1'), 22, 21);
     this.you = youOf(game); this.ferry = ferryOf(); this.dash = dashOf();
-    this.lights = HOLLOWED.map((id, i) => ({ col: c32(...(FREED[id] ? FREED[id].color : [31, 31, 31])), a: (i / 12) * Math.PI * 2 }));
+    // the twelve: where they stand in the circle (the front of it is toward you), what they say, where they will stand in the crowd
+    this.folk = CRYSTAL_ORDER.map((id, i) => {
+      const d = FIGHTERS[id], a = Math.PI / 2 + (i * Math.PI * 2) / 12, side = Math.sin(a);
+      const x = RING.cx + Math.cos(a) * RING.rx, y = RING.cy + side * RING.ry, k = 0.4 + 0.14 * ((side + 1) / 2);
+      // (the crowd: an arc across the back of the ring, left to right in the order they were freed)
+      const ca = Math.PI * (1.08 + (i / 11) * 0.84), cxx = 128 + Math.cos(ca) * 120, cyy = 138 + Math.sin(ca) * 34;
+      return { id, d, bank: fighterSprites(d.spriteLayers), pal: paletteFor(d.palette).u32, rgb: HOLLOWED_COLORS[id], col: rgbOf(HOLLOWED_COLORS[id]), info: FREED[id], line: REFORGE_LINES[id], x, y, k, crowd: [cxx, cyy], sky: [128 + Math.cos(a) * 96, 30 + (i % 4) * 7], a0: a };
+    });
+    this.T = { intro: 190, slot: 112 };
+    this.T.spiral = this.T.intro + 12 * this.T.slot; this.T.flash = this.T.spiral + 200; this.T.descend = this.T.flash + 26; this.T.land = this.T.descend + 190;
+    this.T.crowd = this.T.land + 70; this.T.talk = this.T.crowd + 210;
     this.lines = [
-      [400, 'dash', 'THAT\'S HIM. THAT\'S THE WHOLE OF IT: NOT A SHARD, NOT A CHAMPION\'S SHADOW. HIM.'],
-      [400, 'dash', 'I CAN FEEL EVERY PIECE HE USED TO BE.'],
-      [400, 'dash', 'HE\'S GOING TO USE ALL OF THEM, IN ORDER. I\'LL TELL YOU EVERYTHING THAT COMES.'],
-      [400, 'ferry', 'I ROW NO FARTHER, CHAMPION. THIS CORNER IS HIS NOW. HE HAS EARNED IT, AND MORE THAN I HAVE.'],
-      [400, 'dash', 'READY? NO. YOU\'RE NEVER READY. THAT\'S WHY YOU WIN.'],
+      ['ferry', 'THE TWELVE ARE FREE. THEY ARE A CROWD NOW, AND A CROWD IS ALL THAT A CHAMPION NEEDS.'],
+      ['dash', 'THAT\'S HIM. NOT A SHARD, NOT A CHAMPION\'S SHADOW. HIM. AND LOOK AT THE CRYSTALS.'],
+      ['dash', 'TWELVE, ONE IN EACH COLOUR. WHEN ONE GLOWS, THAT\'S THE KIND OF PUNCH COMING.'],
+      ['dash', 'LAND THE GOLDEN MOMENT OF ITS BIG ONE AND IT CRACKS. THAT KIND OF PUNCH LEAVES HIS FIGHT.'],
+      ['ferry', 'I ROW NO FARTHER, CHAMPION. THIS CORNER IS HIS NOW. HE HAS EARNED IT, AND MORE THAN I HAVE.'],
+      ['dash', 'READY? NO. YOU\'RE NEVER READY. THAT\'S WHY YOU WIN.'],
     ];
-    this.T = { pull: 80, whole: 330, talk: 400, fly: 0 };
+    this.glow = Object.fromEntries(CRYSTAL_ORDER.map((id) => [id, 0]));
   }
   enter() { this.g.audio.play(this.g.songs.reforgeTheme); this.g.audio.sfx('voidTell'); }
+  // the slot of the i-th of the twelve and the frame inside it
+  slot(i) { return this.t - (this.T.intro + i * this.T.slot); }
   update() {
-    const I = this.g.input, A = this.g.audio;
+    const I = this.g.input, A = this.g.audio, T = this.T;
     if (this.line >= 0) {
-      if (talkTick(this, this.lines[this.line][2], 160, I.confirm() || I.pressed('star'))) { A.sfx('menu'); this.lineT = 0; this.line = -1; if (this.shown >= this.lines.length) { this.T.fly = this.t; } }
+      if (talkTick(this, this.lines[this.line][1], 160, I.confirm() || I.pressed('star'))) { A.sfx('menu'); this.lineT = 0; this.line = -1; if (this.shown >= this.lines.length) { this.T.out = this.t; } }
       return;
     }
     this.t++;
-    if (this.t === this.T.pull) A.sfx('whoosh');
-    if (this.t === this.T.whole) { A.sfx('shatter'); A.sfx('rumble'); }
-    if (this.t === this.T.talk + 200) A.sfx('freed');
-    if (this.T.fly) { if (this.t === this.T.fly + 130) A.sfx('unlock'); if (this.t > this.T.fly + 340) this.leave(); return; }
+    const t = this.t;
+    for (let i = 0; i < 12; i++) {
+      const u = this.slot(i);
+      if (u === 26) A.sfx(PILLAR_SFX[i]);
+      if (u === 66) A.sfx('freed');
+      if (u === 92) A.sfx('whoosh');
+    }
+    if (t === T.spiral) A.sfx('rise');
+    if (t === T.flash) { A.sfx('shatter'); A.sfx('crash'); }
+    if (t === T.descend + 20) A.sfx('voidTell');
+    if (t === T.land) { A.sfx('rumble'); A.sfx('freed'); }
+    if (t === T.crowd + 20) A.sfx('crowd');
+    // the crystals light as he lands, then settle
+    const lit = t > T.land ? Math.max(0, 0.9 - (t - T.land) / 80) : t > T.descend ? 0.18 : 0;
+    for (const id of CRYSTAL_ORDER) this.glow[id] += (lit - this.glow[id]) * 0.12;
+    if (this.T.out) { if (t > this.T.out + 70) this.leave(); return; }
     const nx = this.lines[this.shown];
-    if (nx && this.t >= nx[0] + this.shown * 6 && this.t >= this.T.talk) { this.line = this.shown++; this.lineT = 0; }
+    if (nx && t >= T.talk + this.shown * 4) { this.line = this.shown++; this.lineT = 0; }
   }
   leave() { const c = this.g.career; if (c) { c.flags.reforged = true; this.g.saveCareer(); } this.g.go('map'); }
-  shake() { const t = this.t; return t >= this.T.whole && t < this.T.whole + 18 ? [(t & 1) ? 3 : -3, 0] : [0, 0]; }
+  shake() { const t = this.t, T = this.T; return t >= T.flash && t < T.flash + 14 ? [(t & 1) ? 3 : -3, 0] : t >= T.land && t < T.land + 18 ? [(t & 1) ? 2 : -2, 1] : [0, 0]; }
+
+  // the twelve as people (a sprite on the ring), with a rim of their colour
+  person(f, F, x, y, k, rim = 1) {
+    const s = F.bank.get('idle1'), bob = Math.round(Math.sin(this.t / 30 + F.a0 * 3) * 1);
+    if (rim > 0.05) { const R = Math.round(14 * k * 2); for (let j = -R; j <= R; j++) for (let i = -R; i <= R; i++) { const d = Math.hypot(i, j * 1.5); if (d < R && bayer(x + i, y - 40 * k + j) < (1 - d / R) * 0.28 * rim) f.px(Math.round(x + i), Math.round(y - 40 * k + j), F.col); } }
+    f.blit(s, x, y + bob, F.pal, { scale: k });
+  }
+  pillar(f, x, y, h, w, col, t, colRgb) {
+    for (let j = 0; j < h; j++) {
+      const Y = Math.round(y - j), tap = Math.max(2, w * (1 - (j / Math.max(1, h)) * 0.4));
+      for (let i = -Math.round(tap); i <= Math.round(tap); i++) {
+        const d = Math.abs(i) / tap, X = Math.round(x + i);
+        const a = d < 0.28 ? 1 : 1 - (d - 0.28) / 0.72;
+        if (bayer(X + (t >> 2), Y) < a * 0.95) f.px(X, Y, d < 0.28 ? W : d < 0.62 ? mixC(colRgb, 0.35) : col);
+      }
+    }
+  }
   render(f) {
     const t = this.t, T = this.T;
     f.rect(0, 0, 256, 224, BLACK);
-    for (let i = 0; i < 50; i++) f.px((i * 53 + 11) % 256, (i * 31 + 7) % 200, i & 1 ? c32(9, 9, 14) : c32(5, 5, 9));
-    // the twelve lights hang in a ring, turning
-    const fly = T.fly ? Math.min(1, Math.max(0, (t - T.fly - 40) / 100)) : 0;
-    this.lights.forEach((L, i) => {
-      const a = L.a + t * 0.012, rx = 92 * (1 - fly), ry = 34 * (1 - fly);
-      const x = Math.round(128 + Math.cos(a) * rx), y = Math.round(150 - 30 * (1 - fly) + 40 * fly - 36 + Math.sin(a) * ry);
-      disc(f, x, y, 3, c32(1, 1, 3)); disc(f, x, y, 2, L.col); f.px(x - 1, y - 1, W);
-      if (fly > 0) for (let k = 1; k < 5; k++) f.px(Math.round(x - Math.cos(a) * k * 2), y - k, L.col);
-    });
-    // ZERO: the shatter, run backwards: the pieces come in from everywhere and fit
-    if (t < T.whole) {
-      const age = Math.max(0, (T.whole - t) * 1.1);
-      if (t > T.pull - 40) drawShards(f, this.cut, 128, 176, this.zeroPal, age, { fade: 0 });
-    } else {
-      const k = Math.min(1, (t - T.whole) / 30);
-      f.blit(this.zero.get('idle1'), 128, 176, this.zeroPal, { scale: 0.9 + 0.1 * k });
-      if (t < T.whole + 8) f.rect(0, 0, 256, 224, W);
+    for (let i = 0; i < 60; i++) f.px((i * 53 + 11) % 256, (i * 31 + 7) % 130, i & 1 ? c32(9, 9, 14) : c32(5, 5, 9));
+    // the circle on the floor of the Void
+    const fadeIn = Math.min(1, t / 70);
+    for (let a = 0; a < 90; a++) { const q = (a / 90) * Math.PI * 2; if (bayer(a, 3) < fadeIn) f.px(Math.round(RING.cx + Math.cos(q) * (RING.rx + 12)), Math.round(RING.cy + Math.sin(q) * (RING.ry + 5)), c32(14, 14, 20)); }
+    // which of the twelve is in his close-up now
+    let closeI = -1;
+    for (let i = 0; i < 12; i++) { const u = this.slot(i); if (u >= 0 && u < 80) closeI = i; }
+    const cu = closeI >= 0 ? this.slot(closeI) : 0, dim = closeI >= 0 ? (cu < 22 ? cu / 22 : cu < 62 ? 1 : 1 - (cu - 62) / 18) : 0;
+    // ---- the people on the ring (sorted back to front), each until they turn to light
+    const order = this.folk.map((F, i) => ({ F, i })).sort((a, b) => a.F.y - b.F.y);
+    const home = t < T.crowd;
+    if (home) for (const { F, i } of order) {
+      const u = this.slot(i), gone = u >= 66 ? 0 : 1;
+      if (u >= 66 && u < 150) { /* (a pool of light where they stood) */ const fade = 1 - (u - 66) / 84; for (let j = -3; j <= 3; j++) for (let x = -16; x <= 16; x++) if (Math.hypot(x / 16, j / 3) < 1 && bayer(F.x + x, F.y + j) < 0.55 * fade) f.px(Math.round(F.x + x), Math.round(F.y + j), F.col); continue; }
+      if (!gone) continue;
+      this.person(f, F, F.x, F.y, F.k, u >= 0 ? Math.min(1, 0.4 + u / 30) * 2 : 0.5);
     }
-    // the corner: Dash steps in (left) once he has spoken
-    if (t >= T.talk) { const dash = fighterSprites('dash1'); f.blit(dash.get(this.shown > 0 ? 'idle1' : 'beckon1'), 46, 208, paletteFor('dash1').u32); }
-    f.blit(this.you.bank.get(fly > 0.5 ? 'victory' : 'idle1'), 128, 222, this.you.sprPal.default.u32);
-    if (fly > 0.6) { const g = Math.min(1, (fly - 0.6) / 0.4); for (let j = 0; j < 40; j++) for (let x = -12; x <= 12; x++) if (bayer(128 + x, 190 + j) < g * 0.4) f.px(128 + x, 190 + j, W); }
-    const cap = t < T.pull ? 'THE TWELVE ARE FREE. THEIR LIGHTS HANG IN THE DARK.' : t < T.whole ? 'ZERO HAS NOTHING LEFT TO BORROW. THE SHATTER RUNS BACKWARD.' : t < T.talk + 30 ? 'THE REFORGING' : T.fly && t > T.fly + 60 ? 'THE TWELVE LIGHTS GO INTO YOUR BELT. IT BURNS WHITE.' : '';
-    if (cap && this.line < 0) drawBlock(f, cap, 10, 8, 236, 4, (t >> 4) & 1 ? COL.yellow : COL.white, { align: 'center', where: 'void caption' });
-    if (this.line >= 0) { const [, who, text] = this.lines[this.line], S = who === 'dash' ? this.dash : who === 'ferry' ? this.ferry : this.you; speak(f, S, text, this.lineT, t, who !== 'you', this.shown < this.lines.length); }
+    // ---- the pillars and the streaks
+    this.folk.forEach((F, i) => {
+      const u = this.slot(i);
+      if (u >= 40 && u < 92) this.pillar(f, F.x, F.y, Math.round(ease((u - 40) / 24) * 190), 7 + Math.round(Math.sin(u / 3) * 1), F.col, t, F.rgb);
+      if (u >= 92 && u < 128) {
+        const v = (u - 92) / 36, y = F.y - 40 - ease(v) * (F.y - F.sky[1] + 40), x = F.x + (F.sky[0] - F.x) * ease(v);
+        for (let q = 0; q < 24; q++) { const yy = Math.round(y + q * 3), xx = Math.round(x + (F.x - x) * (q / 24) * 0.3); if (bayer(xx, yy) < 1 - q / 26) f.px(xx, yy, q < 4 ? W : F.col); }
+        disc(f, Math.round(x), Math.round(y), 2, W); disc(f, Math.round(x), Math.round(y), 3, F.col);
+      }
+    });
+    // ---- the lights hang high above, then spiral together
+    const sp = Math.max(0, t - T.spiral), spU = Math.min(1, sp / 190);
+    this.folk.forEach((F, i) => {
+      const u = this.slot(i);
+      if (u < 112 || t >= T.flash) return;
+      if (t < T.spiral) { const x = F.sky[0], y = F.sky[1] + Math.round(Math.sin(t / 26 + i) * 2); disc(f, x, y, 3, F.col); disc(f, x, y, 1, W); return; }
+      const ang = F.a0 * 1 + sp * 0.055 * (1 + spU), r = 98 * (1 - ease(spU)), x = Math.round(128 + Math.cos(ang) * r), y = Math.round(44 + Math.sin(ang) * r * 0.42);
+      for (let q = 1; q < 8; q++) { const a2 = ang - q * 0.07, r2 = 98 * (1 - ease(Math.max(0, spU - q * 0.01))); f.px(Math.round(128 + Math.cos(a2) * r2), Math.round(44 + Math.sin(a2) * r2 * 0.42), F.col); }
+      disc(f, x, y, 3 - Math.min(1, spU * 1.2), F.col); disc(f, x, y, 1, W);
+    });
+    if (t >= T.spiral && t < T.flash) { const g = Math.min(1, sp / 190); for (let j = -16; j <= 16; j++) for (let x = -20; x <= 20; x++) if (bayer(128 + x, 44 + j) < g * (1 - Math.hypot(x / 20, j / 16)) * 0.9) f.px(128 + x, 44 + j, W); }
+    // ---- the twelve step back into the crowd
+    if (t >= T.crowd) {
+      const u = Math.min(1, (t - T.crowd) / 150);
+      for (const { F } of order) {
+        const e = ease(u), x = F.x + (F.crowd[0] - F.x) * e, y = F.y + (F.crowd[1] - F.y) * e, k = F.k + (0.36 - F.k) * e;
+        this.person(f, F, x, y, k, 0.8);
+      }
+      // the rest of the crowd behind them: dark heads in rows
+      for (let i = 0; i < 70; i++) { const x = (i * 37 + 9) % 256, y = 100 + ((i * 17) % 3) * 6, a = Math.min(1, (t - T.crowd) / 60); if (bayer(x, y) < a) { disc(f, x, y + 3, 3, c32(2, 2, 5)); f.px(x, y + 1, c32(6, 6, 10)); } }
+    }
+    // ---- ZERO descends, the crystals with him
+    if (t >= T.descend) {
+      const w = Math.min(1, (t - T.descend) / 190), y = Math.round(-100 + ease(w) * 276), lit = t > T.land;
+      if (!lit) for (let j = 0; j < y; j++) for (let x = -14; x <= 14; x++) if (bayer(128 + x, j) < (1 - Math.abs(x) / 15) * 0.5) f.px(128 + x, j, W);
+      const R = { cx: 128, cy: y - 92, t, clock: t, glow: this.glow, broken: {}, white: false, down: false };
+      drawRingSide(f, R, false);
+      f.blit(this.zero.get('idle1'), 128, y, this.zeroPal);
+      drawRingSide(f, R, true);
+      if (t >= T.land && t < T.land + 26) { const r = (t - T.land) * 6; for (let a = 0; a < 70; a++) { const q = (a / 70) * Math.PI * 2; f.px(Math.round(128 + Math.cos(q) * r), Math.round(176 + Math.sin(q) * r * 0.24), W); } }
+    }
+    // ---- you, at the bottom of the ring
+    f.blit(this.you.bank.get(t > T.land ? 'idle1' : 'idle1'), 128, 222, this.you.sprPal.default.u32);
+    // ---- the close-up
+    if (dim > 0.02) {
+      for (let y = 0; y < 224; y++) for (let x = 0; x < 256; x++) if (bayer(x, y) < dim * 0.85) f.px(x, y, BLACK);
+      const F = this.folk[closeI];
+      const big = 1.5 + 0.25 * ease(cu / 60);
+      const R2 = 70; for (let j = -R2; j <= R2; j++) for (let i = -R2; i <= R2; i++) { const d = Math.hypot(i, j); if (d < R2 && bayer(128 + i, 150 + j) < (1 - d / R2) * 0.3 * dim) f.px(128 + i, 150 + j, F.col); }
+      f.blit(F.bank.get('idle1'), 128, 214, F.pal, { scale: big, dither: cu > 40 ? Math.min(1, (cu - 40) / 26) : 0 });
+      const nm = F.info.name;
+      panel(f, 128 - ((textWidth(nm, false) + 20) >> 1), 8, textWidth(nm, false) + 20, 22);
+      drawTextCentered(f, nm, 128, 12, F.col, { mono: false }); drawTextCentered(f, F.info.was, 128, 21, COL.grey, { mono: false });
+      if (cu > 14) { const text = `"${F.line}"`; panel(f, 20, 168, 216, 28); drawTyped(f, text, 28, 176, 200, 2, Math.floor((cu - 14) * 1.2), COL.white, { lineH: 9, where: 'reforge line' }); }
+    }
+    // ---- captions
+    const cap = t < T.intro ? 'THE TWELVE ARE FREE. THEY STAND IN THE VOID, IN A CIRCLE.' : t >= T.spiral && t < T.flash ? 'TWELVE LIGHTS, HIGH ABOVE, TURNING TOGETHER.' : t >= T.flash && t < T.descend + 70 ? 'THE REFORGING' : t >= T.land && t < T.crowd ? 'ZERO. AND TWELVE CRYSTALS, ONE IN EACH OF THEIR COLOURS.' : t >= T.crowd && t < T.talk ? 'THE TWELVE STEP BACK AND TAKE THEIR PLACES IN THE CROWD.' : '';
+    if (cap && this.line < 0 && dim < 0.05) drawBlock(f, cap, 10, 8, 236, 3, (t >> 4) & 1 ? COL.yellow : COL.white, { align: 'center', where: 'void caption' });
+    if (t < 50) for (let y = 0; y < 224; y++) for (let x = 0; x < 256; x++) if (bayer(x, y) < 1 - t / 50) f.px(x, y, BLACK);
+    if (t >= T.flash && t < T.flash + 12) for (let y = 0; y < 224; y++) for (let x = 0; x < 256; x++) if (bayer(x, y) < 1 - (t - T.flash) / 12) f.px(x, y, W);
+    // Dash steps into the corner once he speaks
+    if (t >= T.talk) { const dash = fighterSprites('dash1'); f.blit(dash.get(this.shown > 1 ? 'idle1' : 'beckon1'), 46, 214, paletteFor('dash1').u32); }
+    if (this.line >= 0) { const [who, text] = this.lines[this.line], S = who === 'dash' ? this.dash : who === 'ferry' ? this.ferry : this.you; speak(f, S, text, this.lineT, t, who !== 'you', this.shown < this.lines.length); }
   }
 }
 

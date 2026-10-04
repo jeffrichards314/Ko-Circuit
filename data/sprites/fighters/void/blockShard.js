@@ -2,8 +2,10 @@
 // bone-white with black seams, a T-shaped visor slit in a squat helm, and in the chest the hollow of a shield (a square), its rim burning
 // amber. Nothing on him is round.
 import { hollow } from './_hollow.js';
+import { TD } from './tdLooks.js';
 
 const { layers, palettes } = hollow('blockShard', {
+  remix: TD.blockShard,
   build: 'heavy',
   body: { size: [1.1, 1.0], legLen: 0.9, torsoLen: 1.04, shoulders: 1.22, neckLen: -2, dims: { neck: 11, chestW: 31, waistW: 25, belly: 7, deltoid: 13, upperArm: [8.6, 7.4], forearm: [7.6, 6.6] } },
   tint: [29, 19, 5], tintHi: [31, 28, 14], tintDk: [13, 7, 1],

@@ -65,7 +65,9 @@ for (const id of ids) {
   S2.enter(); T2.hold('start', 30, 400);
   let k = 0;
   for (; k < 400 && !T2.game.next; k++) { T2.step(k); S2.update(); }
-  if (!T2.game.next) fail(`${id}: hold START did not skip`);
+  // (a scene marked `noSkipFirst` plays in full the first time: holding START must NOT skip it until it has been seen)
+  if (SCENES[id].noSkipFirst) { if (T2.game.next) fail(`${id}: hold START skipped a first viewing of a noSkipFirst scene`); }
+  else if (!T2.game.next) fail(`${id}: hold START did not skip`);
   else if (k > 30 + 42 + 40) fail(`${id}: skip took ${k} frames`);
   // seen before: still only holding START skips (a tap does not)
   const T3 = await makeGame({ career: 'zeroTrue', seen: { [id]: 1 } });

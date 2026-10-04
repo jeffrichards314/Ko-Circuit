@@ -28,7 +28,7 @@ export default {
 
   build: 'heavy',
   palette: 'fkarver',
-  spriteLayers: 'karver',
+  spriteLayers: 'fkarver',
 
   stats: stats({ health: 480, damageMult: 2.15, stunResistance: 7, starLossChance: 0.65, stunFrames: 52, hitstun: 12, guardCounter: 0 }),
   anims: { ...anims({ idle: { frames: ['idle1', 'idle2'], rate: 26 } }), taunt: karver.anims.taunt, victory: karver.anims.victory },

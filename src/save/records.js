@@ -14,7 +14,7 @@ import { CIRCUITS, CIRCUIT_ORDER, ALL_ORDER, ASC_PATH, MAIN_PATH, SECRET, RIVALS
 import { FIGHTERS } from '../../data/fighters/index.js';
 import { TD_LISTS, tdDivisionOf } from '../../data/fighters/titleDefense.js';
 import { DIVISIONS, DIVISION_NAMES, DIVISION_UNLOCK, DIVISION_LOCK, GAUNTLET_TEXT } from '../../data/divisions.js';
-import { tdChampMedals } from '../../data/medals.js';
+import { tdChampMedals, medalsFor, speedTarget } from '../../data/medals.js';
 
 // Title Defense: 2 lives for the whole defense, and three medals per division:
 //   BRONZE  defend the title (clear the defense)          SILVER  ...without losing a single fight (both lives intact)
@@ -28,6 +28,19 @@ export function tdMedalsFor(tier, { lives, seconds }) {
 export const GAUNTLETS = DIVISIONS;
 const blankGauntlet = () => ({ bestStreak: 0, bestStreakTime: null, bestTime: null, clears: 0, runs: [] });
 const blankTd = () => ({ best: 0, clears: 0, bestTime: null, medals: { bronze: false, silver: false, gold: false }, runs: [] });
+// ORIGIN (2026-10-04, the secret final boss: spec §18 A15): his own record, kept apart from every list. `beaten` (the Gauntlet's ORIGIN) opens Practice and the true form's
+// door (with the five Title Defense divisions), `trueBeaten` (Title Defense's ORIGIN TRUE FORM) the TRUE FORM switch in Practice, the costume and the title.
+//   seen    the cinematic intro of each has played (his name is shown only after: until then the doors say ???), the victory scenes
+//   best    the best KO time (game seconds) of each; got  the three medals of each (speed, flawless, signature); tries  how many times each was fought
+export const blankOrigin = () => ({
+  beaten: false, trueBeaten: false,
+  seen: { intro: false, introTrue: false, victory: false, victoryTrue: false, hint: false },
+  best: { g: null, t: null }, got: { g: { speed: false, flawless: false, signature: false }, t: { speed: false, flawless: false, signature: false } }, tries: { g: 0, t: 0 },
+});
+const mergeOrigin = (o) => {
+  const b = blankOrigin(), x = o || {};
+  return { ...b, ...x, seen: { ...b.seen, ...(x.seen || {}) }, best: { ...b.best, ...(x.best || {}) }, tries: { ...b.tries, ...(x.tries || {}) }, got: { g: { ...b.got.g, ...((x.got || {}).g || {}) }, t: { ...b.got.t, ...((x.got || {}).t || {}) } } };
+};
 
 // records.ver 2 (2026-10-03): the five divisions. An older save keeps what still means the same thing:
 //   Title Defense: the Classic defense's best defense (capped at the new length; its clears, times and medals were for the old 13
@@ -53,7 +66,7 @@ export function loadRecords() {
     keep(oldG.void, 'void', true); keep(oldG.full, 'combined', false);
   }
   const run = r.run ? normalizeRun(r.run) : null;
-  return { ver: RECORDS_VERSION, unlocks: r.unlocks || {}, met: r.met || [], td, gauntlet, run, tdChamps: r.tdChamps || {}, tdMet: Array.isArray(r.tdMet) ? r.tdMet : [] };
+  return { ver: RECORDS_VERSION, unlocks: r.unlocks || {}, met: r.met || [], td, gauntlet, run, tdChamps: r.tdChamps || {}, tdMet: Array.isArray(r.tdMet) ? r.tdMet : [], origin: mergeOrigin(r.origin) };
 }
 function migrateGauntlet(o, len, sameList) {
   const cut = Math.min(o.bestStreak || 0, len);
@@ -157,6 +170,9 @@ export function syncRecords(r, career, extraMet = []) {
     if (asc > ascIndex('halcyon')) r.unlocks.pantheon = true;
     if (asc > ascIndex('vorgath')) r.unlocks.underworld = true;
     if (asc > ascIndex('zeroTrue') || career.flags.trueEndingSeen) r.unlocks.void = true;
+    // (a password carries ORIGIN beaten and his true form beaten: the V5 flags)
+    if (career.flags.originBeaten) r.origin.beaten = true;
+    if (career.flags.originTrueBeaten) { r.origin.beaten = true; r.origin.trueBeaten = true; }
   }
   const met = new Set([...r.met, ...careerFighters(career), ...extraMet]);
   r.met = EVERYONE.filter((id) => met.has(id));
@@ -191,6 +207,29 @@ export function tdReachedIn(r, tier, id) {
 // the divisions a fighter's Title Defense version has been reached in (empty: he has none, or not yet)
 export const tdVersions = (r, id) => DIVISIONS.filter((d) => tdReachedIn(r, d, id));
 export const remixUnlocked = (r, id) => { const d = tdDivisionOf(id); return !!d && divisionUnlocked(r, d); };
+// ---- ORIGIN: the two doors and what beating him opens. Nothing here is a list: he is in no division, no Practice grid, no gallery until he is beaten.
+// The Gauntlet's door opens when all five Gauntlet divisions have been cleared; the true form's when ORIGIN has been beaten AND all five Title Defense divisions
+// have been cleared.
+export const originGauntletOpen = (r) => DIVISIONS.every((d) => (r.gauntlet[d] && r.gauntlet[d].clears > 0));
+export const originTrueOpen = (r) => !!r.origin.beaten && DIVISIONS.every((d) => (r.td[d] && r.td[d].clears > 0));
+export const originName = (r, which) => (r.origin.seen[which === 'g' ? 'intro' : 'introTrue'] ? 'ORIGIN' : '???'); // (his name is hidden until his intro has played)
+// one fight against him finished: the best time, the medals (speed: a KO under the target; flawless: no hit and no knockdown; signature: the golden moment of the First
+// Punch), what it opened. `d` is his data (ORIGIN's or his true form's). Returns { time, newBest, earned, medals, first } like the other record functions.
+export function recordOriginFight(r, d, result, which, career = null) {
+  const O = r.origin, key = which === 'g' ? 'g' : 't', won = result.winner === 'player' && (result.method === 'KO' || result.method === 'TKO');
+  const M = originMedals(d, result), out = { time: null, newBest: false, earned: [], medals: M, first: false };
+  O.tries[key]++;
+  if (won) {
+    out.time = result.seconds;
+    if (O.best[key] == null || result.seconds < O.best[key]) { O.best[key] = result.seconds; out.newBest = true; }
+    if (key === 'g' && !O.beaten) { O.beaten = true; out.first = true; } else if (key === 't' && !O.trueBeaten) { O.trueBeaten = true; O.beaten = true; out.first = true; }
+    if (career) { career.flags.originBeaten = true; if (key === 't') career.flags.originTrueBeaten = true; }
+  }
+  for (const k of ['speed', 'flawless', 'signature']) if (M[k] && !O.got[key][k]) { O.got[key][k] = true; out.earned.push(k); }
+  saveRecords(r);
+  return out;
+}
+export const originMedals = (d, result) => medalsFor(d, result, speedTarget);
 export const gauntletRoster = (r, zone = 'classic') => gauntletList(zone);
 export const fighterName = (id) => (FIGHTERS[id] ? FIGHTERS[id].name : id);
 

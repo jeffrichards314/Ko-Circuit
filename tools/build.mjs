@@ -47,6 +47,7 @@ for (const f of statics) if (!existsSync(join(ROOT, f))) throw new Error(`missin
 
 // ---- 3. a version that changes when any file does -----------------------------------------------------------------------------------------------
 const hash = createHash('sha1');
+hash.update(process.env.KO_BUILD_SALT || ''); // (the update test builds twice from the same files and needs two versions)
 for (const f of [...files, ...statics, 'index.html', 'sw.js'].sort()) { hash.update(f); hash.update(readFileSync(join(ROOT, f))); }
 const VERSION = hash.digest('hex').slice(0, 12);
 
