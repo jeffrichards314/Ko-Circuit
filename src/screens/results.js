@@ -144,7 +144,7 @@ export class ResultsScreen {
     const pw = () => { drawText(fr, 'PASSWORD', 22, y, COL.cyan, { mono: false }); drawPassword(fr, o.password, 88, y, 148, COL.yellow, { show: showChar, align: 'left', lineH: 9 }); };
     if (o.replay) {
       const nx = (o.kind === 'win' || o.kind === 'rematch' || o.kind === 'rival') && c.replay ? replayOpponent(c) : null;
-      const msg = { win: 'REPLAY: ON TO THE NEXT ONE', rival: 'LADDER DONE. ONE MORE...', done: 'TITLE RECLAIMED!', rematch: `REPLAY LIVES LEFT: ${o.lives}`, over: 'REPLAY OVER. YOUR CAREER IS UNTOUCHED.' }[o.kind];
+      const msg = { win: o.gained ? 'LIFE BACK! ON TO THE NEXT ONE' : 'REPLAY: ON TO THE NEXT ONE', rival: 'LADDER DONE. ONE MORE...', done: 'TITLE RECLAIMED!', rematch: `REPLAY LIVES LEFT: ${o.lives}`, over: 'REPLAY OVER. YOUR CAREER IS UNTOUCHED.' }[o.kind];
       head(msg, o.kind === 'over' || o.kind === 'rematch' ? COL.pink : COL.yellow);
       if (nx) line2(`NEXT: ${FIGHTERS[nx].name}`, COL.white);
       return;
@@ -166,7 +166,11 @@ export class ResultsScreen {
     }
     if (o.kind === 'win') {
       const nx = nextOpponent(c);
-      drawLabel(fr, nx ? `NEXT: ${FIGHTERS[nx].name}` : 'NEXT: ???', 22, y, 212, COL.white, { mono: false, where: 'results next' }); y += 12;
+      // a win in the ladder gives a life back: said at the right of the NEXT line, flashing
+      const lifeTxt = o.gained ? `+1 LIFE (${o.lives})` : '', lifeW = lifeTxt ? textWidth(lifeTxt, false) + 8 : 0;
+      drawLabel(fr, nx ? `NEXT: ${FIGHTERS[nx].name}` : 'NEXT: ???', 22, y, 212 - lifeW, COL.white, { mono: false, where: 'results next' });
+      if (lifeTxt) drawText(fr, lifeTxt, 234 - textWidth(lifeTxt, false), y, (this.t >> 3) & 1 ? COL.cyan : COL.white, { mono: false });
+      y += 12;
       pw();
     } else if (o.kind === 'title') {
       const won = { dream: 'UNDISPUTED CHAMPION OF THE WORLD!', zero: 'YOU ARE THE LAST CHAMPION!', vorgath: 'THE KING BELOW HAS FALLEN!', zeroTrue: 'ZERO IS UNDONE!' }[o.circuit] || `YOU WON THE ${CIRCUITS[o.circuit].asc ? SHORT[o.circuit] : CIRCUITS[o.circuit].name} BELT!`;

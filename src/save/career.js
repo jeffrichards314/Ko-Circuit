@@ -5,7 +5,7 @@
 //   main      index into MAIN_PATH of the main circuit in progress
 //   beaten    fighters beaten in the current circuit (= your rank position)
 //   lives     2 per circuit (1 in the Underworld: circuits.js `lives`). Losing costs one and
-//             you rematch; losing the last one sends you back to the start of the circuit
+//             you rematch; winning a fight of the ladder gives one back (never past the circuit's own); losing the last one sends you back to the start of the circuit
 //             with a full set again.
 //   lostHere  lost any fight in this circuit (secret unlocks need a clean run)
 //   training  (Phase 7) minigame bests, perks won and equipped, and whether a
@@ -220,7 +220,7 @@ export function enterCircuit(c, id, due = false) {
 }
 
 // Apply a fight result. Returns what happened, for the results screen:
-//   { kind: 'win' | 'title' | 'rematch' | 'reset', password, circuit, belt, next }
+//   { kind: 'win' | 'title' | 'rematch' | 'reset', password, circuit, belt, next }  ('win' also says whether it gave a life back: gained, lives)
 export function recordResult(c, result) {
   const won = result.winner === 'player';
   const circuit = c.circuit;
@@ -228,6 +228,8 @@ export function recordResult(c, result) {
     c.record.w++;
     if (result.method === 'KO' || result.method === 'TKO') c.record.ko++;
     c.beaten++;
+    // a win in the ladder gives a life back (up to the circuit's own: 2, or 1 in the Underworld). Podium rematches never come through here, so they give none.
+    const gained = !noLives(circuit) && c.lives < livesOf(circuit) ? (c.lives++, true) : false;
     // a Hollowed freed (permanent): the first time gets its full cutscene
     const newly = HOLLOWED.includes(result.opponent) && !isFreed(c, result.opponent) ? result.opponent : null;
     if (HOLLOWED.includes(result.opponent)) c.freed = (c.freed || 0) | freedBit(result.opponent);
@@ -244,7 +246,7 @@ export function recordResult(c, result) {
       return { kind: 'title', circuit, next, freed, password: passwordOf(c) };
     }
     saveCareer(c);
-    return { kind: 'win', circuit, freed, password: passwordOf(c) };
+    return { kind: 'win', circuit, freed, gained, lives: c.lives, password: passwordOf(c) };
   }
   c.record.l++;
   c.lostHere = true;
@@ -366,7 +368,8 @@ export function recordReplay(c, result) {
     return { kind: 'over', circuit };
   }
   if (!R.rival) R.beaten++;
-  if (!R.rival && R.beaten < CIRCUITS[circuit].fighters.length) { saveCareer(c); return { kind: 'win', circuit }; }
+  const gained = R.lives < livesOf(circuit) ? (R.lives++, true) : false; // (a replay's own lives come back with a win too)
+  if (!R.rival && R.beaten < CIRCUITS[circuit].fighters.length) { saveCareer(c); return { kind: 'win', circuit, gained, lives: R.lives }; }
   const rival = RIVAL_AFTER[circuit];
   if (!R.rival && rival && rivalWon(c, rival)) { R.rival = true; saveCareer(c); return { kind: 'rival', circuit, rivalId: rival }; }
   // reclaimed

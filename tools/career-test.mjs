@@ -468,5 +468,18 @@ function clearWithRival(c, label) {
   ok(lz.kind === 'retry' && z.circuit === 'zeroTrue' && z.asc === 18 && circuitStatus(z, 'zeroTrue') === 'current', 'ZERO\'s true form: losing leaves him reached');
 }
 
+// ---- a win in the ladder gives a life back (2026-10-04); never past the circuit's own
+{
+  const c = newCareer();
+  ok(c.lives === LIVES, 'a new career starts on full lives');
+  let o = win(c, 'life: win at full lives');
+  ok(o.kind === 'win' && !o.gained && c.lives === LIVES, 'a win at full lives gives nothing extra');
+  o = lose(c, 'life: lose one');
+  ok(o.kind === 'rematch' && c.lives === LIVES - 1, 'losing costs one life');
+  o = win(c, 'life: win the rematch');
+  ok(o.kind === 'win' && o.gained === true && c.lives === LIVES && o.lives === LIVES, 'winning gives it back (the rematch after a loss is a ladder win)');
+  lose(c, 'life: lose again'); lose(c, 'life: lose a second time'); // (the last life: back to the start of the circuit with a full set)
+  ok(c.lives === LIVES, 'a reset circuit starts on full lives');
+}
 console.log(`${checks} checks, ${fails} failed`);
 process.exit(fails ? 1 : 0);
